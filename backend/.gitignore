@@ -1,0 +1,38 @@
+# ---------- Python / backend ----------
+backend/.venv/
+backend/venv/
+backend/env/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.db
+*.sqlite3
+
+# ---------- Node / frontend ----------
+node_modules/
+frontend/dist/
+frontend/build/
+frontend/.vite/
+*.tsbuildinfo
+
+# ---------- Secrets (jamais commit) ----------
+.env
+.env.*
+!.env.example
+
+# ---------- Netlify ----------
+.netlify/
+
+# ---------- OS / éditeurs ----------
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# ---------- Logs ----------
+*.log
+npm-debug.log*
