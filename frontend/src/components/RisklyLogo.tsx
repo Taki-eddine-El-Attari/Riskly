@@ -1,0 +1,42 @@
+// Logo Riskly : bouclier « stencil » en fragments anguleux, pièce accent
+// cyan au coin haut-droit, hachures data et repères hairline.
+// Couleurs branchées sur les tokens (fill-text / fill-accent) pour suivre le thème.
+export function RisklyLogo({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 100 112" className={className} aria-hidden="true">
+      <g className="fill-text">
+        {/* barre haut-gauche */}
+        <path d="M15 12.5 L46 6.2 L46 10.8 L19 13.6 Z" />
+        {/* colonne gauche haute */}
+        <path d="M9 20 L19.5 20 L19 36 L9.5 36.8 Z" />
+        {/* hachures gauche */}
+        <rect x="6" y="39.5" width="16" height="0.9" />
+        <rect x="8" y="42" width="15.5" height="0.9" />
+        <rect x="6.5" y="44.5" width="14.5" height="0.9" />
+        <rect x="9" y="47" width="14.5" height="0.9" />
+        <rect x="7" y="49.5" width="12" height="0.9" />
+        {/* flanc bas-gauche avec cran */}
+        <path d="M8 52 L16 48.5 L23 57.5 L21 59 L29 68.5 L33.5 71 L26.5 78 Z" />
+        {/* pointe bas-gauche */}
+        <path d="M25 80.5 L32.5 77 L45 92.5 L46.5 104 Z" />
+        {/* lame fine bas-droite */}
+        <path d="M67.5 79.5 L69.3 81.3 L50 99.5 L48.3 97.7 Z" />
+        {/* flanc bas-droit */}
+        <path d="M86 50.5 L79.5 47.5 L65.5 67.5 L71 71.5 Z" />
+        {/* hachures droite */}
+        <rect x="76" y="44" width="20" height="0.9" />
+        <rect x="74" y="46.5" width="19" height="0.9" />
+        <rect x="77.5" y="49" width="19" height="0.9" />
+        {/* colonne droite sous la pièce cyan */}
+        <path d="M82.5 31.5 L91 32 L90.5 43 L83 42 Z" />
+      </g>
+      {/* pièce accent — coin haut-droit */}
+      <path className="fill-accent" d="M53 4.5 L93 11 L93 28 L82 26.5 L82 17.5 L54 10 Z" />
+      {/* repères hairline sur la pièce accent */}
+      <g className="stroke-text-muted" strokeWidth="0.5" opacity="0.5" fill="none">
+        <line x1="87.5" y1="8" x2="87.5" y2="33" />
+        <line x1="77" y1="21.5" x2="98" y2="21.5" />
+      </g>
+    </svg>
+  );
+}
