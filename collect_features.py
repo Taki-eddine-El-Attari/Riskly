@@ -1,15 +1,21 @@
 import asyncio
+import csv
 import socket
 import sys
 import json
 import os
 from datetime import datetime, timezone
+from pathlib import Path
 
 import httpx
 import dns.resolver
 import pydnsbl
 import tldextract
 from tranco import Tranco
+
+# ---------- Cles API (remplacez par vos vraies cles) ----------
+OPENPAGERANK_API_KEY = "votre_cle_openpagerank_ici"
+PHISHTANK_API_KEY = "votre_cle_phishtank_ici"
 
 
 # ---------- RDAP (age du domaine) ----------
@@ -42,8 +48,8 @@ async def get_domain_age(domain: str, client: httpx.AsyncClient, timeout: float 
 
 # ---------- Open PageRank (rank + backlinks) - CLE API REQUISE ----------
 async def get_page_rank(domain: str, client: httpx.AsyncClient, timeout: float = 5.0) -> dict:
-    api_key = os.getenv("OPENPAGERANK_API_KEY")
-    if not api_key:
+    api_key = OPENPAGERANK_API_KEY
+    if not api_key or api_key == "votre_cle_openpagerank_ici":
         return {"open_page_rank": None, "referring_domains": None, "error": "missing_api_key"}
 
     try:
@@ -129,8 +135,8 @@ async def get_blacklist_status(domain: str) -> dict:
 
 # ---------- PhishTank (base de menaces verifiees) - CLE API REQUISE ----------
 async def check_phishtank(domain: str, client: httpx.AsyncClient, timeout: float = 5.0) -> dict:
-    api_key = os.getenv("PHISHTANK_API_KEY")
-    if not api_key:
+    api_key = PHISHTANK_API_KEY
+    if not api_key or api_key == "votre_cle_phishtank_ici":
         return {"in_phishtank": None, "error": "missing_api_key"}
 
     try:
@@ -312,7 +318,72 @@ async def collect_domain_features(domain: str) -> dict:
     return {"domain": domain, "features": features, "errors": errors}
 
 
+# ---------- Generation du dataset CSV ----------
+def load_domain_list(path: str) -> list[str]:
+    """Charge une liste de domaines depuis un fichier texte (un par ligne)."""
+    p = Path(path)
+    if not p.exists():
+        print(f"Fichier introuvable : {path}")
+        return []
+    with open(p, "r", encoding="utf-8") as f:
+        return [line.strip() for line in f if line.strip() and not line.startswith("#")]
+
+
+async def build_dataset(
+    domaines_sains: list[str],
+    domaines_malveillants: list[str],
+    output_path: str = "dataset.csv",
+    concurrency: int = 5,
+) -> None:
+    """
+    Collecte les features pour tous les domaines et ecrit le CSV final.
+    concurrency limite le nombre de domaines traites en parallele, pour
+    respecter les quotas des APIs (notamment ip-api : 45 req/min).
+    """
+    all_domains = [(d, 0) for d in domaines_sains] + [(d, 1) for d in domaines_malveillants]
+    print(f"Total a traiter : {len(all_domains)} domaines "
+          f"({len(domaines_sains)} sains, {len(domaines_malveillants)} malveillants)")
+
+    semaphore = asyncio.Semaphore(concurrency)
+    rows = []
+
+    async def process_one(domain: str, label: int, index: int, total: int) -> None:
+        async with semaphore:
+            print(f"[{index}/{total}] {domain} (label={label})")
+            result = await collect_domain_features(domain)
+            row = {"domain": domain, "label": label}
+            row.update(result["features"])
+            if result["errors"]:
+                row["_errors"] = ";".join(result["errors"].keys())
+            rows.append(row)
+
+    tasks = [
+        process_one(domain, label, i + 1, len(all_domains))
+        for i, (domain, label) in enumerate(all_domains)
+    ]
+    await asyncio.gather(*tasks)
+
+    fieldnames = ["domain", "label"]
+    for row in rows:
+        for key in row:
+            if key not in fieldnames:
+                fieldnames.append(key)
+
+    with open(output_path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(rows)
+
+    print(f"\nDataset ecrit dans : {output_path} ({len(rows)} lignes)")
+
+
 if __name__ == "__main__":
-    domain_arg = sys.argv[1] if len(sys.argv) > 1 else "exemple-domaine.com"
-    result = asyncio.run(collect_domain_features(domain_arg))
-    print(json.dumps(result, indent=2, ensure_ascii=False))
+    sains = load_domain_list("domaines_sains.txt")
+    malveillants = load_domain_list("domaines_malveillants.txt")
+
+    if not sains and not malveillants:
+        print("Aucun domaine a traiter. Verifiez vos fichiers domaines_sains.txt "
+              "et domaines_malveillants.txt (un domaine par ligne).")
+        sys.exit(1)
+
+    asyncio.run(build_dataset(sains, malveillants, output_path="dataset.csv", concurrency=5))
