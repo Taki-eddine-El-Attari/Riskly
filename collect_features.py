@@ -1,11 +1,3 @@
-"""
-Script unique de collecte des donnees pour un domaine.
-Appelle toutes les sources (RDAP, Open PageRank, ip-api, DNS, pydnsbl)
-en parallele, plus les features lexicales locales.
-
-Usage:
-    python collect_features.py exemple-domaine.com
-"""
 import asyncio
 import socket
 import sys
@@ -17,6 +9,7 @@ import httpx
 import dns.resolver
 import pydnsbl
 import tldextract
+from tranco import Tranco
 
 
 # ---------- RDAP (age du domaine) ----------
@@ -47,7 +40,7 @@ async def get_domain_age(domain: str, client: httpx.AsyncClient, timeout: float 
         return {"age_domaine": None, "error": str(e)}
 
 
-# ---------- Open PageRank (rank + backlinks) ----------
+# ---------- Open PageRank (rank + backlinks) - CLE API REQUISE ----------
 async def get_page_rank(domain: str, client: httpx.AsyncClient, timeout: float = 5.0) -> dict:
     api_key = os.getenv("OPENPAGERANK_API_KEY")
     if not api_key:
@@ -83,7 +76,7 @@ async def get_country(domain: str, client: httpx.AsyncClient, timeout: float = 5
     try:
         ip = socket.gethostbyname(domain)
     except socket.gaierror:
-        return {"country": None, "error": "dns_resolution_failed"}
+        return {"country": None, "ip": None, "error": "dns_resolution_failed"}
 
     try:
         response = await client.get(f"http://ip-api.com/json/{ip}", timeout=timeout)
@@ -91,14 +84,14 @@ async def get_country(domain: str, client: httpx.AsyncClient, timeout: float = 5
         data = response.json()
 
         if data.get("status") != "success":
-            return {"country": None, "error": "lookup_failed"}
+            return {"country": None, "ip": ip, "error": "lookup_failed"}
 
-        return {"country": data.get("countryCode"), "error": None}
+        return {"country": data.get("countryCode"), "ip": ip, "error": None}
 
     except httpx.TimeoutException:
-        return {"country": None, "error": "timeout"}
+        return {"country": None, "ip": ip, "error": "timeout"}
     except Exception as e:
-        return {"country": None, "error": str(e)}
+        return {"country": None, "ip": ip, "error": str(e)}
 
 
 # ---------- dnspython (nombre de serveurs) - synchrone -> thread pool ----------
@@ -134,6 +127,131 @@ async def get_blacklist_status(domain: str) -> dict:
     return await loop.run_in_executor(None, _get_blacklist_status_sync, domain)
 
 
+# ---------- PhishTank (base de menaces verifiees) - CLE API REQUISE ----------
+async def check_phishtank(domain: str, client: httpx.AsyncClient, timeout: float = 5.0) -> dict:
+    api_key = os.getenv("PHISHTANK_API_KEY")
+    if not api_key:
+        return {"in_phishtank": None, "error": "missing_api_key"}
+
+    try:
+        response = await client.post(
+            "https://checkurl.phishtank.com/checkurl/",
+            data={
+                "url": domain,
+                "format": "json",
+                "app_key": api_key,
+            },
+            timeout=timeout,
+        )
+        response.raise_for_status()
+        data = response.json()
+        in_db = data.get("results", {}).get("in_database", False)
+        verified = data.get("results", {}).get("verified", False)
+        return {"in_phishtank": bool(in_db and verified), "error": None}
+
+    except httpx.TimeoutException:
+        return {"in_phishtank": None, "error": "timeout"}
+    except Exception as e:
+        return {"in_phishtank": None, "error": str(e)}
+
+
+# ---------- URLhaus (feed telecharge, verification locale) ----------
+_urlhaus_cache: set[str] | None = None
+
+
+async def _load_urlhaus_feed(client: httpx.AsyncClient, timeout: float = 15.0) -> set[str]:
+    global _urlhaus_cache
+    if _urlhaus_cache is not None:
+        return _urlhaus_cache
+    try:
+        response = await client.get(
+            "https://urlhaus.abuse.ch/downloads/text_online/", timeout=timeout
+        )
+        response.raise_for_status()
+        lines = response.text.splitlines()
+        domains = set()
+        for line in lines:
+            if line.startswith("#") or not line.strip():
+                continue
+            try:
+                host = httpx.URL(line.strip()).host
+                if host:
+                    domains.add(host.lower())
+            except Exception:
+                continue
+        _urlhaus_cache = domains
+        return domains
+    except Exception:
+        _urlhaus_cache = set()
+        return _urlhaus_cache
+
+
+async def check_urlhaus(domain: str, client: httpx.AsyncClient) -> dict:
+    feed = await _load_urlhaus_feed(client)
+    if not feed:
+        return {"in_urlhaus": None, "error": "feed_unavailable"}
+    return {"in_urlhaus": domain.lower() in feed, "error": None}
+
+
+# ---------- OpenPhish (feed telecharge, verification locale) ----------
+_openphish_cache: set[str] | None = None
+
+
+async def _load_openphish_feed(client: httpx.AsyncClient, timeout: float = 15.0) -> set[str]:
+    global _openphish_cache
+    if _openphish_cache is not None:
+        return _openphish_cache
+    try:
+        response = await client.get("https://openphish.com/feed.txt", timeout=timeout)
+        response.raise_for_status()
+        domains = set()
+        for line in response.text.splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                host = httpx.URL(line).host
+                if host:
+                    domains.add(host.lower())
+            except Exception:
+                continue
+        _openphish_cache = domains
+        return domains
+    except Exception:
+        _openphish_cache = set()
+        return _openphish_cache
+
+
+async def check_openphish(domain: str, client: httpx.AsyncClient) -> dict:
+    feed = await _load_openphish_feed(client)
+    if not feed:
+        return {"in_openphish": None, "error": "feed_unavailable"}
+    return {"in_openphish": domain.lower() in feed, "error": None}
+
+
+# ---------- Tranco (verification locale, liste des domaines de reference "sains") ----------
+def check_tranco(domain: str) -> dict:
+    try:
+        t = Tranco(cache=True, cache_dir=".tranco_cache")
+        latest_list = t.list()
+        rank = latest_list.rank(domain)
+        # rank retourne un grand nombre si absent, selon la version de la lib
+        in_top_1m = rank is not None and rank <= 1_000_000
+        return {"tranco_rank": rank, "in_tranco_top_1m": in_top_1m, "error": None}
+    except Exception as e:
+        return {"tranco_rank": None, "in_tranco_top_1m": None, "error": str(e)}
+
+
+# ---------- HumbleWorth (estimation indicative, hors scoring) ----------
+async def get_humbleworth_estimate(domain: str, client: httpx.AsyncClient, timeout: float = 5.0) -> dict:
+    """
+    HumbleWorth ne propose pas d'API publique documentee officiellement.
+    Fonction laissee en placeholder : a completer si un endpoint est
+    confirme disponible, sinon a retirer et garder l'affichage manuel.
+    """
+    return {"humbleworth_estimate": None, "error": "no_public_api_documented"}
+
+
 # ---------- Features lexicales (locales, aucun appel reseau) ----------
 def get_lexical_features(domain: str) -> dict:
     extracted = tldextract.extract(domain)
@@ -144,9 +262,10 @@ def get_lexical_features(domain: str) -> dict:
     }
 
 
-# ---------- Orchestrateur ----------
+# ---------- Orchestrateur global ----------
 async def collect_domain_features(domain: str) -> dict:
     lexical = get_lexical_features(domain)
+    tranco_res = check_tranco(domain)
 
     async with httpx.AsyncClient() as client:
         results = await asyncio.gather(
@@ -155,10 +274,17 @@ async def collect_domain_features(domain: str) -> dict:
             get_country(domain, client),
             get_nameserver_count(domain),
             get_blacklist_status(domain),
+            check_phishtank(domain, client),
+            check_urlhaus(domain, client),
+            check_openphish(domain, client),
+            get_humbleworth_estimate(domain, client),
             return_exceptions=True,
         )
 
-    labels = ["rdap", "open_page_rank", "ip_api", "dns", "pydnsbl"]
+    labels = [
+        "rdap", "open_page_rank", "ip_api", "dns", "pydnsbl",
+        "phishtank", "urlhaus", "openphish", "humbleworth",
+    ]
     features, errors = {}, {}
 
     for label, res in zip(labels, results):
@@ -169,7 +295,19 @@ async def collect_domain_features(domain: str) -> dict:
             errors[label] = res["error"]
         features.update({k: v for k, v in res.items() if k != "error"})
 
+    if tranco_res.get("error"):
+        errors["tranco"] = tranco_res["error"]
+    features.update({k: v for k, v in tranco_res.items() if k != "error"})
+
     features.update(lexical)
+
+    # Signal d'alerte consolide "presence dans une base de menaces"
+    in_threat_db = any([
+        features.get("in_phishtank") is True,
+        features.get("in_urlhaus") is True,
+        features.get("in_openphish") is True,
+    ])
+    features["in_threat_database"] = in_threat_db
 
     return {"domain": domain, "features": features, "errors": errors}
 
