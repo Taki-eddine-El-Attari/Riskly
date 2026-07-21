@@ -5,24 +5,21 @@ import AuthLayout, { AuthDivider } from "@/components/auth/AuthLayout";
 import { OAuthButtons } from "@/components/auth/OAuthButtons";
 import { PasswordInput } from "@/components/auth/PasswordInput";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
 export default function Login() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [remember, setRemember] = useState(true);
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [errors, setErrors] = useState<{ username?: string; password?: string }>({});
   const [pending, setPending] = useState(false);
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
     const errs: typeof errors = {};
-    if (!EMAIL_RE.test(email)) errs.email = "Adresse email invalide.";
+    if (username.trim().length === 0)
+      errs.username = "Veuillez saisir votre nom d'utilisateur.";
     if (password.length === 0) errs.password = "Veuillez saisir votre mot de passe.";
     setErrors(errs);
     if (Object.keys(errs).length > 0) return;
@@ -43,24 +40,24 @@ export default function Login() {
 
       <OAuthButtons className="mt-8" />
 
-      <AuthDivider label="ou par email" />
+      <AuthDivider label="ou" />
 
       <form onSubmit={submit} noValidate className="space-y-5">
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="username">Nom d'utilisateur</Label>
           <Input
-            id="email"
-            type="email"
-            placeholder="vous@exemple.com"
-            autoComplete="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            aria-invalid={!!errors.email}
-            aria-describedby={errors.email ? "email-error" : undefined}
+            id="username"
+            type="text"
+            placeholder="jimmy"
+            autoComplete="username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            aria-invalid={!!errors.username}
+            aria-describedby={errors.username ? "username-error" : undefined}
           />
-          {errors.email && (
-            <p id="email-error" className="text-xs text-avoid">
-              {errors.email}
+          {errors.username && (
+            <p id="username-error" className="text-xs text-avoid">
+              {errors.username}
             </p>
           )}
         </div>
@@ -89,17 +86,6 @@ export default function Login() {
               {errors.password}
             </p>
           )}
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Checkbox
-            id="remember"
-            checked={remember}
-            onCheckedChange={(v) => setRemember(v === true)}
-          />
-          <Label htmlFor="remember" className="font-normal text-text-muted">
-            Se souvenir de moi
-          </Label>
         </div>
 
         <Button type="submit" size="lg" className="w-full" disabled={pending}>
