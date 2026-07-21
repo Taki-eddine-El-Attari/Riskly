@@ -64,7 +64,7 @@ export default function Register() {
           <Input
             id="username"
             type="text"
-            placeholder="jimmy"
+            placeholder="John"
             autoComplete="username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
@@ -83,7 +83,7 @@ export default function Register() {
           <Input
             id="entity"
             type="text"
-            placeholder="Votre entité"
+            placeholder="CMH"
             autoComplete="organization"
             value={entity}
             onChange={(e) => setEntity(e.target.value)}
