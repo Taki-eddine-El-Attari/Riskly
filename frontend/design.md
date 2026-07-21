@@ -28,7 +28,7 @@ avec l'esprit "data/sécurité" de **Stripe Radar**. Sombre, dense en données, 
 | `accent` | `#22D3EE` (cyan) | CTA, liens, focus, bordures actives |
 | `verdict-good` | `#34D399` (émeraude) | Verdict "Bon achat", scores positifs |
 | `verdict-risky` | `#FBBF24` (ambre) | Verdict "Risqué" |
-| `verdict-avoid` | `#F87171` (rouge) | Verdict "À éviter", veto Safe Browsing |
+| `verdict-avoid` | `#F87171` (rouge) | Verdict "À éviter", risque élevé |
 
 Règle : **ambre et rouge n'apparaissent QUE pour les verdicts**. Jamais en décoration.
 Le cyan est l'unique accent marketing (boutons, hover, liens).
@@ -76,8 +76,8 @@ Règles :
 ### Terminal démo (hero) — l'élément mémorable
 - Fenêtre style terminal : barre avec 3 points, fond `bg-elevated`, bordure `border`, police mono.
 - Boucle : tape `exemple-domaine.com` → lignes de checks apparaissent une à une
-  (`WHOIS ✓`, `Safe Browsing ✓`, `Spamhaus ✓`, `Tranco #12 480`, `Wayback 2014→2026`)
-  → compteurs Risque/Valeur montent (0→score) → badge verdict `BON ACHAT` en `verdict-good`.
+  (`RDAP ✓`, `Bases de menaces ✓`, `Blacklists DNS ✓`, `Tranco #12 480`, `Open PageRank 4.7/10`)
+  → compteurs Risque/Autorité montent (0→score) → badge verdict `BON ACHAT` en `verdict-good`.
 - Checkmarks en `verdict-good`, valeurs en `accent`, verdict final coloré selon résultat.
 
 ### Badges de verdict
@@ -87,9 +87,10 @@ RISQUÉ     → bg risky/10, text risky, border risky/30
 À ÉVITER   → bg avoid/10, text avoid, border avoid/30
 ```
 
-### Matrice risque × valeur
-Grille 3×3, axes en mono `text-faint`, cellules colorées good/risky/avoid à 10% d'opacité,
-la cellule survolée passe à 25% + bordure pleine + tooltip du verdict.
+### Matrice risque × autorité
+Grille 3×3 (lignes = risque, colonnes = autorité), axes en mono `text-faint`, cellules colorées
+good/risky/avoid à 10% d'opacité, la cellule survolée passe à 25% + bordure pleine.
+Le risque prime : un risque élevé reste "À éviter" quelle que soit l'autorité.
 
 ## Animations (Framer Motion uniquement)
 - Hero : `staggerChildren: 0.12` — headline → sous-titre → CTA → terminal.
@@ -102,7 +103,7 @@ la cellule survolée passe à 25% + bordure pleine + tooltip du verdict.
 ## Ton rédactionnel
 - Français, direct, orienté bénéfice acheteur de domaines.
 - Headline : « Sachez si un domaine vaut son prix avant de l'acheter. »
-- Pas de superlatifs vides ("révolutionnaire", "propulsé par l'IA") — les sources de données réelles (Safe Browsing, Spamhaus, Tranco…) sont l'argument de crédibilité.
+- Pas de superlatifs vides ("révolutionnaire", "propulsé par l'IA"). Les sources de données réelles (RDAP, Tranco, Open PageRank, PhishTank…) sont l'argument de crédibilité.
 
 ## Pages app (/login, /register, /app, /history)
 Mêmes tokens, mais : pas d'animations d'entrée (juste transitions 150ms), densité plus forte,

@@ -1,12 +1,14 @@
-import { Database, Globe, History, ShieldAlert, TrendingUp, Search } from "lucide-react";
+import { Bug, Fish, Gauge, Globe, MapPin, Network, ShieldAlert, TrendingUp } from "lucide-react";
 
 const sources = [
-  { name: "Google Safe Browsing", icon: ShieldAlert },
-  { name: "Spamhaus", icon: Database },
+  { name: "RDAP", icon: Globe },
   { name: "Tranco", icon: TrendingUp },
-  { name: "Wayback Machine", icon: History },
-  { name: "Open PageRank", icon: Search },
-  { name: "WHOIS / RDAP", icon: Globe },
+  { name: "Open PageRank", icon: Gauge },
+  { name: "PhishTank", icon: Fish },
+  { name: "URLhaus", icon: Bug },
+  { name: "OpenPhish", icon: ShieldAlert },
+  { name: "Résolution DNS", icon: Network },
+  { name: "ip-api", icon: MapPin },
 ];
 
 export default function Sources() {

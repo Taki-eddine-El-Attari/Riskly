@@ -33,7 +33,7 @@ export function AuthDivider({ label }: { label: string }) {
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
     <main className="grid min-h-screen lg:grid-cols-2">
-      {/* Panneau globe — desktop uniquement */}
+      {/* Panneau globe, desktop uniquement */}
       <section className="relative hidden overflow-hidden border-r border-border bg-bg-elevated/30 lg:block">
         <div className="hero-grid pointer-events-none absolute inset-0" aria-hidden />
         <div className="hero-glow pointer-events-none absolute inset-0" aria-hidden />
@@ -47,14 +47,14 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
               <span className="text-accent">Riskly le vérifie.</span>
             </h2>
             <p className="mt-3 text-sm text-text-muted">
-              5 sources croisées en temps réel, sur tous les TLD, partout dans
-              le monde — avant que vous ne payiez.
+              Des sources publiques croisées en temps réel, sur tous les TLD,
+              partout dans le monde, avant que vous ne payiez.
             </p>
             <Globe className="mx-auto mt-8 w-full max-w-[min(26rem,56vh)]" />
           </div>
 
           <p className="font-mono text-xs text-text-faint">
-            WHOIS · Safe Browsing · Spamhaus · Tranco · Wayback Machine
+            RDAP · Tranco · Open PageRank · PhishTank · URLhaus · DNS
           </p>
         </div>
       </section>
@@ -70,7 +70,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
         </div>
 
         <p className="text-center font-mono text-xs text-text-faint">
-          © 2026 Riskly — Domaine Risk Analyser
+          © 2026 Riskly · Domain Risk Analyzer
         </p>
       </section>
     </main>

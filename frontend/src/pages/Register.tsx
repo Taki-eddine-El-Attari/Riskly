@@ -6,43 +6,42 @@ import { OAuthButtons } from "@/components/auth/OAuthButtons";
 import { PasswordInput } from "@/components/auth/PasswordInput";
 import { PasswordStrength, scorePassword } from "@/components/auth/PasswordStrength";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
 interface Errors {
-  name?: string;
-  email?: string;
+  username?: string;
+  entity?: string;
   password?: string;
-  terms?: string;
+  confirm?: string;
 }
 
 export default function Register() {
   const navigate = useNavigate();
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
+  const [entity, setEntity] = useState("");
   const [password, setPassword] = useState("");
-  const [terms, setTerms] = useState(false);
+  const [confirm, setConfirm] = useState("");
   const [errors, setErrors] = useState<Errors>({});
   const [pending, setPending] = useState(false);
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
     const errs: Errors = {};
-    if (name.trim().length < 2) errs.name = "Veuillez renseigner votre nom.";
-    if (!EMAIL_RE.test(email)) errs.email = "Adresse email invalide.";
+    if (username.trim().length < 3)
+      errs.username = "Choisissez un nom d'utilisateur d'au moins 3 caractères.";
+    if (entity.trim().length === 0) errs.entity = "Veuillez renseigner votre entité.";
     if (password.length < 8)
       errs.password = "Le mot de passe doit contenir au moins 8 caractères.";
     else if (scorePassword(password) < 2)
-      errs.password = "Mot de passe trop faible — ajoutez majuscules, chiffres ou symboles.";
-    if (!terms) errs.terms = "Vous devez accepter les conditions d'utilisation.";
+      errs.password = "Mot de passe trop faible : ajoutez majuscules, chiffres ou symboles.";
+    if (confirm !== password)
+      errs.confirm = "Les deux mots de passe ne correspondent pas.";
     setErrors(errs);
     if (Object.keys(errs).length > 0) return;
 
     setPending(true);
-    // ponytail: auth simulée — brancher POST /api/auth/register quand le backend existera
+    // ponytail: auth simulée, brancher POST /auth/register quand le backend existera
     setTimeout(() => navigate("/app"), 900);
   }
 
@@ -52,48 +51,48 @@ export default function Register() {
         Créer un compte
       </h1>
       <p className="mt-2 text-sm text-text-muted">
-        Gratuit — jusqu'à 5 domaines par analyse, verdict en quelques secondes.
+        Gratuit, jusqu'à 5 domaines par analyse et un verdict en moins de 15 secondes.
       </p>
 
       <OAuthButtons className="mt-8" />
 
-      <AuthDivider label="ou par email" />
+      <AuthDivider label="ou" />
 
       <form onSubmit={submit} noValidate className="space-y-5">
         <div className="space-y-2">
-          <Label htmlFor="name">Nom complet</Label>
+          <Label htmlFor="username">Nom d'utilisateur</Label>
           <Input
-            id="name"
+            id="username"
             type="text"
-            placeholder="Jimmy Dolio"
-            autoComplete="name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            aria-invalid={!!errors.name}
-            aria-describedby={errors.name ? "name-error" : undefined}
+            placeholder="jimmy"
+            autoComplete="username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            aria-invalid={!!errors.username}
+            aria-describedby={errors.username ? "username-error" : undefined}
           />
-          {errors.name && (
-            <p id="name-error" className="text-xs text-avoid">
-              {errors.name}
+          {errors.username && (
+            <p id="username-error" className="text-xs text-avoid">
+              {errors.username}
             </p>
           )}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="entity">Entité</Label>
           <Input
-            id="email"
-            type="email"
-            placeholder="vous@exemple.com"
-            autoComplete="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            aria-invalid={!!errors.email}
-            aria-describedby={errors.email ? "email-error" : undefined}
+            id="entity"
+            type="text"
+            placeholder="Votre entité"
+            autoComplete="organization"
+            value={entity}
+            onChange={(e) => setEntity(e.target.value)}
+            aria-invalid={!!errors.entity}
+            aria-describedby={errors.entity ? "entity-error" : undefined}
           />
-          {errors.email && (
-            <p id="email-error" className="text-xs text-avoid">
-              {errors.email}
+          {errors.entity && (
+            <p id="entity-error" className="text-xs text-avoid">
+              {errors.entity}
             </p>
           )}
         </div>
@@ -118,35 +117,19 @@ export default function Register() {
         </div>
 
         <div className="space-y-2">
-          <div className="flex items-start gap-2">
-            <Checkbox
-              id="terms"
-              checked={terms}
-              onCheckedChange={(v) => setTerms(v === true)}
-              aria-invalid={!!errors.terms}
-              aria-describedby={errors.terms ? "terms-error" : undefined}
-              className="mt-0.5"
-            />
-            <Label
-              htmlFor="terms"
-              className="inline-block font-normal leading-snug text-text-muted"
-            >
-              <span>
-                J'accepte les{" "}
-                <a href="#" className="text-text underline underline-offset-2 hover:text-accent">
-                  conditions d'utilisation
-                </a>{" "}
-                et la{" "}
-                <a href="#" className="text-text underline underline-offset-2 hover:text-accent">
-                  politique de confidentialité
-                </a>
-                .
-              </span>
-            </Label>
-          </div>
-          {errors.terms && (
-            <p id="terms-error" className="text-xs text-avoid">
-              {errors.terms}
+          <Label htmlFor="confirm">Confirmer le mot de passe</Label>
+          <PasswordInput
+            id="confirm"
+            placeholder="Retapez votre mot de passe"
+            autoComplete="new-password"
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+            aria-invalid={!!errors.confirm}
+            aria-describedby={errors.confirm ? "confirm-error" : undefined}
+          />
+          {errors.confirm && (
+            <p id="confirm-error" className="text-xs text-avoid">
+              {errors.confirm}
             </p>
           )}
         </div>

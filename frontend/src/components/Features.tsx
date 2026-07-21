@@ -1,16 +1,8 @@
-import {
-  Ban,
-  Brain,
-  Calculator,
-  History,
-  Zap,
-  type LucideIcon,
-} from "lucide-react";
 import { BlurFade } from "./BlurFade";
 import { TiltCard } from "./TiltCard";
 
 type Feature = {
-  icon: LucideIcon;
+  spec: string;
   title: string;
   text: string;
   wide?: boolean;
@@ -18,30 +10,30 @@ type Feature = {
 
 const features: Feature[] = [
   {
-    icon: Brain,
+    spec: "XGBoost + SHAP",
     title: "Score de risque explicable",
-    text: "Un modèle ML entraîné sur des signaux concrets (blacklists, historique, WHOIS) — chaque point du score est justifié, pas de boîte noire.",
+    text: "Un modèle XGBoost entraîné sur des signaux concrets : bases de menaces, ancienneté RDAP, configuration DNS, blacklists. Chaque point du score est justifié par SHAP, jamais une boîte noire.",
     wide: true,
   },
   {
-    icon: Calculator,
-    title: "Score de valeur transparent",
-    text: "Longueur, extension, ancienneté, popularité Tranco, backlinks : une formule ouverte, pas un chiffre magique.",
+    spec: "0,5 · 0,3 · 0,2",
+    title: "Score d'autorité transparent",
+    text: "Popularité Tranco, profil de backlinks et âge du domaine, combinés par une formule ouverte (0,5 rang + 0,3 backlinks + 0,2 âge). Pas un chiffre sorti d'un chapeau.",
   },
   {
-    icon: Ban,
-    title: "Veto Safe Browsing",
-    text: "Un domaine signalé par Google Safe Browsing est automatiquement classé À éviter, quel que soit son score.",
+    spec: "4 signaux",
+    title: "Alertes de transparence",
+    text: "Domaine très récent, aucune autorité, historique discontinu, présence dans une base de menaces : chaque signal s'affiche à part, sans fausser le score ni le verdict.",
   },
   {
-    icon: Zap,
-    title: "Résultats en secondes",
-    text: "Collecte parallèle et cache 24h : les domaines déjà analysés répondent instantanément.",
+    spec: "cache 24 h",
+    title: "Résultats en moins de 15 s",
+    text: "Collecte parallèle et cache de 24 h : une nouvelle analyse tient sous les 15 secondes, et un domaine déjà vu répond aussitôt.",
   },
   {
-    icon: History,
+    spec: "horodaté",
     title: "Historique personnel",
-    text: "Retrouvez toutes vos analyses passées et suivez l'évolution d'un domaine dans le temps.",
+    text: "Retrouvez vos analyses passées, horodatées, et rouvrez chaque rapport tel qu'il a été produit ce jour-là.",
   },
 ];
 
@@ -66,8 +58,13 @@ export default function Features() {
             className={f.wide ? "md:col-span-2" : ""}
           >
             <TiltCard className="h-full rounded-xl border border-border bg-bg-elevated p-6 transition-colors hover:border-accent/40">
-              <f.icon className="size-6 text-accent" />
-              <h3 className="mt-4 font-display text-lg font-semibold">{f.title}</h3>
+              <div className="flex items-center gap-3">
+                <span className="font-mono text-xs tracking-wider text-accent">
+                  {f.spec}
+                </span>
+                <span className="h-px flex-1 bg-border" />
+              </div>
+              <h3 className="mt-5 font-display text-lg font-semibold">{f.title}</h3>
               <p className="mt-2 text-sm leading-relaxed text-text-muted">{f.text}</p>
             </TiltCard>
           </BlurFade>

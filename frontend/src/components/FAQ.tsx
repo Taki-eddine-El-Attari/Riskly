@@ -1,19 +1,19 @@
 import { ChevronDown } from "lucide-react";
 import { BlurFade } from "./BlurFade";
 
-// ponytail: <details>/<summary> natif — accessible et sans JS, pas besoin d'accordéon maison
+// ponytail: <details>/<summary> natif, accessible et sans JS, pas besoin d'accordéon maison
 const faqs = [
   {
     q: "D'où viennent les données ?",
-    a: "Exclusivement de sources publiques reconnues : WHOIS/RDAP, Google Safe Browsing, Spamhaus, Tranco, la Wayback Machine et Open PageRank. Aucune donnée inventée : si une source ne répond pas, le rapport l'indique.",
+    a: "Exclusivement de sources publiques : RDAP, Tranco, Open PageRank, la résolution DNS et les bases de menaces PhishTank, URLhaus et OpenPhish. Aucune donnée inventée : si une source ne répond pas, le rapport le signale.",
   },
   {
     q: "Comment le score de risque est-il calculé ?",
-    a: "Un modèle de machine learning combine les signaux collectés (présence sur des blacklists, ancienneté, historique d'usage, cohérence WHOIS). Chaque facteur qui pèse sur le score est affiché dans le rapport — le verdict est toujours explicable.",
+    a: "Un modèle XGBoost combine les signaux collectés : présence dans une base de menaces, ancienneté RDAP, configuration DNS, blacklists. Chaque facteur qui pèse sur le score est détaillé dans le rapport, via SHAP, donc le verdict reste toujours explicable.",
   },
   {
-    q: "Et le score de valeur ?",
-    a: "Une formule transparente basée sur la longueur du nom, l'extension, l'ancienneté, le rang Tranco et la popularité. Ce n'est pas une estimation de prix de revente, mais un indicateur comparatif entre domaines.",
+    q: "Et le score d'autorité ?",
+    a: "Une formule transparente : 0,5 × rang Open PageRank + 0,3 × backlinks + 0,2 × âge du domaine. Ce n'est pas une estimation de prix de revente, mais un indicateur d'autorité comparable d'un domaine à l'autre.",
   },
   {
     q: "Puis-je analyser plusieurs domaines à la fois ?",

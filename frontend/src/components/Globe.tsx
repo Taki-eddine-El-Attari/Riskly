@@ -4,7 +4,7 @@ import { useReducedMotion } from "motion/react";
 
 // Globe cobe v2 : points de présence (TLD) + arcs vers les sources de données.
 // Les étiquettes flottantes s'accrochent aux ancres CSS exposées par cobe
-// (--cobe-<id> / --cobe-visible-<id>) — rendues uniquement si le navigateur
+// (--cobe-<id> / --cobe-visible-<id>), rendues uniquement si le navigateur
 // supporte CSS Anchor Positioning, sinon le globe reste seul (dégradation propre).
 
 interface GlobeMarker {
@@ -43,11 +43,11 @@ const defaultMarkers: GlobeMarker[] = [
 
 // Chaque arc = une requête vers une source croisée par Riskly.
 const defaultArcs: GlobeArc[] = [
-  { id: "src-whois", from: [38.95, -77.45], to: [49.01, 2.55], source: "WHOIS" },
-  { id: "src-gsb", from: [37.62, -122.38], to: [35.55, 139.78], source: "Safe Browsing" },
-  { id: "src-spamhaus", from: [49.01, 2.55], to: [1.36, 103.99], source: "Spamhaus" },
+  { id: "src-rdap", from: [38.95, -77.45], to: [49.01, 2.55], source: "RDAP" },
+  { id: "src-phishtank", from: [37.62, -122.38], to: [35.55, 139.78], source: "PhishTank" },
+  { id: "src-urlhaus", from: [49.01, 2.55], to: [1.36, 103.99], source: "URLhaus" },
   { id: "src-tranco", from: [38.95, -77.45], to: [-23.43, -46.47], source: "Tranco" },
-  { id: "src-wayback", from: [35.55, 139.78], to: [-33.95, 151.18], source: "Wayback" },
+  { id: "src-openphish", from: [35.55, 139.78], to: [-33.95, 151.18], source: "OpenPhish" },
   { id: "src-dns", from: [33.57, -7.59], to: [49.01, 2.55], source: "DNS" },
 ];
 

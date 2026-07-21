@@ -15,15 +15,25 @@ const verdictLabel: Record<Verdict, string> = {
   avoid: "À éviter",
 };
 
-// lignes = valeur (élevée → faible), colonnes = risque (faible → élevé)
+// lignes = risque (faible -> élevé), colonnes = autorité (forte -> faible).
+// Reprend la matrice de décision finale du PRD (section 10).
 const matrix: Verdict[][] = [
-  ["good", "risky", "avoid"],
-  ["good", "risky", "avoid"],
+  ["good", "good", "risky"],
   ["risky", "risky", "avoid"],
+  ["avoid", "avoid", "avoid"],
 ];
 
-const valueLabels = ["Valeur élevée", "Valeur moyenne", "Valeur faible"];
-const riskLabels = ["Risque faible", "Risque moyen", "Risque élevé"];
+const riskLabels = [
+  { name: "Risque faible", band: "0–25" },
+  { name: "Risque modéré", band: "26–60" },
+  { name: "Risque élevé", band: "61–100" },
+];
+
+const authorityLabels = [
+  { name: "Autorité forte", band: "66–100" },
+  { name: "Autorité correcte", band: "31–65" },
+  { name: "Autorité faible", band: "0–30" },
+];
 
 export default function DecisionMatrix() {
   return (
@@ -33,8 +43,9 @@ export default function DecisionMatrix() {
           La matrice de décision
         </h2>
         <p className="mx-auto mt-4 max-w-xl text-center text-text-muted">
-          Chaque domaine est positionné sur deux axes — risque et valeur — et le
-          verdict tombe. Le veto Safe Browsing court-circuite tout.
+          Chaque domaine se lit sur deux axes, le risque et l'autorité. Le
+          risque prime : un domaine à risque élevé finit sur « À éviter », même
+          quand son autorité est forte.
         </p>
       </BlurFade>
 
@@ -42,19 +53,23 @@ export default function DecisionMatrix() {
         <div className="mx-auto mt-14 max-w-2xl">
           <div className="grid grid-cols-[auto_1fr_1fr_1fr] gap-2">
             <span />
-            {riskLabels.map((r) => (
+            {authorityLabels.map((a) => (
               <span
-                key={r}
-                className="pb-2 text-center font-mono text-xs text-text-faint"
+                key={a.name}
+                className="flex flex-col items-center pb-2 text-center font-mono text-xs text-text-faint"
               >
-                {r}
+                {a.name}
+                <span className="text-[10px] text-text-faint/70">{a.band}</span>
               </span>
             ))}
 
             {matrix.map((row, ri) => (
-              <Fragment key={valueLabels[ri]}>
-                <span className="flex items-center pr-3 font-mono text-xs text-text-faint">
-                  {valueLabels[ri]}
+              <Fragment key={riskLabels[ri].name}>
+                <span className="flex flex-col justify-center pr-3 font-mono text-xs text-text-faint">
+                  {riskLabels[ri].name}
+                  <span className="text-[10px] text-text-faint/70">
+                    {riskLabels[ri].band}
+                  </span>
                 </span>
                 {row.map((v, ci) => (
                   <div
@@ -68,7 +83,8 @@ export default function DecisionMatrix() {
             ))}
           </div>
           <p className="mt-4 text-center font-mono text-xs text-text-faint">
-            Signalé par Google Safe Browsing → À éviter, sans exception.
+            Les alertes (domaine très récent, base de menaces, historique
+            discontinu) éclairent la lecture sans jamais changer le verdict.
           </p>
         </div>
       </BlurFade>
