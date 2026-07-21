@@ -1,13 +1,13 @@
 import { Check } from "lucide-react";
 
-// ponytail: terminal statique — la boucle animée (frappe, checks, compteurs) arrive au Jour 2
+// ponytail: terminal statique. La boucle animée (frappe, checks, compteurs) arrive au Jour 2.
 const checks = [
-  { label: "WHOIS", value: "enregistré 2014 · expire 2027" },
-  { label: "Safe Browsing", value: "aucune menace" },
-  { label: "Spamhaus", value: "non listé" },
+  { label: "RDAP", value: "enregistré 2014 · expire 2027" },
+  { label: "Bases de menaces", value: "absent (PhishTank, URLhaus, OpenPhish)" },
+  { label: "Blacklists DNS", value: "non listé" },
   { label: "Tranco", value: "#12 480" },
-  { label: "Wayback", value: "412 captures · 2014→2026" },
   { label: "Open PageRank", value: "4.7 / 10" },
+  { label: "DNS", value: "MX · SPF · DMARC ok" },
 ];
 
 export default function TerminalDemo() {
@@ -17,7 +17,7 @@ export default function TerminalDemo() {
         <span className="size-3 rounded-full bg-avoid/60" />
         <span className="size-3 rounded-full bg-risky/60" />
         <span className="size-3 rounded-full bg-good/60" />
-        <span className="ml-2 font-mono text-xs text-text-faint">riskly — analyse</span>
+        <span className="ml-2 font-mono text-xs text-text-faint">riskly · analyse</span>
       </div>
 
       <div className="space-y-3 p-5 font-mono text-sm">
@@ -30,7 +30,7 @@ export default function TerminalDemo() {
           {checks.map((c) => (
             <li key={c.label} className="flex items-center gap-2">
               <Check className="size-4 shrink-0 text-good" />
-              <span className="w-32 shrink-0 text-text-muted">{c.label}</span>
+              <span className="w-36 shrink-0 text-text-muted">{c.label}</span>
               <span className="truncate text-text-faint">{c.value}</span>
             </li>
           ))}
@@ -44,7 +44,7 @@ export default function TerminalDemo() {
             </p>
           </div>
           <div className="rounded-lg border border-border bg-bg p-3">
-            <p className="text-xs text-text-faint">Score de valeur</p>
+            <p className="text-xs text-text-faint">Score d'autorité</p>
             <p className="mt-1 text-2xl text-accent">
               72<span className="text-sm text-text-faint">/100</span>
             </p>

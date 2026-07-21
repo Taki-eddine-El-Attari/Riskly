@@ -64,7 +64,7 @@ export default function Footer() {
 
         <div className="border-t border-border">
           <p className="mx-auto max-w-6xl px-6 py-5 text-center font-mono text-xs text-text-faint">
-            © 2026 Riskly — Domaine Risk Analyser
+            © 2026 Riskly · Domain Risk Analyzer
           </p>
         </div>
       </footer>

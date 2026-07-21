@@ -70,7 +70,7 @@ body {
   background-color: color-mix(in srgb, var(--color-accent) 30%, transparent);
 }
 
-/* Texte outline (bordure seule, remplissage transparent) — le "RISKLY" géant du hero */
+/* Texte outline (bordure seule, remplissage transparent), le "RISKLY" géant du hero */
 .text-outline {
   color: transparent;
   -webkit-text-stroke: 1.5px var(--color-text-faint);

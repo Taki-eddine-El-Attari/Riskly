@@ -30,7 +30,7 @@ export function RisklyLogo({ className }: { className?: string }) {
         {/* colonne droite sous la pièce cyan */}
         <path d="M82.5 31.5 L91 32 L90.5 43 L83 42 Z" />
       </g>
-      {/* pièce accent — coin haut-droit */}
+      {/* pièce accent, coin haut-droit */}
       <path className="fill-accent" d="M53 4.5 L93 11 L93 28 L82 26.5 L82 17.5 L54 10 Z" />
       {/* repères hairline sur la pièce accent */}
       <g className="stroke-text-muted" strokeWidth="0.5" opacity="0.5" fill="none">

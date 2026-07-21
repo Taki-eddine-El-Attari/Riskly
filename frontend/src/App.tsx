@@ -7,7 +7,7 @@ import Register from "./pages/Register";
 function Placeholder({ title }: { title: string }) {
   return (
     <main className="flex min-h-screen items-center justify-center">
-      <p className="font-mono text-text-faint">{title} — bientôt</p>
+      <p className="font-mono text-text-faint">{title} · bientôt</p>
     </main>
   );
 }

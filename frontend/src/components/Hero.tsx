@@ -75,8 +75,9 @@ export default function Hero() {
 
         <BlurFade delay={0.2} duration={0.6}>
           <p className="mt-6 max-w-xl text-lg text-text-muted">
-            Score de risque, score de valeur et verdict clair — croisés depuis
-            WHOIS, Google Safe Browsing, Spamhaus, Tranco et la Wayback Machine.
+            Score de risque, score d'autorité et verdict clair, croisés depuis
+            RDAP, Tranco, Open PageRank et les bases de menaces PhishTank,
+            URLhaus et OpenPhish.
           </p>
         </BlurFade>
 
@@ -119,7 +120,7 @@ export default function Hero() {
 
         <BlurFade delay={0.5} duration={0.6}>
           <p className="mt-4 font-mono text-xs text-text-faint">
-            Jusqu'à 5 domaines par analyse · résultats en quelques secondes ·
+            Jusqu'à 5 domaines par analyse · verdict en moins de 15 secondes ·
             gratuit
           </p>
         </BlurFade>

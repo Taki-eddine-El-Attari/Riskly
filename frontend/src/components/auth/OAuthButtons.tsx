@@ -60,7 +60,7 @@ export function OAuthButtons({ className }: { className?: string }) {
 
   function handleClick(provider: Provider) {
     setPending(provider);
-    // ponytail: OAuth simulé — rediriger vers l'endpoint backend
+    // ponytail: OAuth simulé, rediriger vers l'endpoint backend
     // (ex. window.location.href = `/api/auth/${provider}`) quand il existera
     setTimeout(() => navigate("/app"), 800);
   }

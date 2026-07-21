@@ -28,7 +28,7 @@ export default function Login() {
     if (Object.keys(errs).length > 0) return;
 
     setPending(true);
-    // ponytail: auth simulée — brancher POST /api/auth/login quand le backend existera
+    // ponytail: auth simulée, brancher POST /auth/login quand le backend existera
     setTimeout(() => navigate("/app"), 900);
   }
 

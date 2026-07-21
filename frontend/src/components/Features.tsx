@@ -1,8 +1,8 @@
 import {
-  Ban,
   Brain,
   Calculator,
   History,
+  TriangleAlert,
   Zap,
   type LucideIcon,
 } from "lucide-react";
@@ -20,28 +20,28 @@ const features: Feature[] = [
   {
     icon: Brain,
     title: "Score de risque explicable",
-    text: "Un modèle ML entraîné sur des signaux concrets (blacklists, historique, WHOIS) — chaque point du score est justifié, pas de boîte noire.",
+    text: "Un modèle XGBoost entraîné sur des signaux concrets : bases de menaces, ancienneté RDAP, configuration DNS, blacklists. Chaque point du score est justifié par SHAP, jamais une boîte noire.",
     wide: true,
   },
   {
     icon: Calculator,
-    title: "Score de valeur transparent",
-    text: "Longueur, extension, ancienneté, popularité Tranco, backlinks : une formule ouverte, pas un chiffre magique.",
+    title: "Score d'autorité transparent",
+    text: "Popularité Tranco, profil de backlinks et âge du domaine, combinés par une formule ouverte (0,5 rang + 0,3 backlinks + 0,2 âge). Pas un chiffre sorti d'un chapeau.",
   },
   {
-    icon: Ban,
-    title: "Veto Safe Browsing",
-    text: "Un domaine signalé par Google Safe Browsing est automatiquement classé À éviter, quel que soit son score.",
+    icon: TriangleAlert,
+    title: "Alertes de transparence",
+    text: "Domaine très récent, aucune autorité, historique discontinu, présence dans une base de menaces : chaque signal s'affiche à part, sans fausser le score ni le verdict.",
   },
   {
     icon: Zap,
-    title: "Résultats en secondes",
-    text: "Collecte parallèle et cache 24h : les domaines déjà analysés répondent instantanément.",
+    title: "Résultats en moins de 15 s",
+    text: "Collecte parallèle et cache de 24 h : une nouvelle analyse tient sous les 15 secondes, et un domaine déjà vu répond aussitôt.",
   },
   {
     icon: History,
     title: "Historique personnel",
-    text: "Retrouvez toutes vos analyses passées et suivez l'évolution d'un domaine dans le temps.",
+    text: "Retrouvez vos analyses passées, horodatées, et rouvrez chaque rapport tel qu'il a été produit ce jour-là.",
   },
 ];
 

@@ -36,13 +36,13 @@ export default function Register() {
     if (password.length < 8)
       errs.password = "Le mot de passe doit contenir au moins 8 caractères.";
     else if (scorePassword(password) < 2)
-      errs.password = "Mot de passe trop faible — ajoutez majuscules, chiffres ou symboles.";
+      errs.password = "Mot de passe trop faible : ajoutez majuscules, chiffres ou symboles.";
     if (!terms) errs.terms = "Vous devez accepter les conditions d'utilisation.";
     setErrors(errs);
     if (Object.keys(errs).length > 0) return;
 
     setPending(true);
-    // ponytail: auth simulée — brancher POST /api/auth/register quand le backend existera
+    // ponytail: auth simulée, brancher POST /auth/register quand le backend existera
     setTimeout(() => navigate("/app"), 900);
   }
 
@@ -52,7 +52,7 @@ export default function Register() {
         Créer un compte
       </h1>
       <p className="mt-2 text-sm text-text-muted">
-        Gratuit — jusqu'à 5 domaines par analyse, verdict en quelques secondes.
+        Gratuit, jusqu'à 5 domaines par analyse et un verdict en moins de 15 secondes.
       </p>
 
       <OAuthButtons className="mt-8" />
