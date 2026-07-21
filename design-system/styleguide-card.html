@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Riskly — Design System · Aide-mémoire</title>
+<meta name="description" content="Aide-mémoire du design system Riskly sur une seule page : couleurs, typographie et son échelle, espacement, rayons, bordures." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Geist:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --bg-elevated: #111627;
+    --border: #1e2438;
+    --border-hover: #2e3650;
+    --text: #edeef2;
+    --text-muted: #8a91a8;
+    --text-faint: #565d75;
+    --accent: #22d3ee;
+    --good: #34d399;
+    --risky: #fbbf24;
+    --avoid: #f87171;
+    --font-display: "Bricolage Grotesque", sans-serif;
+    --font-body: "Geist", "Inter", sans-serif;
+    --font-mono: "JetBrains Mono", monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .stage {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 22px;
+    position: relative;
+  }
+  /* halo cyan discret derrière la carte */
+  .stage::before {
+    content: "";
+    position: fixed; inset: 0; z-index: 0;
+    background: radial-gradient(ellipse 60% 45% at 50% 0%, color-mix(in srgb, var(--accent) 8%, transparent), transparent 70%);
+    pointer-events: none;
+  }
+
+  /* ————— Le rectangle unique ————— */
+  .card {
+    position: relative; z-index: 1;
+    width: min(1200px, 97vw);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 30px 70px -25px rgba(0, 0, 0, 0.7);
+  }
+
+  .cardhead {
+    display: flex; align-items: center; gap: 14px;
+    padding: 15px 22px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+  }
+  .cardhead svg { display: block; border-radius: 8px; }
+  .brandname { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text); }
+  .brandname b { color: var(--accent); font-weight: 500; }
+  .tag { font-family: var(--font-display); font-weight: 700; font-size: 17px; letter-spacing: -0.02em; }
+  .headmeta { margin-left: auto; font-family: var(--font-mono); font-size: 11px; color: var(--text-faint); text-align: right; line-height: 1.5; }
+
+  .grid { display: grid; grid-template-columns: 1.08fr 1fr 1.02fr; }
+  .col { padding: 18px 22px 20px; }
+  .col + .col { border-left: 1px solid var(--border); }
+  @media (max-width: 920px) {
+    .grid { grid-template-columns: 1fr; }
+    .col + .col { border-left: none; border-top: 1px solid var(--border); }
+  }
+
+  .glabel {
+    font-family: var(--font-mono);
+    font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--text-faint);
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 11px;
+  }
+  .glabel::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+  .glabel + .glabel, .group + .group > .glabel, .group .glabel { }
+  .group { margin-top: 19px; }
+  .group:first-child { margin-top: 0; }
+
+  /* ————— Swatches ————— */
+  .chips { display: flex; flex-wrap: wrap; gap: 11px; }
+  .sw .box { width: 46px; height: 46px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); }
+  .sw .box.lg { width: 58px; height: 52px; }
+  .sw .t { font-family: var(--font-mono); font-size: 10px; color: var(--text-faint); margin-top: 6px; line-height: 1.35; }
+  .sw .t b { display: block; color: var(--text); font-weight: 500; }
+  .chips.mini .box { width: 32px; height: 32px; border-radius: 6px; }
+  .chips.mini .t { font-size: 9px; }
+
+  /* ————— Typographie ————— */
+  .fam { display: flex; align-items: center; gap: 13px; padding: 5px 0; }
+  .fam .ag { width: 42px; text-align: center; font-size: 27px; line-height: 1; color: var(--text); }
+  .fam .fi { font-size: 12.5px; }
+  .fam .fi b { font-weight: 500; }
+  .fam .fi span { display: block; font-family: var(--font-mono); font-size: 10px; color: var(--text-faint); margin-top: 1px; }
+
+  .srow { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+  .srow:last-child { border-bottom: none; }
+  .srow .sample { color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .srow .spec { font-family: var(--font-mono); font-size: 9.5px; color: var(--text-faint); white-space: nowrap; flex-shrink: 0; }
+
+  /* ————— Espacement ————— */
+  .bar { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .bar .lab { font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); width: 92px; flex-shrink: 0; }
+  .bar .lab b { color: var(--text-faint); font-weight: 400; }
+  .bar .v { height: 13px; background: color-mix(in srgb, var(--accent) 24%, transparent); border-left: 2px solid var(--accent); border-radius: 0 3px 3px 0; }
+
+  /* ————— Rayons ————— */
+  .radii { display: flex; flex-wrap: wrap; gap: 13px; }
+  .rad { text-align: center; }
+  .rad .b { width: 40px; height: 40px; background: var(--bg); border: 1px solid var(--border-hover); }
+  .rad .l { font-family: var(--font-mono); font-size: 9px; color: var(--text-faint); margin-top: 5px; }
+
+  /* ————— Bordures & ombres ————— */
+  .be { display: flex; flex-wrap: wrap; gap: 12px; }
+  .be .item { text-align: center; }
+  .be .s { width: 78px; height: 36px; border-radius: 7px; background: var(--bg); }
+  .be .l { font-family: var(--font-mono); font-size: 9px; color: var(--text-muted); margin-top: 5px; }
+  .b-base { border: 1px solid var(--border); }
+  .b-hover { border: 1px solid var(--border-hover); }
+  .b-focus { border: 1px solid var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent); }
+  .sh-sm { border: 1px solid var(--border); box-shadow: 0 1px 2px 0 rgba(0,0,0,0.55); }
+  .sh-xxl { border: 1px solid var(--border); box-shadow: 0 14px 26px -10px rgba(0,0,0,0.75); }
+
+  .footnote { padding: 11px 22px; border-top: 1px solid var(--border); background: var(--bg); font-family: var(--font-mono); font-size: 10px; color: var(--text-faint); display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+
+  /* ————— Impression : une page paysage ————— */
+  @media print {
+    @page { size: landscape; margin: 8mm; }
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .stage { min-height: auto; padding: 0; }
+    .stage::before { display: none; }
+    .card { width: 100%; box-shadow: none; }
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="card">
+
+    <!-- En-tête -->
+    <header class="cardhead">
+      <svg viewBox="0 0 124 124" width="34" height="34" aria-hidden="true">
+        <rect width="124" height="124" rx="26" fill="#0A0E1A"/>
+        <g transform="translate(16 10.5) scale(0.92)">
+          <g fill="#EDEEF2">
+            <path d="M15 12.5 L46 6.2 L46 10.8 L19 13.6 Z"/><path d="M9 20 L19.5 20 L19 36 L9.5 36.8 Z"/>
+            <rect x="6" y="39.5" width="16" height="0.9"/><rect x="8" y="42" width="15.5" height="0.9"/><rect x="6.5" y="44.5" width="14.5" height="0.9"/><rect x="9" y="47" width="14.5" height="0.9"/><rect x="7" y="49.5" width="12" height="0.9"/>
+            <path d="M8 52 L16 48.5 L23 57.5 L21 59 L29 68.5 L33.5 71 L26.5 78 Z"/><path d="M25 80.5 L32.5 77 L45 92.5 L46.5 104 Z"/><path d="M67.5 79.5 L69.3 81.3 L50 99.5 L48.3 97.7 Z"/><path d="M86 50.5 L79.5 47.5 L65.5 67.5 L71 71.5 Z"/>
+            <rect x="76" y="44" width="20" height="0.9"/><rect x="74" y="46.5" width="19" height="0.9"/><rect x="77.5" y="49" width="19" height="0.9"/>
+            <path d="M82.5 31.5 L91 32 L90.5 43 L83 42 Z"/>
+          </g>
+          <path fill="#22D3EE" d="M53 4.5 L93 11 L93 28 L82 26.5 L82 17.5 L54 10 Z"/>
+          <g stroke="#8A91A8" stroke-width="0.5" opacity="0.5" fill="none"><line x1="87.5" y1="8" x2="87.5" y2="33"/><line x1="77" y1="21.5" x2="98" y2="21.5"/></g>
+        </g>
+      </svg>
+      <span class="brandname"><b>Riskly</b> · Design System</span>
+      <span class="tag">Aide-mémoire</span>
+      <span class="headmeta">Dark-only · usage produit<br>3 marque · 11 tokens · 3 familles</span>
+    </header>
+
+    <div class="grid">
+
+      <!-- ————— Colonne 1 : Couleurs ————— -->
+      <section class="col">
+        <div class="group">
+          <div class="glabel">Couleurs — marque</div>
+          <div class="chips">
+            <div class="sw"><div class="box lg" style="background:#0a0e1a"></div><div class="t"><b>Base</b>#0A0E1A</div></div>
+            <div class="sw"><div class="box lg" style="background:#22d3ee"></div><div class="t"><b>Accent</b>#22D3EE</div></div>
+            <div class="sw"><div class="box lg" style="background:#edeef2"></div><div class="t"><b>Clarté</b>#EDEEF2</div></div>
+          </div>
+        </div>
+
+        <div class="group">
+          <div class="glabel">Sémantique — verdicts &amp; accent</div>
+          <div class="chips">
+            <div class="sw"><div class="box" style="background:#22d3ee"></div><div class="t"><b>Info</b>accent</div></div>
+            <div class="sw"><div class="box" style="background:#34d399"></div><div class="t"><b>Bon</b>#34D399</div></div>
+            <div class="sw"><div class="box" style="background:#fbbf24"></div><div class="t"><b>Risqué</b>#FBBF24</div></div>
+            <div class="sw"><div class="box" style="background:#f87171"></div><div class="t"><b>Éviter</b>#F87171</div></div>
+          </div>
+        </div>
+
+        <div class="group">
+          <div class="glabel">Surfaces &amp; texte</div>
+          <div class="chips mini">
+            <div class="sw"><div class="box" style="background:#111627"></div><div class="t"><b>elevated</b>#111627</div></div>
+            <div class="sw"><div class="box" style="background:#1e2438"></div><div class="t"><b>border</b>#1E2438</div></div>
+            <div class="sw"><div class="box" style="background:#2e3650"></div><div class="t"><b>hover</b>#2E3650</div></div>
+            <div class="sw"><div class="box" style="background:#8a91a8"></div><div class="t"><b>muted</b>#8A91A8</div></div>
+            <div class="sw"><div class="box" style="background:#565d75"></div><div class="t"><b>faint</b>#565D75</div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ————— Colonne 2 : Typographie ————— -->
+      <section class="col">
+        <div class="group">
+          <div class="glabel">Typographie — 3 familles</div>
+          <div class="fam"><span class="ag" style="font-family:var(--font-display);font-weight:700">Ag</span><span class="fi"><b style="font-family:var(--font-display)">Bricolage Grotesque</b><span>Display · titres · 600 / 700</span></span></div>
+          <div class="fam"><span class="ag" style="font-family:var(--font-body)">Ag</span><span class="fi"><b style="font-family:var(--font-body)">Geist</b><span>Body · UI, prose · 400 / 500</span></span></div>
+          <div class="fam"><span class="ag" style="font-family:var(--font-mono)">Ag</span><span class="fi"><b style="font-family:var(--font-mono)">JetBrains Mono</b><span>Data · scores, domaines, dates · 400 / 500</span></span></div>
+        </div>
+
+        <div class="group">
+          <div class="glabel">Échelle typographique</div>
+          <div class="srow"><span class="sample" style="font-family:var(--font-display);font-weight:700;font-size:25px;letter-spacing:-0.02em">Accroche</span><span class="spec">H1 · text-4xl→6xl</span></div>
+          <div class="srow"><span class="sample" style="font-family:var(--font-display);font-weight:600;font-size:19px;letter-spacing:-0.02em">Titre de section</span><span class="spec">H2 · text-3xl→4xl</span></div>
+          <div class="srow"><span class="sample" style="font-size:15px;font-weight:600">Titre de carte</span><span class="spec">H3 · text-lg→xl</span></div>
+          <div class="srow"><span class="sample" style="font-size:13px;color:var(--text-muted)">Corps courant, descriptions</span><span class="spec">Body · text-sm→base</span></div>
+          <div class="srow"><span class="sample" style="font-family:var(--font-mono);font-size:11px;color:var(--text-faint)">enregistré 2014 · #12&nbsp;480</span><span class="spec">Meta · mono text-xs</span></div>
+          <div class="srow"><span class="sample" style="font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:0.14em;color:var(--text-muted)">Micro-label</span><span class="spec">10–11px · uppercase</span></div>
+        </div>
+
+        <div class="group">
+          <div class="glabel">Règle</div>
+          <div style="font-size:11.5px;color:var(--text-muted);line-height:1.5">Toute <b style="color:var(--text)">donnée</b> — chiffre, domaine, date, rang, score — s'affiche en <b style="color:var(--accent);font-family:var(--font-mono)">mono</b>. C'est le look «&nbsp;outil de data&nbsp;».</div>
+        </div>
+      </section>
+
+      <!-- ————— Colonne 3 : Espacement / Rayons / Bordures ————— -->
+      <section class="col">
+        <div class="group">
+          <div class="glabel">Espacement — paddings &amp; gaps</div>
+          <div class="bar"><span class="lab">p-3 · gap-3 <b>12</b></span><span class="v" style="width:12px"></span></div>
+          <div class="bar"><span class="lab">p-5 · gap-5 <b>20</b></span><span class="v" style="width:20px"></span></div>
+          <div class="bar"><span class="lab">p-6 · gap-6 <b>24</b></span><span class="v" style="width:24px"></span></div>
+          <div class="bar"><span class="lab">py-8 <b>32</b></span><span class="v" style="width:32px"></span></div>
+          <div class="bar"><span class="lab">py-10 <b>40</b></span><span class="v" style="width:40px"></span></div>
+          <div class="bar"><span class="lab">py-24 <b>96</b></span><span class="v" style="width:96px"></span></div>
+        </div>
+
+        <div class="group">
+          <div class="glabel">Rayons</div>
+          <div class="radii">
+            <div class="rad"><div class="b" style="border-radius:4px"></div><div class="l">4px</div></div>
+            <div class="rad"><div class="b" style="border-radius:6px"></div><div class="l">md</div></div>
+            <div class="rad"><div class="b" style="border-radius:8px"></div><div class="l">lg</div></div>
+            <div class="rad"><div class="b" style="border-radius:12px"></div><div class="l">xl</div></div>
+            <div class="rad"><div class="b" style="border-radius:16px"></div><div class="l">2xl</div></div>
+            <div class="rad"><div class="b" style="border-radius:9999px"></div><div class="l">full</div></div>
+          </div>
+        </div>
+
+        <div class="group">
+          <div class="glabel">Bordures &amp; ombres</div>
+          <div class="be">
+            <div class="item"><div class="s b-base"></div><div class="l">border</div></div>
+            <div class="item"><div class="s b-hover"></div><div class="l">hover</div></div>
+            <div class="item"><div class="s b-focus"></div><div class="l">focus ring</div></div>
+            <div class="item"><div class="s sh-sm"></div><div class="l">shadow-sm</div></div>
+            <div class="item"><div class="s sh-xxl"></div><div class="l">shadow-2xl</div></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <div class="footnote">
+      <span>Ambre &amp; rouge = risque / verdict uniquement · cyan = seul accent d'interaction</span>
+      <span>Riskly · Fondations</span>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>
