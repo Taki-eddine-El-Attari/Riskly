@@ -1,0 +1,721 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Riskly — Design System · Fondations</title>
+<meta name="description" content="Fondations du design system Riskly : couleurs de marque, typographie, espacement, rayons, ombres." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Geist:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  /* ————————————————————————————————————————————————
+     Tokens de couleur & typographie de la marque Riskly
+     ———————————————————————————————————————————————— */
+  :root {
+    --bg: #0a0e1a;
+    --bg-elevated: #111627;
+    --border: #1e2438;
+    --border-hover: #2e3650;
+    --text: #edeef2;
+    --text-muted: #8a91a8;
+    --text-faint: #565d75;
+    --accent: #22d3ee;
+    --good: #34d399;
+    --risky: #fbbf24;
+    --avoid: #f87171;
+    --font-display: "Bricolage Grotesque", sans-serif;
+    --font-body: "Geist", "Inter", sans-serif;
+    --font-mono: "JetBrains Mono", monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+    position: relative;
+    min-height: 100vh;
+  }
+
+  /* Atmosphère — grille + halo cyan, écho du hero produit */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background-image:
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 56px 56px;
+    -webkit-mask-image: radial-gradient(ellipse 80% 55% at 50% 0%, black 5%, transparent 70%);
+    mask-image: radial-gradient(ellipse 80% 55% at 50% 0%, black 5%, transparent 70%);
+    opacity: 0.5;
+    pointer-events: none;
+  }
+  body::after {
+    content: "";
+    position: fixed;
+    top: 0; left: 50%;
+    width: 900px; height: 420px;
+    transform: translateX(-50%);
+    z-index: 0;
+    background: radial-gradient(ellipse 50% 60% at 50% 0%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 70%);
+    pointer-events: none;
+  }
+
+  .wrap {
+    position: relative;
+    z-index: 1;
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0 24px 120px;
+  }
+
+  ::selection { background-color: color-mix(in srgb, var(--accent) 30%, transparent); }
+
+  /* ————————————— En-tête ————————————— */
+  header.hero { padding: 96px 0 64px; }
+  .kicker {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .kicker::before {
+    content: "";
+    width: 22px; height: 1px;
+    background: var(--accent);
+    display: inline-block;
+  }
+  h1.title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(48px, 9vw, 92px);
+    letter-spacing: -0.03em;
+    line-height: 1;
+    margin: 20px 0 20px;
+    color: var(--text);
+  }
+  .lead {
+    font-size: 18px;
+    color: var(--text-muted);
+    max-width: 620px;
+  }
+  .meta-line {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-faint);
+    margin-top: 28px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 20px;
+  }
+  .meta-line span::before { content: "▪ "; color: var(--accent); }
+
+  /* ————————————— Sections ————————————— */
+  section { padding-top: 72px; }
+  .sec-head { margin-bottom: 32px; }
+  .sec-head .num {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-faint);
+    letter-spacing: 0.1em;
+  }
+  .sec-head h2 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 34px;
+    letter-spacing: -0.02em;
+    margin: 6px 0 10px;
+  }
+  .sec-head p { color: var(--text-muted); max-width: 640px; font-size: 15px; }
+  .sec-head::after {
+    content: "";
+    display: block;
+    height: 1px;
+    background: var(--border);
+    margin-top: 24px;
+  }
+
+  .subhead {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    margin: 40px 0 18px;
+  }
+
+  /* ————————————— Grilles de swatches ————————————— */
+  .grid { display: grid; gap: 16px; }
+  .g4 { grid-template-columns: repeat(4, 1fr); }
+  .g3 { grid-template-columns: repeat(3, 1fr); }
+  @media (max-width: 820px) { .g4, .g3 { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 520px) { .g4, .g3 { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    transition: border-color 150ms ease, transform 150ms ease;
+  }
+  .card:hover { border-color: var(--border-hover); transform: translateY(-2px); }
+
+  .swatch-chip {
+    height: 76px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    margin-bottom: 14px;
+  }
+  .tok-name {
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-size: 14px;
+    color: var(--text);
+  }
+  .hex {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: none;
+    background: none;
+    padding: 2px 0;
+  }
+  .hex::after {
+    content: "copier";
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    opacity: 0;
+    transition: opacity 120ms;
+  }
+  .hex:hover::after { opacity: 1; }
+  .hex.copied::after { content: "copié ✓"; color: var(--good); opacity: 1; }
+  .usage {
+    font-size: 12.5px;
+    color: var(--text-muted);
+    margin-top: 10px;
+    line-height: 1.45;
+  }
+  .role {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-top: 12px;
+    display: inline-block;
+  }
+
+  /* Cartes texte : échantillon Aa dans la couleur */
+  .text-sample {
+    height: 76px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 14px;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 34px;
+  }
+
+  /* ————————————— Couleurs de marque ————————————— */
+  .brand {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 28px;
+    align-items: center;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    margin-top: 8px;
+  }
+  .brand-logo svg { display: block; border-radius: 22px; }
+  .brand-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .brand-card { background: var(--bg); }
+  .brand-card .swatch-chip { height: 52px; }
+  @media (max-width: 860px) {
+    .brand { grid-template-columns: 1fr; justify-items: center; }
+    .brand-cards { grid-template-columns: 1fr; width: 100%; }
+  }
+
+  /* ————————————— Barème d'opacité ————————————— */
+  .opacity-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+  .op-chip {
+    width: 96px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    padding: 10px;
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+  .op-chip .bar { height: 34px; border-radius: 5px; margin-bottom: 8px; }
+
+  .formula {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    color: var(--text-muted);
+    margin-top: 18px;
+    overflow-x: auto;
+  }
+  .formula b { color: var(--accent); font-weight: 500; }
+
+  /* Badges d'exemple (illustration des règles couleur, mono uppercase) */
+  .badge {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 5px 12px;
+    border-radius: 6px;
+    display: inline-block;
+  }
+  .badge.good  { background: color-mix(in srgb, var(--good) 10%, transparent);  color: var(--good);  border: 1px solid color-mix(in srgb, var(--good) 30%, transparent); }
+  .badge.risky { background: color-mix(in srgb, var(--risky) 10%, transparent); color: var(--risky); border: 1px solid color-mix(in srgb, var(--risky) 30%, transparent); }
+  .badge.avoid { background: color-mix(in srgb, var(--avoid) 10%, transparent); color: var(--avoid); border: 1px solid color-mix(in srgb, var(--avoid) 30%, transparent); }
+
+  /* ————————————— Callouts (règles) ————————————— */
+  .callout {
+    border: 1px solid var(--border);
+    border-left: 2px solid var(--accent);
+    background: var(--bg-elevated);
+    border-radius: 10px;
+    padding: 20px 22px;
+    margin-top: 24px;
+  }
+  .callout h4 {
+    font-size: 13px;
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-faint);
+    margin-bottom: 12px;
+  }
+  .callout ul { list-style: none; display: grid; gap: 10px; }
+  .callout li { color: var(--text-muted); font-size: 14px; padding-left: 18px; position: relative; }
+  .callout li::before { content: "→"; position: absolute; left: 0; color: var(--accent); }
+  .callout li b { color: var(--text); font-weight: 500; }
+  code {
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 8%, transparent);
+    padding: 1px 5px;
+    border-radius: 4px;
+  }
+
+  /* ————————————— Typographie ————————————— */
+  .fam-glyph {
+    font-size: 56px;
+    line-height: 1;
+    margin-bottom: 16px;
+    color: var(--text);
+  }
+  .fam-name { font-size: 18px; font-weight: 500; }
+  .fam-role { color: var(--text-muted); font-size: 13px; margin-top: 6px; }
+  .fam-weights { font-family: var(--font-mono); font-size: 12px; color: var(--text-faint); margin-top: 12px; }
+
+  .scale-row {
+    display: grid;
+    grid-template-columns: 1fr 220px;
+    gap: 24px;
+    align-items: baseline;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  @media (max-width: 720px) { .scale-row { grid-template-columns: 1fr; gap: 8px; } }
+  .scale-spec {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-faint);
+    line-height: 1.6;
+  }
+  .scale-spec b { color: var(--text-muted); font-weight: 400; display: block; }
+
+  .data-demo {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 18px;
+    font-family: var(--font-mono);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin-top: 8px;
+    font-size: 15px;
+  }
+  .data-demo .dom { color: var(--accent); }
+  .data-demo .sep { color: var(--text-faint); }
+  .data-demo .score-r { color: var(--good); }
+  .data-demo .score-a { color: var(--accent); }
+  .data-demo .small { color: var(--text-faint); font-size: 12px; }
+
+  /* ————————————— Espacement / rayons / ombres ————————————— */
+  .bars { display: grid; gap: 12px; }
+  .bar-row { display: grid; grid-template-columns: 130px 1fr; gap: 16px; align-items: center; }
+  .bar-label { font-family: var(--font-mono); font-size: 12px; color: var(--text-muted); }
+  .bar-label b { color: var(--text-faint); font-weight: 400; }
+  .bar-viz { height: 24px; background: color-mix(in srgb, var(--accent) 22%, transparent); border-left: 2px solid var(--accent); border-radius: 0 4px 4px 0; }
+
+  .container-viz { position: relative; height: 22px; border-radius: 0 4px 4px 0; }
+  .container-viz span { position: absolute; inset: 0; background: color-mix(in srgb, var(--accent) 14%, transparent); border-right: 1px solid color-mix(in srgb, var(--accent) 50%, transparent); border-radius: 0 3px 3px 0; }
+
+  .radii-grid, .shadow-grid { display: flex; flex-wrap: wrap; gap: 24px; margin-top: 8px; }
+  .radius-item { text-align: center; }
+  .radius-box {
+    width: 84px; height: 84px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-hover);
+  }
+  .radius-item .lab { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); margin-top: 10px; }
+  .radius-item .lab b { color: var(--text-faint); font-weight: 400; display: block; }
+
+  .shadow-card {
+    width: 220px; height: 120px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 6px;
+  }
+  .shadow-card.sm { box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.5); }
+  .shadow-card.xxl { box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.6); }
+  .shadow-card .n { font-family: var(--font-mono); font-size: 13px; color: var(--text); }
+  .shadow-card .u { font-size: 12px; color: var(--text-muted); }
+
+  /* ————————————— Pied ————————————— */
+  footer {
+    margin-top: 96px;
+    padding-top: 28px;
+    border-top: 1px solid var(--border);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-faint);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+
+  /* ————————————— Animation de chargement (une cascade) ————————————— */
+  .reveal { opacity: 0; transform: translateY(10px); animation: rise 0.6s ease forwards; }
+  @keyframes rise { to { opacity: 1; transform: none; } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .reveal { animation: none; opacity: 1; transform: none; }
+    html { scroll-behavior: auto; }
+  }
+
+  /* ————————————— Impression / PDF ————————————— */
+  @media print {
+    @page { margin: 14mm; }
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    body::before, body::after { display: none; }
+    .reveal { animation: none; opacity: 1; transform: none; }
+    .card:hover { transform: none; }
+    section, .card, .scale-row, .callout, .shadow-card, .radius-item { break-inside: avoid; }
+    .wrap { padding-bottom: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ————————————— En-tête ————————————— -->
+  <header class="hero reveal">
+    <span class="kicker">Riskly · Design System</span>
+    <h1 class="title">Fondations</h1>
+    <p class="lead">Couleurs, typographie, espacement, rayons et ombres du produit Riskly. Un thème unique, sombre, dense en données&nbsp;: la couleur porte du sens, jamais de la décoration, et toute donnée s'affiche en monospace.</p>
+    <div class="meta-line">
+      <span>Fondations</span>
+      <span>Dark-only · 3 couleurs de marque</span>
+      <span>11 tokens · 3 familles</span>
+    </div>
+  </header>
+
+  <!-- ————————————— Principes ————————————— -->
+  <section class="reveal" style="animation-delay:.05s">
+    <div class="sec-head">
+      <span class="num">00 — Principes directeurs</span>
+      <h2>Quatre règles qui gouvernent tout</h2>
+    </div>
+    <div class="grid g4">
+      <div class="card"><div class="tok-name">Dark-only</div><p class="usage">Un seul thème, sombre. Pas de light mode. L'échelle de gris part de <code>#0A0E1A</code>.</p></div>
+      <div class="card"><div class="tok-name">Données en mono</div><p class="usage">Chiffre, domaine, date, rang, score&nbsp;: toujours en JetBrains Mono. C'est le look «&nbsp;outil de data&nbsp;».</p></div>
+      <div class="card"><div class="tok-name">Couleur = sens</div><p class="usage">Ambre et rouge pour le risque et les verdicts uniquement. Cyan&nbsp;: seul accent d'interaction.</p></div>
+      <div class="card"><div class="tok-name">Les bordures travaillent</div><p class="usage">Séparation par <code>border</code> + surface élevée. Ombres réservées aux éléments flottants.</p></div>
+    </div>
+  </section>
+
+  <!-- ————————————— Couleurs ————————————— -->
+  <section class="reveal" style="animation-delay:.1s">
+    <div class="sec-head">
+      <span class="num">01 — Couleurs</span>
+      <h2>Onze tokens</h2>
+      <p>Trois teintes portent la marque ; huit autres tokens complètent le système. Cliquez un code hexadécimal pour le copier.</p>
+    </div>
+
+    <div class="subhead">Couleurs de marque — les trois teintes du logo</div>
+    <div class="brand">
+      <div class="brand-logo" aria-hidden="true">
+        <svg viewBox="0 0 124 124" width="112" height="112">
+          <rect width="124" height="124" rx="26" fill="#0A0E1A"/>
+          <g transform="translate(16 10.5) scale(0.92)">
+            <g fill="#EDEEF2">
+              <path d="M15 12.5 L46 6.2 L46 10.8 L19 13.6 Z"/>
+              <path d="M9 20 L19.5 20 L19 36 L9.5 36.8 Z"/>
+              <rect x="6" y="39.5" width="16" height="0.9"/>
+              <rect x="8" y="42" width="15.5" height="0.9"/>
+              <rect x="6.5" y="44.5" width="14.5" height="0.9"/>
+              <rect x="9" y="47" width="14.5" height="0.9"/>
+              <rect x="7" y="49.5" width="12" height="0.9"/>
+              <path d="M8 52 L16 48.5 L23 57.5 L21 59 L29 68.5 L33.5 71 L26.5 78 Z"/>
+              <path d="M25 80.5 L32.5 77 L45 92.5 L46.5 104 Z"/>
+              <path d="M67.5 79.5 L69.3 81.3 L50 99.5 L48.3 97.7 Z"/>
+              <path d="M86 50.5 L79.5 47.5 L65.5 67.5 L71 71.5 Z"/>
+              <rect x="76" y="44" width="20" height="0.9"/>
+              <rect x="74" y="46.5" width="19" height="0.9"/>
+              <rect x="77.5" y="49" width="19" height="0.9"/>
+              <path d="M82.5 31.5 L91 32 L90.5 43 L83 42 Z"/>
+            </g>
+            <path fill="#22D3EE" d="M53 4.5 L93 11 L93 28 L82 26.5 L82 17.5 L54 10 Z"/>
+            <g stroke="#8A91A8" stroke-width="0.5" opacity="0.5" fill="none">
+              <line x1="87.5" y1="8" x2="87.5" y2="33"/>
+              <line x1="77" y1="21.5" x2="98" y2="21.5"/>
+            </g>
+          </g>
+        </svg>
+      </div>
+      <div class="brand-cards">
+        <div class="card brand-card">
+          <div class="swatch-chip" style="background:#0a0e1a"></div>
+          <div class="tok-name">Bleu-noir</div><br><button class="hex">#0A0E1A</button>
+          <span class="role" style="color:var(--text-muted)">Base</span>
+          <p class="usage">Le fond du terminal et des centres de surveillance. Bleu profond&nbsp;: confiance et technologie ; le sombre fait ressortir le signal et repose l'œil sur les interfaces denses.</p>
+        </div>
+        <div class="card brand-card">
+          <div class="swatch-chip" style="background:#22d3ee"></div>
+          <div class="tok-name">Cyan électrique</div><br><button class="hex">#22D3EE</button>
+          <span class="role" style="color:#22d3ee">Accent · signature</span>
+          <p class="usage">La couleur du signal&nbsp;: flux de données, scan en cours, connectivité. La teinte des HUD et des interfaces cyber — l'énergie qui traverse le noir.</p>
+        </div>
+        <div class="card brand-card">
+          <div class="swatch-chip" style="background:#edeef2"></div>
+          <div class="tok-name">Blanc cassé</div><br><button class="hex">#EDEEF2</button>
+          <span class="role" style="color:var(--text-muted)">Clarté · verdict</span>
+          <p class="usage">La vérité dite simplement&nbsp;: lisibilité du résultat. Cassé, jamais pur, pour ne pas éblouir en lecture longue sur fond sombre.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <h4>Pourquoi ces couleurs — IT, sécurité &amp; internet</h4>
+      <ul>
+        <li><b>Le trio bleu-noir · cyan · blanc</b> est le langage des outils techniques&nbsp;: consoles, tableaux de bord de sécurité, moniteurs réseau. Sombre pour la concentration, cyan pour le signal vivant, blanc pour la clarté du résultat.</li>
+        <li><b>Le cyan évite deux clichés</b>&nbsp;: le bleu corporate fade et le vert «&nbsp;hacker&nbsp;» caricatural. Il dit «&nbsp;donnée en direct&nbsp;», la sonde qui analyse, sans folklore.</li>
+        <li><b>Les verdicts reprennent le feu tricolore</b> universel (vert / ambre / rouge)&nbsp;: la sémantique instantanée du risque, comme les niveaux de menace ou l'indicateur de sécurité d'un navigateur.</li>
+      </ul>
+    </div>
+
+    <div class="subhead">Fond &amp; surfaces</div>
+    <div class="grid g4">
+      <div class="card"><div class="swatch-chip" style="background:#0a0e1a"></div><div class="tok-name">bg</div><br><button class="hex">#0A0E1A</button><p class="usage">Fond principal (bleu-noir profond)</p></div>
+      <div class="card"><div class="swatch-chip" style="background:#111627"></div><div class="tok-name">bg-elevated</div><br><button class="hex">#111627</button><p class="usage">Cartes, navbar, panneaux, inputs</p></div>
+      <div class="card"><div class="swatch-chip" style="background:#1e2438"></div><div class="tok-name">border</div><br><button class="hex">#1E2438</button><p class="usage">Bordures, séparateurs, grilles</p></div>
+      <div class="card"><div class="swatch-chip" style="background:#2e3650"></div><div class="tok-name">border-hover</div><br><button class="hex">#2E3650</button><p class="usage">Bordure au survol</p></div>
+    </div>
+
+    <div class="subhead">Texte</div>
+    <div class="grid g3">
+      <div class="card"><div class="text-sample" style="color:#edeef2">Ag</div><div class="tok-name">text</div><br><button class="hex">#EDEEF2</button><p class="usage">Titres, texte principal (blanc cassé)</p></div>
+      <div class="card"><div class="text-sample" style="color:#8a91a8">Ag</div><div class="tok-name">text-muted</div><br><button class="hex">#8A91A8</button><p class="usage">Sous-titres, descriptions, corps secondaire</p></div>
+      <div class="card"><div class="text-sample" style="color:#565d75">Ag</div><div class="tok-name">text-faint</div><br><button class="hex">#565D75</button><p class="usage">Labels, metadata, placeholders</p></div>
+    </div>
+
+    <div class="subhead">Accent &amp; verdicts — le langage visuel du produit</div>
+    <div class="grid g4">
+      <div class="card"><div class="swatch-chip" style="background:#22d3ee"></div><div class="tok-name">accent</div><br><button class="hex">#22D3EE</button><span class="role" style="color:#22d3ee">Interaction / info</span><p class="usage">CTA, liens, focus, score d'autorité</p></div>
+      <div class="card"><div class="swatch-chip" style="background:#34d399"></div><div class="tok-name">good</div><br><button class="hex">#34D399</button><span class="role" style="color:#34d399">Verdict positif</span><p class="usage">«&nbsp;Bon achat&nbsp;», risque faible</p></div>
+      <div class="card"><div class="swatch-chip" style="background:#fbbf24"></div><div class="tok-name">risky</div><br><button class="hex">#FBBF24</button><span class="role" style="color:#fbbf24">Avertissement</span><p class="usage">«&nbsp;Risqué&nbsp;», risque modéré</p></div>
+      <div class="card"><div class="swatch-chip" style="background:#f87171"></div><div class="tok-name">avoid</div><br><button class="hex">#F87171</button><span class="role" style="color:#f87171">Danger / erreur</span><p class="usage">«&nbsp;À éviter&nbsp;», risque élevé, erreurs</p></div>
+    </div>
+
+    <div class="subhead">Barème d'opacité (pattern <code>/NN</code> de Tailwind)</div>
+    <div class="opacity-row">
+      <div class="op-chip"><div class="bar" style="background:color-mix(in srgb,#22d3ee 10%,transparent)"></div>/10</div>
+      <div class="op-chip"><div class="bar" style="background:color-mix(in srgb,#22d3ee 20%,transparent)"></div>/20</div>
+      <div class="op-chip"><div class="bar" style="background:color-mix(in srgb,#22d3ee 25%,transparent)"></div>/25</div>
+      <div class="op-chip"><div class="bar" style="background:color-mix(in srgb,#22d3ee 30%,transparent)"></div>/30</div>
+      <div class="op-chip"><div class="bar" style="background:color-mix(in srgb,#22d3ee 40%,transparent)"></div>/40</div>
+      <div class="op-chip"><div class="bar" style="background:color-mix(in srgb,#22d3ee 60%,transparent)"></div>/60</div>
+    </div>
+    <div class="formula">Badge = <b>bg-{token}/10</b> · <b>text-{token}</b> · <b>border-{token}/30</b> &nbsp;→&nbsp; hover <b>bg-{token}/25</b> · <b>border-{token}</b></div>
+    <div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap">
+      <span class="badge good">Bon achat</span>
+      <span class="badge risky">Risqué</span>
+      <span class="badge avoid">À éviter</span>
+    </div>
+
+    <div class="callout">
+      <h4>Règles de couleur</h4>
+      <ul>
+        <li><b>Ambre &amp; rouge n'apparaissent QUE</b> pour le risque et les verdicts. Jamais en décoration.</li>
+        <li><b>Le cyan est l'unique accent d'interaction</b> (boutons, hover, liens, focus).</li>
+        <li>Pas de token <code>info</code>/<code>warning</code>/<code>error</code>/<code>success</code> séparé&nbsp;: <b>les verdicts SONT le système sémantique</b> — <code>good</code>=succès, <code>risky</code>=warning, <code>avoid</code>=danger, <code>accent</code>=info.</li>
+        <li>Les erreurs de formulaire réutilisent <code>avoid</code> — une erreur <i>est</i> un «&nbsp;à éviter&nbsp;».</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ————————————— Typographie ————————————— -->
+  <section class="reveal" style="animation-delay:.15s">
+    <div class="sec-head">
+      <span class="num">02 — Typographie</span>
+      <h2>Trois familles, deux graisses chacune</h2>
+      <p>Chargées via Google Fonts. Tout ce qui est <b style="color:var(--text)">donnée</b> passe en monospace.</p>
+    </div>
+
+    <div class="grid g3">
+      <div class="card"><div class="fam-glyph" style="font-family:var(--font-display)">Ag</div><div class="fam-name" style="font-family:var(--font-display)">Bricolage Grotesque</div><div class="fam-role">Display — H1 hero, titres de sections, wordmark</div><div class="fam-weights">600 · 700</div></div>
+      <div class="card"><div class="fam-glyph" style="font-family:var(--font-body)">Ag</div><div class="fam-name" style="font-family:var(--font-body)">Geist <span style="color:var(--text-faint);font-size:13px">(fallback Inter)</span></div><div class="fam-role">Body — paragraphes, UI, boutons, labels</div><div class="fam-weights">400 · 500</div></div>
+      <div class="card"><div class="fam-glyph" style="font-family:var(--font-mono)">Ag</div><div class="fam-name" style="font-family:var(--font-mono)">JetBrains Mono</div><div class="fam-role">Mono — scores, domaines, rangs, dates, metadata</div><div class="fam-weights">400 · 500</div></div>
+    </div>
+
+    <div class="subhead">Échelle typographique</div>
+    <div class="scale-row">
+      <div style="font-family:var(--font-display);font-weight:700;font-size:56px;letter-spacing:-0.02em;line-height:1;color:var(--text-faint);-webkit-text-stroke:1.5px var(--text-faint);color:transparent">RISKLY</div>
+      <div class="scale-spec"><b>Display XXL</b>text-[22vw] · outline · font-display 700</div>
+    </div>
+    <div class="scale-row">
+      <div style="font-family:var(--font-display);font-weight:700;font-size:56px;letter-spacing:-0.02em;line-height:1.05">Sachez si un domaine vaut son prix.</div>
+      <div class="scale-spec"><b>H1 hero</b>text-4xl→6xl · tracking-[-0.02em]</div>
+    </div>
+    <div class="scale-row">
+      <div style="font-family:var(--font-display);font-weight:600;font-size:34px;letter-spacing:-0.02em">Titre de section</div>
+      <div class="scale-spec"><b>H2 section</b>text-3xl→4xl · font-display 600</div>
+    </div>
+    <div class="scale-row">
+      <div style="font-size:20px;font-weight:600">Titre de carte</div>
+      <div class="scale-spec"><b>H3 carte</b>text-lg→xl · font-semibold</div>
+    </div>
+    <div class="scale-row">
+      <div style="font-size:18px;color:var(--text-muted)">Sous-titre d'accroche en corps large, plus respirant.</div>
+      <div class="scale-spec"><b>Body large</b>text-lg · text-muted</div>
+    </div>
+    <div class="scale-row">
+      <div style="font-size:15px;color:var(--text-muted)">Corps courant et descriptions. La prose reste en français courant, lisible.</div>
+      <div class="scale-spec"><b>Body</b>text-sm→base · text-muted</div>
+    </div>
+    <div class="scale-row">
+      <div style="font-family:var(--font-mono);font-size:12px;color:var(--text-faint)">enregistré 2014 · expire 2027 · #12&nbsp;480</div>
+      <div class="scale-spec"><b>Meta / data</b>font-mono text-xs · text-faint</div>
+    </div>
+    <div class="scale-row">
+      <div style="font-family:var(--font-mono);font-size:11px;text-transform:uppercase;letter-spacing:0.14em;color:var(--text-muted)">OU · NIVEAU · SOURCE</div>
+      <div class="scale-spec"><b>Micro-label</b>text-[10-11px] · uppercase · tracking-wider</div>
+    </div>
+
+    <div class="subhead">Démonstration — la donnée en mono, la couleur porte le sens</div>
+    <div class="data-demo">
+      <span class="small">$ riskly analyse</span>
+      <span class="dom">exemple-domaine.com</span>
+      <span class="sep">·</span>
+      <span>risque <span class="score-r">12</span><span class="small">/100</span></span>
+      <span class="sep">·</span>
+      <span>autorité <span class="score-a">72</span><span class="small">/100</span></span>
+      <span class="badge good">Bon achat</span>
+    </div>
+  </section>
+
+  <!-- ————————————— Espacement / rayons / ombres ————————————— -->
+  <section class="reveal" style="animation-delay:.2s">
+    <div class="sec-head">
+      <span class="num">03 — Espacement, rayons &amp; ombres</span>
+      <h2>Le rythme et la profondeur</h2>
+      <p>La profondeur vient des bordures et des surfaces, pas des ombres — réservées à ce qui flotte.</p>
+    </div>
+
+    <div class="subhead">Échelle d'espacement (paddings &amp; gaps)</div>
+    <div class="bars">
+      <div class="bar-row"><div class="bar-label">gap-2 <b>8px</b></div><div class="bar-viz" style="width:8px"></div></div>
+      <div class="bar-row"><div class="bar-label">p-3 / gap-3 <b>12px</b></div><div class="bar-viz" style="width:12px"></div></div>
+      <div class="bar-row"><div class="bar-label">p-5 / gap-5 <b>20px</b></div><div class="bar-viz" style="width:20px"></div></div>
+      <div class="bar-row"><div class="bar-label">p-6 / gap-6 <b>24px</b></div><div class="bar-viz" style="width:24px"></div></div>
+      <div class="bar-row"><div class="bar-label">py-8 <b>32px</b></div><div class="bar-viz" style="width:32px"></div></div>
+      <div class="bar-row"><div class="bar-label">py-10 <b>40px</b></div><div class="bar-viz" style="width:40px"></div></div>
+      <div class="bar-row"><div class="bar-label">py-24 <b>96px</b></div><div class="bar-viz" style="width:96px"></div></div>
+    </div>
+
+    <div class="subhead">Largeurs de containers</div>
+    <div class="bars">
+      <div class="bar-row"><div class="bar-label">max-w-sm <b>384px</b></div><div class="container-viz"><span style="width:33.3%"></span></div></div>
+      <div class="bar-row"><div class="bar-label">max-w-xl <b>576px</b></div><div class="container-viz"><span style="width:50%"></span></div></div>
+      <div class="bar-row"><div class="bar-label">max-w-2xl <b>672px</b></div><div class="container-viz"><span style="width:58.3%"></span></div></div>
+      <div class="bar-row"><div class="bar-label">max-w-3xl <b>768px</b></div><div class="container-viz"><span style="width:66.7%"></span></div></div>
+      <div class="bar-row"><div class="bar-label">max-w-6xl <b>1152px</b></div><div class="container-viz"><span style="width:100%"></span></div></div>
+    </div>
+
+    <div class="subhead">Rayons</div>
+    <div class="radii-grid">
+      <div class="radius-item"><div class="radius-box" style="border-radius:4px"></div><div class="lab">rounded-[4px]<b>checkbox</b></div></div>
+      <div class="radius-item"><div class="radius-box" style="border-radius:6px"></div><div class="lab">rounded-md<b>petits boutons, badges</b></div></div>
+      <div class="radius-item"><div class="radius-box" style="border-radius:8px"></div><div class="lab">rounded-lg<b>boutons, inputs, cartes score</b></div></div>
+      <div class="radius-item"><div class="radius-box" style="border-radius:12px"></div><div class="lab">rounded-xl<b>cartes, panneaux</b></div></div>
+      <div class="radius-item"><div class="radius-box" style="border-radius:16px"></div><div class="lab">rounded-2xl<b>coque champ hero</b></div></div>
+      <div class="radius-item"><div class="radius-box" style="border-radius:9999px;width:84px"></div><div class="lab">rounded-full<b>points, pastilles</b></div></div>
+    </div>
+
+    <div class="subhead">Ombres <span style="text-transform:none;letter-spacing:0">— usage minimal</span></div>
+    <div class="shadow-grid">
+      <div class="shadow-card sm"><span class="n">shadow-sm</span><span class="u">étiquettes du globe</span></div>
+      <div class="shadow-card xxl"><span class="n">shadow-2xl</span><span class="u">champ hero, terminal</span></div>
+    </div>
+  </section>
+
+  <footer>
+    <span>Riskly · Design System — Fondations</span>
+    <span>Charte couleurs · typographie · espacement</span>
+  </footer>
+
+</div>
+
+<script>
+  // Cliquer un hex → copie dans le presse-papier
+  document.querySelectorAll(".hex").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var val = btn.textContent.trim();
+      navigator.clipboard && navigator.clipboard.writeText(val);
+      btn.classList.add("copied");
+      setTimeout(function () { btn.classList.remove("copied"); }, 1100);
+    });
+  });
+</script>
+</body>
+</html>
