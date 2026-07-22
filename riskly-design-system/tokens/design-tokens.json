@@ -1,5 +1,5 @@
 {
-  "$description": "Riskly — Design tokens au format DTCG (Design Tokens Community Group). Miroir exact des tokens @theme de src/index.css. Importable dans Figma via le plugin Tokens Studio, ou transformable en CSS/iOS/Android via Style Dictionary. Règles d'usage complètes dans design.md.",
+  "$description": "Riskly — Design tokens au format DTCG (Design Tokens Community Group). Miroir exact des tokens @theme de src/index.css. Importable dans Figma via le plugin Tokens Studio, ou transformable en CSS/iOS/Android via Style Dictionary. Règles d'usage complètes dans styleguide.html.",
   "color": {
     "$type": "color",
     "bg": { "$value": "#0A0E1A", "$description": "Fond principal (bleu-noir profond)" },
