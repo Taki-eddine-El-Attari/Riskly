@@ -1,0 +1,32 @@
+{
+  "$description": "Riskly — Design tokens au format DTCG (Design Tokens Community Group). Miroir exact des tokens @theme de src/index.css. Importable dans Figma via le plugin Tokens Studio, ou transformable en CSS/iOS/Android via Style Dictionary. Règles d'usage complètes dans design.md.",
+  "color": {
+    "$type": "color",
+    "bg": { "$value": "#0A0E1A", "$description": "Fond principal (bleu-noir profond)" },
+    "bg-elevated": { "$value": "#111627", "$description": "Cartes, navbar, terminal, panneaux, inputs" },
+    "border": { "$value": "#1E2438", "$description": "Bordures de cartes, séparateurs, grilles" },
+    "border-hover": { "$value": "#2E3650", "$description": "Bordure au survol" },
+    "text": { "$value": "#EDEEF2", "$description": "Titres, texte principal (blanc cassé)" },
+    "text-muted": { "$value": "#8A91A8", "$description": "Sous-titres, descriptions, corps secondaire" },
+    "text-faint": { "$value": "#565D75", "$description": "Labels, metadata, placeholders" },
+    "accent": { "$value": "#22D3EE", "$description": "Interaction / info : CTA, liens, focus, score d'autorité" },
+    "good": { "$value": "#34D399", "$description": "Succès : « Bon achat », risque faible" },
+    "risky": { "$value": "#FBBF24", "$description": "Avertissement : « Risqué », risque modéré" },
+    "avoid": { "$value": "#F87171", "$description": "Danger : « À éviter », risque élevé, erreurs de formulaire" }
+  },
+  "font": {
+    "family": {
+      "$type": "fontFamily",
+      "display": { "$value": ["Bricolage Grotesque", "sans-serif"], "$description": "H1 hero, titres de sections, wordmark" },
+      "body": { "$value": ["Geist", "Inter", "sans-serif"], "$description": "Paragraphes, UI, boutons, labels" },
+      "mono": { "$value": ["JetBrains Mono", "monospace"], "$description": "Données : scores, domaines, rangs, dates, badges" }
+    },
+    "weight": {
+      "$type": "fontWeight",
+      "regular": { "$value": 400 },
+      "medium": { "$value": 500 },
+      "semibold": { "$value": 600, "$description": "Display uniquement" },
+      "bold": { "$value": 700, "$description": "Display uniquement" }
+    }
+  }
+}

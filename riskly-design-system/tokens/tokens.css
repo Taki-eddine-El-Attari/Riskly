@@ -1,0 +1,23 @@
+/*
+ * Riskly — Design tokens (Tailwind CSS v4).
+ * À coller dans le fichier CSS d'entrée d'un projet Tailwind v4 (après @import "tailwindcss").
+ * Génère les utilitaires bg-*, text-*, border-*, font-* correspondants.
+ * Source de vérité : src/index.css du projet. Règles d'usage : design.md.
+ */
+
+@theme {
+  --color-bg: #0a0e1a;
+  --color-bg-elevated: #111627;
+  --color-border: #1e2438;
+  --color-border-hover: #2e3650;
+  --color-text: #edeef2;
+  --color-text-muted: #8a91a8;
+  --color-text-faint: #565d75;
+  --color-accent: #22d3ee;
+  --color-good: #34d399;
+  --color-risky: #fbbf24;
+  --color-avoid: #f87171;
+  --font-display: "Bricolage Grotesque", sans-serif;
+  --font-body: "Geist", "Inter", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+}
