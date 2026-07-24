@@ -39,7 +39,7 @@ avec l'esprit « data / sécurité » de **Stripe Radar**. Sombre, dense en donn
 **Anti-références** : pas de dégradés violets génériques, pas d'illustrations IA, pas de glassmorphism partout.
 
 **Principes directeurs**
-1. **Dark-only.** Un seul thème, sombre. Pas de light mode prévu — l'échelle de gris part de `#0A0E1A`.
+1. **Dark-first, clair disponible.** Le sombre reste le thème de référence et le défaut (l'échelle de gris part de `#0A0E1A`). Un **thème clair** l'accompagne, activé par la classe `.light` sur `<html>` et une **bascule dans la navbar / le header auth** (bouton soleil/lune). Le choix est mémorisé (`localStorage: riskly-theme`) et posé avant le rendu (script anti-FOUC). Voir §2 pour la palette claire. *(Historiquement le produit était « dark-only » ; le clair a été ajouté sans toucher à l'identité sombre.)*
 2. **La donnée est en mono.** Tout ce qui est chiffre, domaine, date, rang, score s'affiche en `JetBrains Mono`. C'est ce qui donne le look « outil de data ».
 3. **La couleur porte du sens, jamais de la décoration.** Ambre et rouge ne servent QU'aux verdicts et au risque. Le cyan est l'unique accent d'interaction (CTA, liens, focus).
 4. **Les bordures font le travail, pas les ombres.** Séparation par `border` + surface `bg-elevated`. Ombres réservées aux éléments flottants (2 seulement dans tout le code).
@@ -95,6 +95,31 @@ Les couleurs pleines sont rarement posées telles quelles ; on les décline en o
 | `/60` | Points de statut, bordure focus input | `bg-avoid/60`, `focus:border-accent/60` |
 
 Badge type = `bg-{token}/10  text-{token}  border-{token}/30`, hover = `bg-{token}/25  border-{token}`.
+
+### Thème clair `✅ Implémenté`
+
+Le clair **ne remplace pas** un simple fond blanc : les teintes néon calibrées pour le sombre deviennent illisibles sur blanc (échec du contraste AA). On redéfinit donc **les mêmes 11 tokens** sous `.light` (dans `@layer base` de `src/index.css`), selon deux règles :
+
+1. **Élévation inversée.** Le fond passe en gris froid léger et les surfaces élevées (cartes, navbar, inputs) en **blanc** : elles « flottent » en étant plus lumineuses que la base — l'inverse du sombre.
+2. **Accents & verdicts approfondis.** Cyan / vert / ambre / rouge sont assombris pour tenir le contraste AA sur clair. **La sémantique est identique** : cyan = interaction, vert/ambre/rouge = verdicts uniquement.
+
+| Token | Sombre (défaut) | Clair (`.light`) | Note |
+|---|---|---|---|
+| `bg` | `#0A0E1A` | `#F7F8FA` | gris froid léger, pas blanc pur |
+| `bg-elevated` | `#111627` | `#FFFFFF` | surfaces élevées en blanc (élévation inversée) |
+| `border` | `#1E2438` | `#E4E7EC` | |
+| `border-hover` | `#2E3650` | `#D0D5DD` | |
+| `text` | `#EDEEF2` | `#0D1220` | réutilise le bleu-noir de marque |
+| `text-muted` | `#8A91A8` | `#565D73` | |
+| `text-faint` | `#565D75` | `#868DA0` | metadata / placeholders uniquement |
+| `accent` | `#22D3EE` | `#0E7490` | cyan-700 : lisible sur blanc, reste « cyan » |
+| `good` | `#34D399` | `#047857` | émeraude-700 |
+| `risky` | `#FBBF24` | `#B45309` | ambre-700 (l'ambre vif est illisible sur blanc) |
+| `avoid` | `#F87171` | `#DC2626` | rouge-600 |
+
+Le motif de badge (`bg/10 · text · border/30`) fonctionne à l'identique : le lavis /10 reste pâle sur blanc et la teinte approfondie reste lisible dessus. `color-scheme` suit le thème (contrôles natifs, barres de défilement). Composants en hex brut (globe cobe, `BorderBeam`) : inchangés — le globe sombre sur panneau clair se lit comme une « terre de nuit », effet volontaire.
+
+**Infra** : `src/lib/theme.ts` (hook `useTheme` — état, persistance, synchro multi-onglets), `src/components/ThemeToggle.tsx` (bouton soleil/lune), script anti-FOUC dans `index.html`. Le sombre est le défaut absolu (aucune classe = sombre).
 
 ---
 

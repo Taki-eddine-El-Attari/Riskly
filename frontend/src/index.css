@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+/*
+ * Thème par défaut = SOMBRE (identité Riskly, dark-first). C'est la référence
+ * historique du produit, conservée telle quelle.
+ * Le thème CLAIR s'active en ajoutant la classe `.light` sur <html> :
+ *   - script anti-FOUC dans index.html (avant le rendu) ;
+ *   - hook useTheme + bouton ThemeToggle (bascule dans la navbar / l'auth).
+ * Voir design.md §2 (couleurs) et §6 (styles globaux).
+ */
 @theme {
   --color-bg: #0a0e1a;
   --color-bg-elevated: #111627;
@@ -15,6 +23,47 @@
   --font-display: "Bricolage Grotesque", sans-serif;
   --font-body: "Geist", "Inter", sans-serif;
   --font-mono: "JetBrains Mono", monospace;
+}
+
+/*
+ * Thème clair. Deux principes, sinon un simple « fond blanc » casserait le
+ * design (les teintes néon calibrées pour le sombre deviennent illisibles) :
+ *   1. ÉLÉVATION INVERSÉE — le fond passe en gris froid, les surfaces élevées
+ *      (cartes, navbar, inputs) en blanc : elles « flottent » en étant plus
+ *      lumineuses que la base, comme le sombre le fait à l'envers.
+ *   2. ACCENTS & VERDICTS ASSOMBRIS — cyan/vert/ambre/rouge sont approfondis
+ *      pour tenir le contraste AA sur clair. La sémantique reste identique :
+ *      cyan = interaction, vert/ambre/rouge = verdicts uniquement.
+ * Déclaré dans @layer base pour l'emporter sur les valeurs @theme de :root
+ * (l'ordre de couches Tailwind est theme < base).
+ */
+@layer base {
+  .light {
+    --color-bg: #f7f8fa;
+    --color-bg-elevated: #ffffff;
+    --color-border: #e4e7ec;
+    --color-border-hover: #d0d5dd;
+    --color-text: #0d1220;
+    --color-text-muted: #565d73;
+    --color-text-faint: #868da0;
+    --color-accent: #0e7490; /* cyan-700 : lisible sur blanc, reste « cyan » */
+    --color-good: #047857; /* émeraude-700 */
+    --color-risky: #b45309; /* ambre-700 : l'ambre vif est illisible sur blanc */
+    --color-avoid: #dc2626; /* rouge-600 */
+    color-scheme: light;
+  }
+
+  /* Contrôles natifs, barres de défilement : accordés au thème.
+     `:not(.light)` évite tout conflit d'ordre avec la règle `.light` ci-dessus. */
+  html:not(.light) {
+    color-scheme: dark;
+  }
+
+  /* Transition douce des surfaces à la bascule de thème. */
+  html,
+  body {
+    transition: background-color 220ms ease, color 220ms ease;
+  }
 }
 
 /* BorderBeam (adapté de magicui) : lueur qui parcourt la bordure d'un conteneur */
@@ -149,6 +198,11 @@ body {
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+
+  html,
+  body {
+    transition: none;
   }
 
   .hero-glow,
