@@ -39,7 +39,7 @@ const features: Feature[] = [
 
 export default function Features() {
   return (
-    <section className="mx-auto max-w-6xl px-6 py-24">
+    <section id="fonctionnalites" className="mx-auto max-w-6xl px-6 py-24">
       <BlurFade inView>
         <h2 className="text-center font-display text-3xl font-bold md:text-4xl">
           Tout ce qu'il faut pour décider

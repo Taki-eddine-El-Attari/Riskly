@@ -42,8 +42,27 @@ export function useTheme() {
     setTheme(readTheme() === "light" ? "dark" : "light");
   }, [setTheme]);
 
-  // Synchronise les onglets ouverts : une bascule ailleurs se reflète ici.
+  // Synchronise les onglets ouverts et les changements de classe DOM.
   useEffect(() => {
+    function updateFromDOM() {
+      setThemeState(readTheme());
+    }
+
+    const observer = new MutationObserver((mutations) => {
+      for (const m of mutations) {
+        if (m.type === "attributes" && m.attributeName === "class") {
+          updateFromDOM();
+        }
+      }
+    });
+
+    if (typeof document !== "undefined") {
+      observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ["class"],
+      });
+    }
+
     function onStorage(e: StorageEvent) {
       if (e.key !== THEME_STORAGE_KEY || !e.newValue) return;
       const next: Theme = e.newValue === "light" ? "light" : "dark";
@@ -51,7 +70,10 @@ export function useTheme() {
       setThemeState(next);
     }
     window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("storage", onStorage);
+    };
   }, []);
 
   return { theme, setTheme, toggle };

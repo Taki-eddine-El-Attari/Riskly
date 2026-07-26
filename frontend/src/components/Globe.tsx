@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback } from "react";
 import createGlobe from "cobe";
 import { useReducedMotion } from "motion/react";
+import { useTheme } from "@/lib/theme";
 
 // Globe cobe v2 : points de présence (TLD) + arcs vers les sources de données.
 // Les étiquettes flottantes s'accrochent aux ancres CSS exposées par cobe
@@ -63,6 +64,9 @@ export function Globe({
   className = "",
   speed = 0.003,
 }: GlobeProps) {
+  const { theme } = useTheme();
+  const isLight = theme === "light";
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const pointerInteracting = useRef<{ x: number; y: number } | null>(null);
   const dragOffset = useRef({ phi: 0, theta: 0 });
@@ -125,18 +129,18 @@ export function Globe({
         height: width,
         phi: 0,
         theta: 0.2,
-        dark: 1,
-        diffuse: 1.6,
+        dark: isLight ? 0 : 1,
+        diffuse: isLight ? 1.4 : 1.6,
         mapSamples: 16000,
-        mapBrightness: 7,
-        baseColor: [0.28, 0.38, 0.58],
-        markerColor: CYAN,
-        glowColor: [0.05, 0.14, 0.2],
-        opacity: 0.92,
+        mapBrightness: isLight ? 7.5 : 7,
+        baseColor: isLight ? [0.9, 0.93, 0.96] : [0.28, 0.38, 0.58],
+        markerColor: isLight ? [0.02, 0.52, 0.64] : CYAN,
+        glowColor: isLight ? [0.8, 0.86, 0.92] : [0.05, 0.14, 0.2],
+        opacity: isLight ? 0.96 : 0.92,
         markerElevation: 0.02,
         markers: markers.map((m) => ({ location: m.location, size: 0.035, id: m.id })),
         arcs: arcs.map((a) => ({ from: a.from, to: a.to, id: a.id })),
-        arcColor: CYAN,
+        arcColor: isLight ? [0.02, 0.52, 0.64] : CYAN,
         arcWidth: 0.5,
         arcHeight: 0.25,
       });
@@ -170,7 +174,7 @@ export function Globe({
       if (globe) globe.destroy();
       ro?.disconnect();
     };
-  }, [markers, arcs]);
+  }, [markers, arcs, isLight]);
 
   // Petite pyramide 3D en CSS qui tourne au-dessus de chaque point.
   const pyramidFaceStyle = (nth: number): React.CSSProperties => {

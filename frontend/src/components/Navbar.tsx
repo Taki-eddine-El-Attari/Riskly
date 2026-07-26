@@ -3,8 +3,9 @@ import { RisklyLogo } from "./RisklyLogo";
 import { ThemeToggle } from "./ThemeToggle";
 
 const links = [
-  { label: "Fonctionnement", href: "#fonctionnement" },
   { label: "Sources", href: "#sources" },
+  { label: "Fonctionnement", href: "#fonctionnement" },
+  { label: "Fonctionnalités", href: "#fonctionnalites" },
   { label: "FAQ", href: "#faq" },
 ];
 

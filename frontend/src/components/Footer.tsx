@@ -41,11 +41,14 @@ export default function Footer() {
             <span className="font-display font-bold">Riskly</span>
           </div>
           <div className="flex items-center gap-6 text-sm text-text-muted">
+            <a href="#sources" className="transition-colors hover:text-text">
+              Sources
+            </a>
             <a href="#fonctionnement" className="transition-colors hover:text-text">
               Fonctionnement
             </a>
-            <a href="#sources" className="transition-colors hover:text-text">
-              Sources
+            <a href="#fonctionnalites" className="transition-colors hover:text-text">
+              Fonctionnalités
             </a>
             <a href="#faq" className="transition-colors hover:text-text">
               FAQ

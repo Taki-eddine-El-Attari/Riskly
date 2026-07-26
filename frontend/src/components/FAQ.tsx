@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { ChevronDown } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 import { BlurFade } from "./BlurFade";
 
-// ponytail: <details>/<summary> natif, accessible et sans JS, pas besoin d'accordéon maison
+// Accordéon FAQ avec animations douces d'ouverture et de fermeture.
 const faqs = [
   {
     q: "D'où viennent les données ?",
@@ -26,6 +28,14 @@ const faqs = [
 ];
 
 export default function FAQ() {
+  const [openIndices, setOpenIndices] = useState<number[]>([]);
+
+  const toggle = (i: number) => {
+    setOpenIndices((prev) =>
+      prev.includes(i) ? prev.filter((idx) => idx !== i) : [...prev, i]
+    );
+  };
+
   return (
     <section id="faq" className="mx-auto max-w-3xl px-6 py-24">
       <BlurFade inView>
@@ -35,17 +45,42 @@ export default function FAQ() {
       </BlurFade>
 
       <div className="mt-12 space-y-3">
-        {faqs.map((f, i) => (
-          <BlurFade key={f.q} inView delay={i * 0.08}>
-            <details className="group rounded-xl border border-border bg-bg-elevated transition-colors hover:border-border-hover open:border-border-hover">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-5 font-medium [&::-webkit-details-marker]:hidden">
-                {f.q}
-                <ChevronDown className="size-4 shrink-0 text-text-faint transition-transform group-open:rotate-180" />
-              </summary>
-              <p className="px-5 pb-5 text-sm leading-relaxed text-text-muted">{f.a}</p>
-            </details>
-          </BlurFade>
-        ))}
+        {faqs.map((f, i) => {
+          const isOpen = openIndices.includes(i);
+          return (
+            <BlurFade key={f.q} inView delay={i * 0.08}>
+              <div className="rounded-xl border border-border bg-bg-elevated transition-colors hover:border-border-hover">
+                <button
+                  type="button"
+                  onClick={() => toggle(i)}
+                  className="flex w-full cursor-pointer items-center justify-between gap-4 p-5 text-left font-medium text-text outline-none"
+                >
+                  <span>{f.q}</span>
+                  <ChevronDown
+                    className={`size-4 shrink-0 text-text-faint transition-transform duration-300 ${
+                      isOpen ? "rotate-180 text-text" : ""
+                    }`}
+                  />
+                </button>
+                <AnimatePresence initial={false}>
+                  {isOpen && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                      className="overflow-hidden"
+                    >
+                      <p className="px-5 pb-5 text-sm leading-relaxed text-text-muted">
+                        {f.a}
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </BlurFade>
+          );
+        })}
       </div>
     </section>
   );
