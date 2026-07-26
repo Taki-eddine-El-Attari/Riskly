@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { RisklyLogo } from "./RisklyLogo";
+import { ThemeToggle } from "./ThemeToggle";
 
 const links = [
   { label: "Fonctionnement", href: "#fonctionnement" },
@@ -28,7 +29,8 @@ export default function Navbar() {
           ))}
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <ThemeToggle />
           <Link
             to="/login"
             className="rounded-lg px-4 py-2 text-sm text-text-muted transition-colors hover:text-text"

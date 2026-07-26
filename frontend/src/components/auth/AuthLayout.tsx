@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Globe } from "@/components/Globe";
 import { RisklyLogo } from "@/components/RisklyLogo";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { Separator } from "@/components/ui/separator";
 
 function Logo() {
@@ -61,8 +62,13 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
 
       {/* Panneau formulaire */}
       <section className="flex flex-col px-6 py-8 sm:px-10">
-        <header className="lg:hidden">
-          <Logo />
+        <header className="flex items-center justify-between">
+          {/* Logo masqué en desktop (présent dans le panneau gauche), l'espace
+              est conservé pour garder la bascule alignée à droite. */}
+          <div className="lg:invisible">
+            <Logo />
+          </div>
+          <ThemeToggle />
         </header>
 
         <div className="flex flex-1 items-center justify-center py-10">
