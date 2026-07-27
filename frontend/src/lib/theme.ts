@@ -30,11 +30,33 @@ function applyTheme(theme: Theme) {
   }
 }
 
+type ViewTransitionDocument = Document & {
+  startViewTransition?: (callback: () => void) => unknown;
+};
+
+/**
+ * Applique la mutation dans un fondu plein écran (View Transition API :
+ * fondu croisé « fade in / out » de toute la page). Repli immédiat si l'API
+ * n'existe pas ou si l'utilisateur réduit les animations.
+ */
+function startThemeTransition(mutate: () => void) {
+  const doc = document as ViewTransitionDocument;
+  const prefersReduced =
+    typeof window !== "undefined" &&
+    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+
+  if (typeof doc.startViewTransition !== "function" || prefersReduced) {
+    mutate();
+    return;
+  }
+  doc.startViewTransition(mutate);
+}
+
 export function useTheme() {
   const [theme, setThemeState] = useState<Theme>(readTheme);
 
   const setTheme = useCallback((next: Theme) => {
-    applyTheme(next);
+    startThemeTransition(() => applyTheme(next));
     setThemeState(next);
   }, []);
 

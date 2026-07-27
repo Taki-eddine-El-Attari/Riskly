@@ -50,6 +50,24 @@
   }
 }
 
+/*
+ * Bascule de thème : fondu « fade in / out » plein écran via la View Transition
+ * API (déclenché dans lib/theme.ts). On règle juste la durée du fondu croisé
+ * par défaut (old = ancien thème, new = nouveau thème).
+ */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 400ms;
+  animation-timing-function: ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+  }
+}
+
 /* BorderBeam (adapté de magicui) : lueur qui parcourt la bordure d'un conteneur */
 .border-beam-layer {
   pointer-events: none;
