@@ -50,7 +50,7 @@ class User(Base):
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    # TODO(équipe) : rétablir une fois les modèles analysis corrigés et importés
+    # TODO: rétablir une fois les modèles analysis corrigés et importés
     # (aujourd'hui api_log.py/analysis.py ne s'importent pas → cassent le boot).
     # analyses = relationship("Analysis", back_populates="user")
 

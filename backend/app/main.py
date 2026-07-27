@@ -7,9 +7,19 @@ from app.core.exceptions import RisklyException, riskly_exception_handler
 from app.api.v1.router import router as api_router
 
 # Enregistre le modèle User (auth). Les autres modèles (analysis, domain…)
-# sont du WIP équipe qui ne s'importe pas encore ; on les ajoutera ici une
+# sont du WIP qui ne s'importe pas encore ; on les ajoutera ici une
 # fois corrigés, en même temps que la relation User.analyses.
-from app.models import user  # noqa: F401
+from app.models import (  # noqa: F401
+    user,
+    domain,
+    analysis,
+    api_log,
+    features,
+    model,
+    traffic_history,
+    reputation_event,
+    acquisition_result,
+)
 
 app = FastAPI(title="Riskly API")
 

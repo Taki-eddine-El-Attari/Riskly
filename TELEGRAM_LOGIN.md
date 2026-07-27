@@ -4,6 +4,8 @@ Le login Telegram utilise le **Login Widget** officiel : l'utilisateur clique
 « Se connecter avec Telegram », autorise dans son app, et le backend vérifie
 cryptographiquement la réponse avant d'ouvrir la session.
 
+Documentation : https://core.telegram.org/bots/telegram-login
+
 ## 1. Créer le bot (une fois)
 
 1. Sur Telegram, ouvre **[@BotFather](https://t.me/BotFather)** → `/newbot`.
