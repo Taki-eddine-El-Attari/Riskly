@@ -28,12 +28,15 @@ COOKIE_SAMESITE=none                         # 'none' si front et back sont sur 
 
 **Frontend** — fichier `frontend/.env` :
 ```dotenv
-VITE_TELEGRAM_BOT=MonBotRiskly               # le username du bot, SANS le @
+VITE_TELEGRAM_BOT_ID=8123456789              # les chiffres AVANT le ":" du token (non secret)
+VITE_TELEGRAM_BOT=MonBotRiskly               # username du bot, sans @ (informatif)
 VITE_API_URL=https://ton-back.exemple        # URL du backend
 ```
 
-> Le token du bot reste **uniquement côté serveur**. Le frontend n'a besoin que du
-> username du bot (public).
+> Le **token** reste uniquement côté serveur. Le frontend n'utilise que le
+> `bot_id` (les chiffres avant `:` dans le token) : c'est public, pas secret.
+> Le bouton « Se connecter avec Telegram » s'affiche toujours ; il ouvre la
+> popup Telegram au clic.
 
 ## 3. Lancer
 
@@ -54,6 +57,6 @@ Ouvre le site **via le domaine déclaré à BotFather** (pas `localhost`) → pa
 |---|---|---|
 | `TELEGRAM_BOT_TOKEN` | @BotFather (`/newbot`) | `backend/.env` |
 | domaine du bot | @BotFather (`/setdomain`) | — (config Telegram) |
-| `VITE_TELEGRAM_BOT` | username du bot, sans `@` | `frontend/.env` |
+| `VITE_TELEGRAM_BOT_ID` | chiffres avant `:` du token (non secret) | `frontend/.env` |
 | `SECRET_KEY` | tu la génères (aléatoire) | `backend/.env` |
 | `DATABASE_URL` | ton hébergeur Postgres | `backend/.env` |

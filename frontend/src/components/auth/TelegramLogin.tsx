@@ -1,61 +1,111 @@
-import { useEffect, useRef } from "react";
-import {
-  TELEGRAM_BOT_USERNAME,
-  TELEGRAM_CALLBACK_PATH,
-} from "@/lib/constants";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import * as authApi from "@/api/auth.api";
+import { useAuth } from "@/hooks/useAuth";
+import { TELEGRAM_BOT_ID } from "@/lib/constants";
+import type { TelegramAuthData } from "@/types/auth";
+
+// API exposée par https://telegram.org/js/telegram-widget.js
+declare global {
+  interface Window {
+    Telegram?: {
+      Login: {
+        auth: (
+          options: { bot_id: string; request_access?: string; lang?: string },
+          callback: (user: TelegramAuthData | false) => void,
+        ) => void;
+      };
+    };
+  }
+}
+
+function TelegramIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-5" aria-hidden>
+      <path
+        fill="#229ED9"
+        d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71l-4.14-3.05-1.99 1.93c-.23.23-.42.42-.83.42z"
+      />
+    </svg>
+  );
+}
 
 /**
- * Bouton officiel « Log in with Telegram ».
+ * Bouton « Se connecter avec Telegram » — TOUJOURS affiché, indépendamment de
+ * la configuration. Au clic, ouvre la popup officielle Telegram
+ * (window.Telegram.Login.auth), puis transmet les données signées au backend
+ * qui vérifie le hash et ouvre la session.
  *
- * On charge le widget officiel de Telegram en mode `data-auth-url` :
- * après autorisation dans l'app Telegram, le navigateur est redirigé vers
- * TELEGRAM_CALLBACK_PATH avec les données signées en query string. La page
- * TelegramCallback les transmet au backend, qui vérifie le `hash` et pose
- * le cookie de session HttpOnly.
- *
- * Pré-requis (une seule fois) :
- *   1. Créer un bot via @BotFather → récupérer le token (côté backend).
- *   2. `/setdomain` sur le bot avec le domaine exact du site.
- *   3. Renseigner VITE_TELEGRAM_BOT (nom du bot, sans @) dans le .env du front.
- *
- * Le widget ne fonctionne pas sur `localhost` : utiliser un domaine déclaré
- * (ou un tunnel type ngrok) pour tester en local.
+ * Config : VITE_TELEGRAM_BOT_ID (chiffres avant `:` dans le token du bot).
+ * Pré-requis Telegram : `/setdomain` sur le bot avec le domaine du site
+ * (le login ne fonctionne pas sur localhost).
  */
 export function TelegramLogin({ className }: { className?: string }) {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
+  const { refreshUser } = useAuth();
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
+  // Charge le script Telegram une seule fois (pour disposer de Telegram.Login.auth).
   useEffect(() => {
-    const container = containerRef.current;
-    if (!container || !TELEGRAM_BOT_USERNAME) return;
-
-    const authUrl = `${window.location.origin}${TELEGRAM_CALLBACK_PATH}`;
-
+    if (!TELEGRAM_BOT_ID || document.getElementById("telegram-widget-js")) return;
     const script = document.createElement("script");
+    script.id = "telegram-widget-js";
     script.src = "https://telegram.org/js/telegram-widget.js?22";
     script.async = true;
-    script.setAttribute("data-telegram-login", TELEGRAM_BOT_USERNAME);
-    script.setAttribute("data-size", "large");
-    script.setAttribute("data-radius", "12");
-    script.setAttribute("data-request-access", "write");
-    script.setAttribute("data-auth-url", authUrl);
-
-    container.appendChild(script);
-    return () => {
-      container.innerHTML = "";
-    };
+    document.body.appendChild(script);
   }, []);
 
-  if (!TELEGRAM_BOT_USERNAME) {
-    return (
-      <div className={className}>
-        <p className="rounded-lg border border-dashed border-border px-4 py-3 text-center text-xs text-text-muted">
-          Connexion Telegram non configurée — renseignez{" "}
-          <code className="font-mono">VITE_TELEGRAM_BOT</code>.
-        </p>
-      </div>
+  function handleClick() {
+    setError(null);
+
+    if (!TELEGRAM_BOT_ID || !window.Telegram?.Login) {
+      setError("Connexion Telegram non configurée (VITE_TELEGRAM_BOT_ID).");
+      return;
+    }
+
+    setPending(true);
+    window.Telegram.Login.auth(
+      { bot_id: TELEGRAM_BOT_ID, request_access: "write" },
+      (user) => {
+        if (!user) {
+          setPending(false); // popup fermée / refusée
+          return;
+        }
+        authApi
+          .loginTelegram(user)
+          .then(() => refreshUser())
+          .then(() => navigate("/app", { replace: true }))
+          .catch(() => {
+            setPending(false);
+            setError("La connexion Telegram a échoué. Veuillez réessayer.");
+          });
+      },
     );
   }
 
-  // Le widget injecte son propre bouton (iframe) dans ce conteneur.
-  return <div ref={containerRef} className={className} />;
+  return (
+    <div className={className}>
+      <Button
+        type="button"
+        variant="outline"
+        size="lg"
+        className="w-full"
+        disabled={pending}
+        onClick={handleClick}
+      >
+        {pending ? (
+          <Loader2 className="size-5 animate-spin text-text-muted" />
+        ) : (
+          <>
+            <TelegramIcon />
+            Se connecter avec Telegram
+          </>
+        )}
+      </Button>
+      {error && <p className="mt-2 text-xs text-avoid">{error}</p>}
+    </div>
+  );
 }

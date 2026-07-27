@@ -3,12 +3,13 @@
 /** Base de l'API backend. Surchargeable via VITE_API_URL. */
 export const API_BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
 
-/** Nom du bot Telegram (sans @) utilisé par le Login Widget.
- *  À créer via @BotFather, puis `/setdomain` sur le domaine du site. */
-export const TELEGRAM_BOT_USERNAME = import.meta.env.VITE_TELEGRAM_BOT ?? "";
+/** Identifiant NUMÉRIQUE du bot Telegram (les chiffres avant `:` dans le token,
+ *  non secret). Requis pour ouvrir la popup de login. Vide = login désactivé
+ *  (le bouton reste affiché mais inactif). */
+export const TELEGRAM_BOT_ID = import.meta.env.VITE_TELEGRAM_BOT_ID ?? "";
 
-/** Route frontend vers laquelle Telegram redirige après autorisation. */
-export const TELEGRAM_CALLBACK_PATH = "/telegram/callback";
+/** Nom du bot Telegram (sans @) — informatif / docs. */
+export const TELEGRAM_BOT_USERNAME = import.meta.env.VITE_TELEGRAM_BOT ?? "";
 
 /** Limite de domaines par analyse. */
 export const MAX_DOMAINS = 5;
