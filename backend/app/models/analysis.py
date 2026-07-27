@@ -1,0 +1,68 @@
+import enum
+import uuid
+from datetime import datetime
+from typing import List, Optional
+from sqlalchemy import DateTime, Enum, ForeignKey, Numeric
+from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from app.models.base import Base, UUIDPrimaryKeyMixin, utcnow
+
+class AnalysisStatus(str, enum.Enum):
+    PENDING = "pending"
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+class AnalysisVerdict(str, enum.Enum):
+    BON_ACHAT = "bon_achat"
+    RISQUE = "risque"
+    A_EVITER = "a_eviter"
+
+class Analysis(UUIDPrimaryKeyMixin, Base):
+    __tablename__ = "analysis"
+    status: Mapped[AnalysisStatus] = mapped_column(
+        Enum(AnalysisStatus, name="analysis_status"),
+        nullable=False,
+        default=AnalysisStatus.PENDING,
+    )
+    profitability_score: Mapped[Optional[float]] = mapped_column(Numeric(6, 2), nullable=True)
+    risk_score: Mapped[Optional[float]] = mapped_column(Numeric(6, 2), nullable=True)
+    authority_score: Mapped[Optional[float]] = mapped_column(Numeric(6, 2), nullable=True)
+    verdict: Mapped[Optional[AnalysisVerdict]] = mapped_column(
+        Enum(AnalysisVerdict, name="analysis_verdict"),
+        nullable=True,
+    )
+
+    shap_values: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+    requested_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, nullable=False
+    )
+    completed_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+
+    domain_id: Mapped[uuid.UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("domain.id"), nullable=False
+    )
+
+    domain_metric_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("domain_metric.id"), nullable=True
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
+    )
+    model_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("model.id"), nullable=True
+    )
+
+    domain: Mapped["Domain"] = relationship(back_populates="analyses")
+    domain_metric: Mapped[Optional["DomainMetric"]] = relationship(back_populates="analyses")
+    user: Mapped["Users"] = relationship(back_populates="analyses")
+    model: Mapped[Optional["Model"]] = relationship(back_populates="analyses")
+
+    api_logs: Mapped[List["ApiLog"]] = relationship(
+        back_populates="analysis",
+        cascade="all, delete-orphan",
+        order_by="ApiLog.call_date.desc()",
+    )
+

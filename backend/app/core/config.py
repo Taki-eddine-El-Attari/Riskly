@@ -1,38 +1,23 @@
-"""Configuration centrale de l'application (chargée depuis l'environnement / .env)."""
-
-from __future__ import annotations
-
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-    # --- Base de données ---
-    # SQLite par défaut pour le développement ; surcharger par une URL Postgres en prod.
-    database_url: str = "sqlite:///./riskly.db"
+    DATABASE_URL: str 
 
-    # --- Sécurité ---
-    secret_key: str = "dev-secret-a-changer"
+    SECRET_KEY: str 
 
-    # --- Telegram Login Widget ---
-    telegram_bot_token: str = ""
-    # Fraîcheur maximale d'un login Telegram (anti-rejeu), en secondes.
-    telegram_auth_max_age: int = 86_400
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60*24
 
-    # --- CORS ---
-    # Origines autorisées (front), séparées par des virgules.
-    cors_origins: str = "http://localhost:5173"
-
-    # --- Cookie de session ---
-    cookie_name: str = "riskly_session"
-    cookie_max_age: int = 60 * 60 * 24 * 30  # 30 jours
-    cookie_secure: bool = False  # True obligatoire en prod (HTTPS)
-    cookie_samesite: str = "lax"  # "none" si front et back sur des domaines différents
-
-    @property
-    def cors_origins_list(self) -> list[str]:
-        return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
-
-
+    # Rendre obligatoires une fois la clé est ajouté
+    # Par défaut vides  pour le développement initial et  pour le démarrage  de l'app normalement maintenant
+    OPEN_PAGERANK_API_KEY: str = ""
+    INTERNAL_TOOL_API_URL: str = ""
+    INTERNAL_TOOL_API_KEY: str = ""
+ 
+    MODEL_PATH: str = "app/ml/artifacts/model_v1.pkl"
+    MODEL_VERSION: str = "v1"
+    
 settings = Settings()

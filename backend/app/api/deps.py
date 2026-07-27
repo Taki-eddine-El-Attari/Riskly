@@ -1,25 +1,23 @@
-"""Dépendances FastAPI partagées par les endpoints."""
+import uuid
 
-from __future__ import annotations
-
-from typing import Annotated
-
-from fastapi import Cookie, Depends
+from fastapi import Depends, Request
 from sqlalchemy.orm import Session
 
-from app.core.config import settings
 from app.core.database import get_db
+from app.core.exceptions import AuthenticationError
 from app.models.user import User
-from app.services.auth_service import AuthService
-
-
-def get_auth_service(db: Annotated[Session, Depends(get_db)]) -> AuthService:
-    return AuthService(db)
 
 
 def get_current_user(
-    auth: Annotated[AuthService, Depends(get_auth_service)],
-    session_token: Annotated[str | None, Cookie(alias=settings.cookie_name)] = None,
+    request: Request,
+    db: Session = Depends(get_db),
 ) -> User:
-    """Exige une session valide (cookie HttpOnly). Renvoie 401 sinon."""
-    return auth.user_from_session(session_token)
+    user_id = request.session.get("user_id")
+    if user_id is None:
+        raise AuthenticationError("Non authentifié.")
+
+    user = db.query(User).filter(User.id == uuid.UUID(str(user_id))).first()
+    if user is None:
+        raise AuthenticationError("Utilisateur associé au token introuvable.")
+
+    return user

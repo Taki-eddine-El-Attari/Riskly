@@ -1,58 +1,99 @@
-"""Logique métier de l'authentification Telegram + session."""
-
-from __future__ import annotations
-
-from fastapi import HTTPException, status
+from uuid import UUID
+from typing import Optional
+from fastapi import Request
 from sqlalchemy.orm import Session
 
-from app.core.config import settings
-from app.core.security import (
-    create_session_token,
-    read_session_token,
-    verify_telegram_auth,
+from app.core.security import hash_password, verify_password
+from app.core.exceptions import (
+    UsernameDejaUtiliseError,
+    IdentifiantsInvalidesError,
+    MotDePasseFaibleError,
+    PermissionInsuffisanteError,
+    UtilisateurNonTrouveError,
+    ProtectionSuperadminError,
+    AutoSuppressionError,
 )
-from app.models.user import User
 from app.repositories.user_repo import UserRepository
-from app.schemas.user import TelegramAuthData
+from app.models.user import User
+
+MIN_PASSWORD_LENGTH = 8
 
 
 class AuthService:
-    def __init__(self, db: Session) -> None:
-        self.users = UserRepository(db)
+    def __init__(self, db: Session):
+        self.db = db
+        self.user_repo = UserRepository(db)
 
-    def authenticate_telegram(self, data: TelegramAuthData) -> tuple[User, str]:
-        """Vérifie les données Telegram, crée/retrouve l'utilisateur,
-        et renvoie (utilisateur, jeton de session)."""
-        if not settings.telegram_bot_token:
-            raise HTTPException(
-                status.HTTP_503_SERVICE_UNAVAILABLE,
-                "TELEGRAM_BOT_TOKEN non configuré côté serveur.",
-            )
+    def register(self, username: str, password: str, entite: Optional[str] = None) -> User:
+        if self.user_repo.exists(username):
+            raise UsernameDejaUtiliseError(username)
 
-        # On ne signe que les champs réellement envoyés par Telegram.
-        fields = data.model_dump(exclude_none=True)
-        if not verify_telegram_auth(
-            fields, settings.telegram_bot_token, settings.telegram_auth_max_age
-        ):
-            raise HTTPException(
-                status.HTTP_401_UNAUTHORIZED,
-                "Vérification Telegram échouée (signature invalide ou expirée).",
-            )
+        if len(password) < MIN_PASSWORD_LENGTH:
+            raise MotDePasseFaibleError(MIN_PASSWORD_LENGTH)
 
-        user = self.users.upsert_from_telegram(data)
-        token = create_session_token(user.id)
-        return user, token
+        return self.user_repo.create(
+            username=username.lower().strip(),
+            password_hash=hash_password(password),
+            role="user",
+            entite=entite,
+        )
 
-    def user_from_session(self, token: str | None) -> User:
-        """Résout l'utilisateur à partir du cookie de session signé."""
-        if not token:
-            raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Non authentifié.")
+    def login(self, request: Request, username: str, password: str) -> User:
+        user = self.user_repo.get_by_username(username)
 
-        user_id = read_session_token(token, settings.cookie_max_age)
-        if user_id is None:
-            raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Session invalide.")
+        if user is None or not verify_password(password, user.password_hash):
+            raise IdentifiantsInvalidesError()
 
-        user = self.users.get_by_id(int(user_id))
-        if user is None:
-            raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Utilisateur introuvable.")
+        request.session["user_id"] = str(user.id)
         return user
+
+    def logout(self, request: Request) -> None:
+        request.session.clear()
+
+    def create_admin(self, current_user: User, username: str, password: str) -> User:
+        if current_user.role != "superadmin":
+            raise PermissionInsuffisanteError("Seul le superadmin peut creer des comptes admin")
+
+        if self.user_repo.exists(username):
+            raise UsernameDejaUtiliseError(username)
+
+        return self.user_repo.create(
+            username=username.lower().strip(),
+            password_hash=hash_password(password),
+            role="admin",
+        )
+
+    def change_password(self, user: User, current_password: str, new_password: str) -> bool:
+        if not verify_password(current_password, user.password_hash):
+            raise IdentifiantsInvalidesError()
+
+        if len(new_password) < MIN_PASSWORD_LENGTH:
+            raise MotDePasseFaibleError(MIN_PASSWORD_LENGTH)
+
+        return self.user_repo.update_password(user.id, hash_password(new_password))
+
+    def reset_password(self, current_user: User, target_user_id: UUID, new_password: str) -> bool:
+        if current_user.role not in ("admin", "superadmin"):
+            raise PermissionInsuffisanteError()
+
+        target = self.user_repo.get_by_id(target_user_id)
+        if target is None:
+            raise UtilisateurNonTrouveError()
+
+        if target.role == "superadmin" and current_user.role != "superadmin":
+            raise ProtectionSuperadminError("Impossible de modifier le superadmin")
+
+        return self.user_repo.update_password(target_user_id, hash_password(new_password))
+
+    def delete_user(self, current_user: User, target_user_id: UUID) -> bool:
+        if current_user.role != "superadmin":
+            raise PermissionInsuffisanteError("Seul le superadmin peut supprimer des comptes")
+
+        if str(current_user.id) == str(target_user_id):
+            raise AutoSuppressionError()
+
+        target = self.user_repo.get_by_id(target_user_id)
+        if target and target.role == "superadmin":
+            raise ProtectionSuperadminError("Impossible de supprimer le superadmin")
+
+        return self.user_repo.delete(target_user_id)

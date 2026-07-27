@@ -1,50 +1,55 @@
-"""Primitives de sécurité : vérification du login Telegram + jetons de session signés."""
-
-from __future__ import annotations
-
-import hashlib
-import hmac
-import time
-
-from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
-
+import bcrypt
+from fastapi import Depends , HTTPException ,Request , status, Response
+from sqlalchemy.orm import Session
 from app.core.config import settings
-
-_serializer = URLSafeTimedSerializer(settings.secret_key, salt="riskly-session")
-
-
-def verify_telegram_auth(fields: dict[str, object], bot_token: str, max_age: int) -> bool:
-    """Vérifie la signature du Login Widget Telegram.
-
-    `fields` = données envoyées par Telegram (le `hash` inclus, les None exclus).
-    L'algorithme officiel :
-      1. data_check_string = "clé=valeur" triées par clé, jointes par "\\n" (sans hash) ;
-      2. clé secrète = SHA256(bot_token) ;
-      3. hash attendu = HMAC-SHA256(data_check_string, clé secrète).
-    On compare en temps constant, puis on vérifie la fraîcheur (anti-rejeu).
-    """
-    received_hash = str(fields.get("hash", ""))
-    check = {k: v for k, v in fields.items() if k != "hash"}
-    check_string = "\n".join(f"{k}={check[k]}" for k in sorted(check))
-
-    secret_key = hashlib.sha256(bot_token.encode()).digest()
-    computed_hash = hmac.new(
-        secret_key, check_string.encode(), hashlib.sha256
-    ).hexdigest()
-
-    if not hmac.compare_digest(computed_hash, received_hash):
-        return False
-    return (time.time() - int(fields.get("auth_date", 0))) < max_age
+from app.core.database import get_db
+from app.models.user import User
 
 
-def create_session_token(user_id: int) -> str:
-    """Sérialise l'identifiant utilisateur dans un jeton signé (posé en cookie)."""
-    return _serializer.dumps(str(user_id))
+def hash_password(mot_de_passe: str) -> str:
+    hashed= bcrypt.hashpw(mot_de_passe.encode("utf-8"), bcrypt.gensalt())
+    return hashed.decode("utf-8")
 
+def verify_password(mot_de_passe: str, mot_de_passe_hash: str) -> bool:
+    return bcrypt.checkpw(mot_de_passe.encode("utf-8"), mot_de_passe_hash.encode("utf-8"))
 
-def read_session_token(token: str, max_age: int) -> str | None:
-    """Renvoie l'identifiant utilisateur si le jeton est valide et non expiré, sinon None."""
-    try:
-        return _serializer.loads(token, max_age=max_age)
-    except (BadSignature, SignatureExpired):
-        return None
+def set_auth_cookie(request: Request, user_id: str)-> None :
+ request.session["user_id"] = str(user_id)
+
+def  clear_auth_cookie(request: Request) -> None: 
+   request.session.pop("user_id", None)
+ 
+async def get_current_user(
+        request : Request,
+        db: Session = Depends(get_db)
+)-> User:
+ user_id=request.session.get("user_id")
+
+ if user_id is None:
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Non authentifié",
+    )
+ user = db.query(User).filter(User.id == user_id).first()
+ if user is None :
+    raise HTTPException(
+       status_code=status.HTTP_401_UNAUTHORIZED,
+       detail="Utulisateur non trouvé" 
+    )
+ return user
+
+def require_role(*allowed_roles : str):
+   def role_checker(current_user : User = Depends(get_current_user))-> User:
+      if current_user.role not in allowed_roles :
+         raise HTTPException(
+            status_code = status.HTTP_403_FORBIDDEN,
+            detail=f"Role requis : {','.join(allowed_roles)}"
+         )
+      return current_user
+   return role_checker
+
+require_admin=require_role("admin","superadmin")
+require_superadmin= require_role("superadmin")
+require_autheticated=require_role("user","admin","superadmin")
+
+    

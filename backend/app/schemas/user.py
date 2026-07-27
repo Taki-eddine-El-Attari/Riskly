@@ -1,53 +1,46 @@
-"""Schemas Pydantic pour l'authentification et l'exposition des utilisateurs."""
+import uuid
+from datetime import datetime
+from enum import Enum
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from __future__ import annotations
-
-from typing import TYPE_CHECKING
-
-from pydantic import BaseModel
-
-if TYPE_CHECKING:
-    from app.models.user import User
+class UserRole(str, Enum):
+    superadmin = "superadmin"
+    admin = "admin"
+    user = "user"
 
 
-class TelegramAuthData(BaseModel):
-    """Données brutes renvoyées par le Login Widget Telegram (à vérifier)."""
+class UserRegister(BaseModel):
+    name: str = Field(..., min_length=2, max_length=100)
+    password: str = Field(..., min_length=8, max_length=128)
 
-    id: int
-    first_name: str
-    last_name: str | None = None
-    username: str | None = None
-    photo_url: str | None = None
-    auth_date: int
-    hash: str
+    @field_validator("password")
+    @classmethod
+    def password_complexity(cls, value: str) -> str:
+        if not any(char.isdigit() for char in value):
+            raise ValueError("Le mot de passe doit contenir au moins un chiffre.")
+        if not any(char.isupper() for char in value):
+            raise ValueError("Le mot de passe doit contenir au moins une majuscule.")
+        return value
+
+
+class UserLogin(BaseModel):
+    name: str = Field(..., min_length=2, max_length=100)
+    password: str = Field(..., min_length=1)
 
 
 class UserRead(BaseModel):
-    """Utilisateur exposé au frontend (miroir de frontend/src/types/auth.ts)."""
+    model_config = ConfigDict(from_attributes=True) 
+    id: uuid.UUID
+    name: str
+    role: UserRole
+    created_at: datetime
+   
 
-    id: str
-    telegramId: int
-    username: str | None
-    displayName: str
-    photoUrl: str | None
-    role: str
-    entity: str | None
+class Token(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
 
-    @classmethod
-    def from_model(cls, user: "User") -> "UserRead":
-        return cls(
-            id=str(user.id),
-            telegramId=user.telegram_id,
-            username=user.username,
-            displayName=user.display_name,
-            photoUrl=user.photo_url,
-            role=user.role,
-            entity=user.entity,
-        )
+class TokenPayload(BaseModel):
 
-
-class AuthResponse(BaseModel):
-    """Réponse des endpoints d'auth : uniquement l'utilisateur (jamais de token :
-    la session vit dans un cookie HttpOnly)."""
-
-    user: UserRead
+    sub: uuid.UUID 
+    exp: datetime
