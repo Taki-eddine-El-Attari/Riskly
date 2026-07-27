@@ -1,1 +1,1 @@
-export type { Role, User, TelegramAuthData, AuthResponse } from "./auth";
+export type { Role, AuthMethod, User, TelegramAuthData } from "./auth";

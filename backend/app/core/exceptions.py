@@ -116,3 +116,64 @@ class ExternalServiceUnavailableError(ExternalAPIError):
     status_code = 503
     def __init__(self, source_name: str):
         super().__init__(source_name, "Service temporairement indisponible.")
+
+
+# ---------------------------------------------------------------------------
+# Exceptions d'authentification (utilisées par auth_service / deps / auth API)
+# ---------------------------------------------------------------------------
+class AuthenticationError(RisklyException):
+    status_code = 401
+    def __init__(self, message: str = "Non authentifié."):
+        super().__init__(message)
+
+
+class UsernameDejaUtiliseError(RisklyException):
+    status_code = 409
+    def __init__(self, username: str):
+        self.username = username
+        super().__init__(f"Le nom d'utilisateur '{username}' est déjà utilisé.")
+
+
+class IdentifiantsInvalidesError(RisklyException):
+    status_code = 401
+    def __init__(self, message: str = "Identifiants invalides."):
+        super().__init__(message)
+
+
+class MotDePasseFaibleError(RisklyException):
+    status_code = 422
+    def __init__(self, min_length: int = 8):
+        self.min_length = min_length
+        super().__init__(
+            f"Mot de passe trop faible : {min_length} caractères minimum."
+        )
+
+
+class PermissionInsuffisanteError(RisklyException):
+    status_code = 403
+    def __init__(self, message: str = "Permissions insuffisantes."):
+        super().__init__(message)
+
+
+class UtilisateurNonTrouveError(RisklyException):
+    status_code = 404
+    def __init__(self, message: str = "Utilisateur introuvable."):
+        super().__init__(message)
+
+
+class ProtectionSuperadminError(RisklyException):
+    status_code = 403
+    def __init__(self, message: str = "Action interdite sur le superadmin."):
+        super().__init__(message)
+
+
+class AutoSuppressionError(RisklyException):
+    status_code = 400
+    def __init__(self, message: str = "Vous ne pouvez pas supprimer votre propre compte."):
+        super().__init__(message)
+
+
+class TelegramAuthError(RisklyException):
+    status_code = 401
+    def __init__(self, message: str = "Vérification Telegram échouée (signature invalide ou expirée)."):
+        super().__init__(message)

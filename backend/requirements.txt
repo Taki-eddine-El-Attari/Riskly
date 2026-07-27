@@ -1,8 +1,14 @@
-# Auth Telegram + API
+# --- API ---
 fastapi>=0.115
 uvicorn[standard]>=0.30
 pydantic>=2.7
 pydantic-settings>=2.3
+
+# --- Base de données (Postgres) ---
 sqlalchemy>=2.0
-itsdangerous>=2.2
+psycopg[binary]>=3.2
+
+# --- Auth ---
+bcrypt>=4.1          # hachage des mots de passe (auth locale)
+itsdangerous>=2.2    # signature du cookie de session (SessionMiddleware)
 python-dotenv>=1.0
