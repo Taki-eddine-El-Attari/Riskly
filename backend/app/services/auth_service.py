@@ -3,7 +3,8 @@ from typing import Optional
 from fastapi import Request
 from sqlalchemy.orm import Session
 
-from app.core.security import hash_password, verify_password
+from app.core.config import settings
+from app.core.security import hash_password, verify_password, verify_telegram_auth
 from app.core.exceptions import (
     UsernameDejaUtiliseError,
     IdentifiantsInvalidesError,
@@ -12,9 +13,11 @@ from app.core.exceptions import (
     UtilisateurNonTrouveError,
     ProtectionSuperadminError,
     AutoSuppressionError,
+    TelegramAuthError,
 )
 from app.repositories.user_repo import UserRepository
 from app.models.user import User
+from app.schemas.user import TelegramAuthData
 
 MIN_PASSWORD_LENGTH = 8
 
@@ -39,7 +42,8 @@ class AuthService:
         )
 
     def login(self, request: Request, username: str, password: str) -> User:
-        user = self.user_repo.get_by_username(username)
+        # register() stocke le username en minuscules → normaliser la recherche.
+        user = self.user_repo.get_by_username(username.lower().strip())
 
         if user is None or not verify_password(password, user.password_hash):
             raise IdentifiantsInvalidesError()
@@ -49,6 +53,26 @@ class AuthService:
 
     def logout(self, request: Request) -> None:
         request.session.clear()
+
+    def authenticate_telegram(self, request: Request, data: TelegramAuthData) -> User:
+        """Login/register via le Login Widget Telegram : vérifie la signature,
+        crée/retrouve le compte (clé = telegram_id), ouvre la session."""
+        if not settings.TELEGRAM_BOT_TOKEN:
+            raise TelegramAuthError("Connexion Telegram non configurée côté serveur.")
+
+        fields = data.model_dump(exclude_none=True)
+        if not verify_telegram_auth(
+            fields, settings.TELEGRAM_BOT_TOKEN, settings.TELEGRAM_AUTH_MAX_AGE
+        ):
+            raise TelegramAuthError()
+
+        user = self.user_repo.upsert_from_telegram(
+            telegram_id=data.id,
+            telegram_username=data.username,
+            first_name=data.first_name,
+        )
+        request.session["user_id"] = str(user.id)
+        return user
 
     def create_admin(self, current_user: User, username: str, password: str) -> User:
         if current_user.role != "superadmin":

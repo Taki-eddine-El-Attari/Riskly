@@ -9,6 +9,47 @@ class UserRepository:
     def __init__(self, db: Session):
         self.db = db
 
+    # --- Telegram ---------------------------------------------------------
+    def get_by_telegram_id(self, telegram_id: int) -> Optional[User]:
+        return self.db.query(User).filter(User.telegram_id == telegram_id).first()
+
+    def upsert_from_telegram(
+        self,
+        telegram_id: int,
+        telegram_username: Optional[str],
+        first_name: Optional[str] = None,
+    ) -> User:
+        """Crée le compte au 1er login Telegram (auth_method='telegram'),
+        sinon rafraîchit le telegram_username. La clé est telegram_id."""
+        user = self.get_by_telegram_id(telegram_id)
+        if user is not None:
+            user.telegram_username = telegram_username
+            self.db.commit()
+            self.db.refresh(user)
+            return user
+
+        # `username` est UNIQUE NOT NULL : on en dérive un à partir du handle
+        # Telegram (ou de l'id), en garantissant l'unicité.
+        base = (telegram_username or f"tg_{telegram_id}").lower().strip()
+        username = base
+        suffix = 1
+        while self.exists(username):
+            username = f"{base}_{suffix}"
+            suffix += 1
+
+        user = User(
+            telegram_id=telegram_id,
+            telegram_username=telegram_username,
+            username=username,
+            role="user",
+            auth_method="telegram",
+            password_hash=None,
+        )
+        self.db.add(user)
+        self.db.commit()
+        self.db.refresh(user)
+        return user
+
     def create(
         self,
         username: str,
