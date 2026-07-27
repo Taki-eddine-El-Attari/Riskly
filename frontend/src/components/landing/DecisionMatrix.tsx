@@ -1,5 +1,5 @@
 import { Fragment, useState } from "react";
-import { BlurFade } from "./BlurFade";
+import { BlurFade } from "./effects/BlurFade";
 
 type Verdict = "good" | "risky" | "avoid";
 

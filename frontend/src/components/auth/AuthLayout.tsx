@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { Globe } from "@/components/Globe";
-import { RisklyLogo } from "@/components/RisklyLogo";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { Globe } from "@/components/landing/effects/Globe";
+import { RisklyLogo } from "@/components/landing/RisklyLogo";
+import { ThemeToggle } from "@/components/landing/ThemeToggle";
 import { Separator } from "@/components/ui/separator";
 
 function Logo() {

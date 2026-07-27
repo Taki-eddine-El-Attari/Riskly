@@ -14,7 +14,7 @@ function TelegramIcon() {
   );
 }
 
-export function OAuthButtons({ className }: { className?: string }) {
+export function TelegramLogin({ className }: { className?: string }) {
   const navigate = useNavigate();
   const [pending, setPending] = useState(false);
 

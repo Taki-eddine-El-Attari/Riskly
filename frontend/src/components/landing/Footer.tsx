@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { RisklyLogo } from "./RisklyLogo";
-import { BlurFade } from "./BlurFade";
-import { AnimatedGridPattern } from "./AnimatedGridPattern";
+import { BlurFade } from "./effects/BlurFade";
+import { AnimatedGridPattern } from "./effects/AnimatedGridPattern";
 
 export default function Footer() {
   return (

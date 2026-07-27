@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import AuthLayout, { AuthDivider } from "@/components/auth/AuthLayout";
-import { OAuthButtons } from "@/components/auth/OAuthButtons";
+import { TelegramLogin } from "@/components/auth/TelegramLogin";
 import { PasswordInput } from "@/components/auth/PasswordInput";
 import { PasswordStrength, scorePassword } from "@/components/auth/PasswordStrength";
 import { Button } from "@/components/ui/button";
@@ -53,7 +53,7 @@ export default function Register() {
         Gratuit, jusqu'à 5 domaines par analyse et un verdict en moins de 15 secondes.
       </p>
 
-      <OAuthButtons className="mt-8" />
+      <TelegramLogin className="mt-8" />
 
       <AuthDivider label="ou" />
 

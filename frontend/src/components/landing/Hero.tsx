@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useReducedMotion } from "motion/react";
 import { ArrowRight, Globe } from "lucide-react";
-import { BlurFade } from "./BlurFade";
-import { BorderBeam } from "./BorderBeam";
+import { BlurFade } from "./effects/BlurFade";
+import { BorderBeam } from "./effects/BorderBeam";
 
 const examples = [
   "exemple-domaine.com",

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { BlurFade } from "./BlurFade";
+import { BlurFade } from "./effects/BlurFade";
 
 const faqs = [
   {

@@ -1,5 +1,5 @@
-import { BlurFade } from "./BlurFade";
-import { TiltCard } from "./TiltCard";
+import { BlurFade } from "./effects/BlurFade";
+import { TiltCard } from "./effects/TiltCard";
 
 const steps = [
   {
