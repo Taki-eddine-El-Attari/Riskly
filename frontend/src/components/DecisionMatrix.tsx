@@ -21,8 +21,6 @@ const verdictLabel: Record<Verdict, string> = {
   avoid: "À éviter",
 };
 
-// lignes = risque (faible -> élevé), colonnes = autorité (forte -> faible).
-// Reprend la matrice de décision finale du PRD (section 10).
 const matrix: Verdict[][] = [
   ["good", "good", "risky"],
   ["risky", "risky", "avoid"],

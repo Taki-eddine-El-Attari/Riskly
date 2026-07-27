@@ -1,6 +1,5 @@
 import { cn } from "@/lib/utils";
 
-// Robustesse affichée comme un verdict Riskly : mêmes couleurs, badge mono.
 const LEVELS = [
   { label: "TROP FAIBLE", bar: "bg-avoid", text: "text-avoid" },
   { label: "FAIBLE", bar: "bg-avoid", text: "text-avoid" },

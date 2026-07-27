@@ -15,7 +15,6 @@ export const BorderBeam = ({
   duration = 15,
   anchor = 90,
   borderWidth = 1.5,
-  // couleurs projet : accent cyan → bleu profond
   colorFrom = "#22d3ee",
   colorTo = "#0891b2",
   delay = 0,

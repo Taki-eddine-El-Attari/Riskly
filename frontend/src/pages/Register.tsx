@@ -41,7 +41,6 @@ export default function Register() {
     if (Object.keys(errs).length > 0) return;
 
     setPending(true);
-    // ponytail: auth simulée, brancher POST /auth/register quand le backend existera
     setTimeout(() => navigate("/app"), 900);
   }
 
@@ -83,7 +82,7 @@ export default function Register() {
           <Input
             id="entity"
             type="text"
-            placeholder="CMH"
+            placeholder="CMH5"
             autoComplete="organization"
             value={entity}
             onChange={(e) => setEntity(e.target.value)}

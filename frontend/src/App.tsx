@@ -3,7 +3,6 @@ import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 
-// ponytail: pages app en placeholder, construites au Jour 4
 function Placeholder({ title }: { title: string }) {
   return (
     <main className="flex min-h-screen items-center justify-center">

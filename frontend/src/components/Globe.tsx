@@ -3,7 +3,7 @@ import createGlobe from "cobe";
 import { useReducedMotion } from "motion/react";
 import { useTheme } from "@/lib/theme";
 
-// Globe cobe v2 : points de présence (TLD) + arcs vers les sources de données.
+// Globe cobe : points de présence (TLD) + arcs vers les sources de données.
 // Les étiquettes flottantes s'accrochent aux ancres CSS exposées par cobe
 // (--cobe-<id> / --cobe-visible-<id>), rendues uniquement si le navigateur
 // supporte CSS Anchor Positioning, sinon le globe reste seul (dégradation propre).
@@ -28,7 +28,7 @@ interface GlobeProps {
   speed?: number;
 }
 
-// Villes → TLD analysés (clin d'œil : .ma, cf. exemples du hero).
+// Villes → TLD analysés (clin d'œil : .ma, .cf).
 const defaultMarkers: GlobeMarker[] = [
   { id: "tld-com", location: [38.95, -77.45], label: ".com" },
   { id: "tld-io", location: [37.62, -122.38], label: ".io" },
@@ -52,7 +52,6 @@ const defaultArcs: GlobeArc[] = [
   { id: "src-dns", from: [33.57, -7.59], to: [49.01, 2.55], source: "DNS" },
 ];
 
-// #22D3EE (accent cyan) en RGB normalisé pour cobe.
 const CYAN: [number, number, number] = [34 / 255, 211 / 255, 238 / 255];
 
 const supportsAnchors =
@@ -176,7 +175,6 @@ export function Globe({
     };
   }, [markers, arcs, isLight]);
 
-  // Petite pyramide 3D en CSS qui tourne au-dessus de chaque point.
   const pyramidFaceStyle = (nth: number): React.CSSProperties => {
     const transforms = [
       "rotateY(0deg) translateZ(4px) rotateX(19.5deg)",

@@ -3,7 +3,6 @@ import { ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { BlurFade } from "./BlurFade";
 
-// Accordéon FAQ avec animations douces d'ouverture et de fermeture.
 const faqs = [
   {
     q: "D'où viennent les données ?",

@@ -12,7 +12,7 @@ const sources = [
 ];
 
 export default function Sources() {
-  const items = [...sources, ...sources]; // dupliqué pour la boucle infinie du marquee
+  const items = [...sources, ...sources];
 
   return (
     <section id="sources" className="border-y border-border py-10">

@@ -56,7 +56,6 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Wordmark géant façon Komta : dégradé qui s'estompe vers le bas */}
         <div className="overflow-hidden px-6" aria-hidden>
           <p className="select-none whitespace-nowrap text-center font-display text-[21vw] font-bold leading-[0.8] tracking-[-0.03em]">
             <span className="bg-gradient-to-b from-text/20 to-text/[0.02] bg-clip-text text-transparent">

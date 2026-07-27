@@ -6,7 +6,6 @@ import {
   useTransform,
 } from "motion/react";
 
-/** Carte avec tilt 3D qui suit la souris (effet repris de la carte login 21st.dev). */
 export function TiltCard({
   children,
   className,
@@ -15,7 +14,6 @@ export function TiltCard({
   className?: string;
 }) {
   const reduced = useReducedMotion();
-  // position normalisée du curseur dans la carte : -0.5 (bord gauche/haut) → 0.5
   const mx = useMotionValue(0);
   const my = useMotionValue(0);
   const rotateX = useSpring(useTransform(my, [-0.5, 0.5], [8, -8]), {

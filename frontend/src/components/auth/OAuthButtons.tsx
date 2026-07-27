@@ -20,7 +20,6 @@ export function OAuthButtons({ className }: { className?: string }) {
 
   function handleClick() {
     setPending(true);
-    // ponytail: connexion Telegram simulée, brancher le login widget Telegram quand le backend existera
     setTimeout(() => navigate("/app"), 800);
   }
 

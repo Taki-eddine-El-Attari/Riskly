@@ -12,7 +12,6 @@ const examples = [
   "agence-web.ma",
 ];
 
-/** Placeholder qui se tape et s'efface en boucle, façon sites de vibecoding. */
 function useTypingPlaceholder(paused: boolean) {
   const reduced = useReducedMotion();
   const [phase, setPhase] = useState({ i: 0, len: 0, deleting: false });
@@ -38,7 +37,6 @@ function useTypingPlaceholder(paused: boolean) {
     return () => clearTimeout(t);
   }, [phase, paused, reduced, word.length]);
 
-  // Le texte est dérivé de la phase : impossible de se désynchroniser.
   return reduced ? examples[0] : word.slice(0, phase.len);
 }
 
