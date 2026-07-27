@@ -177,24 +177,6 @@ body {
   }
 }
 
-/* Marquee des sources de données */
-.marquee {
-  overflow: hidden;
-  mask-image: linear-gradient(90deg, transparent, black 12%, black 88%, transparent);
-}
-
-.marquee-track {
-  display: flex;
-  width: max-content;
-  animation: marquee 32s linear infinite;
-}
-
-@keyframes marquee {
-  to {
-    transform: translateX(-50%);
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -207,7 +189,6 @@ body {
 
   .hero-glow,
   .typing-caret,
-  .marquee-track,
   .globe-pyramid {
     animation: none;
   }
