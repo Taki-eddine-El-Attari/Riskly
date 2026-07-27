@@ -5,8 +5,6 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script>
-      // Thème anti-FOUC : applique `.light` AVANT le premier rendu si l'utilisateur
-      // l'a choisi. Défaut = sombre (dark-first). Source : src/lib/theme.ts.
       try {
         if (localStorage.getItem("riskly-theme") === "light") {
           document.documentElement.classList.add("light");

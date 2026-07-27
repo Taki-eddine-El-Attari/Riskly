@@ -19,7 +19,6 @@ const sources = [
   { name: "ip-api", icon: MapPin },
 ];
 
-// Vitesse de défilement en pixels par seconde.
 const SPEED = 40;
 
 function SourceSet({ setRef }: { setRef?: React.Ref<HTMLDivElement> }) {
@@ -44,8 +43,6 @@ export default function Sources() {
   const x = useMotionValue(0);
   const reduceMotion = useReducedMotion();
 
-  // Largeur d'un jeu de sources et nombre de copies nécessaires pour couvrir
-  // en permanence le viewport (boucle réellement infinie, sans trou).
   const [setWidth, setSetWidth] = useState(0);
   const [copies, setCopies] = useState(2);
 
@@ -59,7 +56,6 @@ export default function Sources() {
       const cw = container.offsetWidth;
       if (sw <= 0) return;
       setSetWidth(sw);
-      // Assez de copies pour remplir 2× le conteneur + 1 de marge de sécurité.
       setCopies(Math.max(2, Math.ceil((cw * 2) / sw) + 1));
     };
 
@@ -73,8 +69,6 @@ export default function Sources() {
   useAnimationFrame((_, delta) => {
     if (reduceMotion || setWidth === 0) return;
     const moveBy = (SPEED * delta) / 1000;
-    // On enroule la position dans [-setWidth, 0] : quand un jeu complet a
-    // défilé, on revient à 0 sur un contenu identique → raccord invisible.
     x.set(wrap(-setWidth, 0, x.get() - moveBy));
   });
 
