@@ -230,11 +230,12 @@ Classes maison définies dans `index.css`, au-delà des utilitaires Tailwind.
 | `.hero-glow` + `@keyframes glow-pulse` | Halo cyan (12 %) qui respire (5 s) | Fond hero, panneau auth, CTA footer |
 | `.typing-caret` + `@keyframes caret-blink` | Curseur clignotant (1 s) | Placeholder qui se tape (hero) |
 | `.globe-pyramid` + `@keyframes pyramid-spin` | Pyramide 3D en rotation (4 s) | Marqueurs du globe (auth) |
-| `.marquee` / `.marquee-track` + `@keyframes marquee` | Défilement horizontal infini (32 s), masqué aux bords | Bande des sources |
 | `.border-beam-layer` + `@keyframes border-beam` | Lueur qui parcourt la bordure d'un conteneur | Champ hero (composant `BorderBeam`) |
 
 **Toutes** ces animations sont coupées sous `@media (prefers-reduced-motion: reduce)`
-(`hero-glow`, `typing-caret`, `marquee-track`, `globe-pyramid`, `border-beam`, `scroll-behavior`).
+(`hero-glow`, `typing-caret`, `globe-pyramid`, `border-beam`, `scroll-behavior`).
+Le défilement des sources (`Sources`) est piloté en JS via Motion et respecte
+lui aussi `useReducedMotion` (bande statique quand le mouvement est réduit).
 
 ---
 
@@ -258,7 +259,7 @@ Deux moteurs : **Framer Motion** (`motion/react`) pour l'orchestration, **CSS** 
 - **Sections** : `BlurFade inView` sur les titres, puis `delay` incrémental sur les items (`i * 0.1` / `i * 0.15` / `i * 0.08`).
 - **Compteurs** *(cible)* : score de 0 → valeur avec `useMotionValue` + `useTransform`, ~1.2 s ease-out. `🚧 À construire` (voir `ScoreGauge`, §12).
 - **Hover cartes** : `translateY(-2px)` + bordure `accent/40`, transition 150 ms — en CSS pur (via classes), pas Motion.
-- **Marquee sources** : CSS `@keyframes`, pas de lib.
+- **Carrousel sources** : boucle infinie pilotée par Motion (`useAnimationFrame` + `wrap`), largeur mesurée et copies dupliquées pour couvrir tout viewport sans trou (`Sources`).
 
 > **Règle app** : sur les pages `/app`, `/history`, `/report`, **pas d'animations d'entrée**. Seulement des transitions d'état 150 ms (hover, focus, ouverture d'accordéon). Le mouvement marketing reste sur la landing.
 
@@ -358,9 +359,11 @@ Table de décision (référence PRD) :
 | **Modéré (26–60)** | Risqué | Risqué | À éviter |
 | **Élevé (61–100)** | À éviter | À éviter | À éviter |
 
-### Marquee des sources `✅ Implémenté` (`Sources`)
-Bande défilante infinie des 8 sources (RDAP, Tranco, Open PageRank, PhishTank, URLhaus, OpenPhish, Résolution DNS, ip-api),
-icône lucide + nom en mono, masquée en fondu aux bords.
+### Carrousel des sources `✅ Implémenté` (`Sources`)
+Carrousel à boucle infinie des 8 sources (RDAP, Tranco, Open PageRank, PhishTank, URLhaus, OpenPhish, Résolution DNS, ip-api),
+icône lucide + nom en mono, masqué en fondu aux bords. Défilement piloté par Motion :
+la largeur d'un jeu est mesurée (`ResizeObserver`) et assez de copies sont dupliquées
+pour couvrir tout viewport, la position est enroulée avec `wrap(-setWidth, 0, …)` → raccord invisible.
 
 ---
 
