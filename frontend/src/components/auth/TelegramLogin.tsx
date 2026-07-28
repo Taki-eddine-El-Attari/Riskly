@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Loader2 } from "lucide-react";
+import { CheckCircle2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import * as authApi from "@/api/auth.api";
 import { useAuth } from "@/hooks/useAuth";
@@ -36,19 +36,15 @@ function TelegramIcon() {
  * Bouton « Se connecter avec Telegram » — TOUJOURS affiché, indépendamment de
  * la configuration. Au clic, ouvre la popup officielle Telegram
  * (window.Telegram.Login.auth), puis transmet les données signées au backend
- * qui vérifie le hash et ouvre la session.
- *
- * Config : VITE_TELEGRAM_BOT_ID (chiffres avant `:` dans le token du bot).
- * Pré-requis Telegram : `/setdomain` sur le bot avec le domaine du site
- * (le login ne fonctionne pas sur localhost).
+ * qui vérifie le hash, enregistre le compte et ouvre la session.
  */
 export function TelegramLogin({ className }: { className?: string }) {
   const navigate = useNavigate();
   const { refreshUser } = useAuth();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
-  // Charge le script Telegram une seule fois (pour disposer de Telegram.Login.auth).
   useEffect(() => {
     if (!TELEGRAM_BOT_ID || document.getElementById("telegram-widget-js")) return;
     const script = document.createElement("script");
@@ -60,6 +56,7 @@ export function TelegramLogin({ className }: { className?: string }) {
 
   function handleClick() {
     setError(null);
+    setSuccess(null);
 
     if (!TELEGRAM_BOT_ID || !window.Telegram?.Login) {
       setError("Connexion Telegram non configurée (VITE_TELEGRAM_BOT_ID).");
@@ -76,8 +73,15 @@ export function TelegramLogin({ className }: { className?: string }) {
         }
         authApi
           .loginTelegram(user)
-          .then(() => refreshUser())
-          .then(() => navigate("/app", { replace: true }))
+          .then((account) => {
+            const handle = account.telegram_username ?? account.username;
+            setSuccess(`Connecté en tant que @${handle} — compte enregistré.`);
+            return refreshUser();
+          })
+          .then(() => {
+            // Laisse le message de confirmation visible un instant.
+            setTimeout(() => navigate("/app", { replace: true }), 1400);
+          })
           .catch(() => {
             setPending(false);
             setError("La connexion Telegram a échoué. Veuillez réessayer.");
@@ -96,7 +100,7 @@ export function TelegramLogin({ className }: { className?: string }) {
         disabled={pending}
         onClick={handleClick}
       >
-        {pending ? (
+        {pending && !success ? (
           <Loader2 className="size-5 animate-spin text-text-muted" />
         ) : (
           <>
@@ -105,6 +109,13 @@ export function TelegramLogin({ className }: { className?: string }) {
           </>
         )}
       </Button>
+
+      {success && (
+        <p className="mt-2 flex items-center gap-1.5 text-xs text-good">
+          <CheckCircle2 className="size-4 shrink-0" aria-hidden />
+          {success}
+        </p>
+      )}
       {error && <p className="mt-2 text-xs text-avoid">{error}</p>}
     </div>
   );
