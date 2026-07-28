@@ -14,4 +14,4 @@ class UserSession(Base):
     user_agent = Column(String(255), nullable=True)
     ip_address = Column(String(45), nullable=True)
 
-    user = relationship("Users")
+    user = relationship("User")

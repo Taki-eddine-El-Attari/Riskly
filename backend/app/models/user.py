@@ -16,17 +16,15 @@ class User(Base):
             "auth_method IN ('local','telegram')",
             name="check_valid_auth_method"
         ),
-        CheckConstraint(
-            "(email IS NOT NULL) OR (telegram_id IS NOT NULL)",
-            name="check_user_has_identifier",
-        ),
     )
 
     id = Column(UUID(as_uuid=True), primary_key=True , default=uuid.uuid4)
 
     username = Column(String(255) ,unique=True, nullable=False)
 
-    password_hash= Column(String(255), nullable = False)
+    password_hash= Column(String(255), nullable = True)
+
+    auth_method = Column(String(20), nullable=False, default='local', server_default='local')
 
     telegram_id=Column(BigInteger , unique=True, nullable=True,index=True)
 

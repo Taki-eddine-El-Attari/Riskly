@@ -5,7 +5,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.models.base import Base
 
-class ApoLog(Base):
+class ApiLog(Base):
     __tablename__ = "api_log"
 
     id = Column(UUID(as_uuid=True), primary_key=True , default=uuid.uuid4)

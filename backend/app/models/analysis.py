@@ -57,7 +57,7 @@ class Analysis(UUIDPrimaryKeyMixin, Base):
 
     domain: Mapped["Domain"] = relationship(back_populates="analyses")
     domain_metric: Mapped[Optional["DomainMetric"]] = relationship(back_populates="analyses")
-    user: Mapped["Users"] = relationship(back_populates="analyses")
+    user: Mapped["User"] = relationship(back_populates="analyses")
     model: Mapped[Optional["Model"]] = relationship(back_populates="analyses")
 
     api_logs: Mapped[List["ApiLog"]] = relationship(

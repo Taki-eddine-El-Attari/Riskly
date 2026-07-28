@@ -25,12 +25,9 @@ class AcquisitionResult(Base):
     success_label = Column(Boolean , nullable=False)
     observed_roi = Column(DECIMAL(6, 2))
 
-    domain = relationship("Domain", back_populates="acquisition_result")
+    domain = relationship("Domain", back_populates="acquisition_results")
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-
-    domain = relationship("Domain", back_populates="acquisition_result")
-
 
     
