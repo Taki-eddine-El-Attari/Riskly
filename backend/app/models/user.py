@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, DateTime, CheckConstraint , event, text
+from sqlalchemy import Column, String, DateTime, CheckConstraint , event, BigInteger, text
 from sqlalchemy.dialects.postgresql import  UUID
 from sqlalchemy.orm import relationship , validates
 from sqlalchemy.sql import func

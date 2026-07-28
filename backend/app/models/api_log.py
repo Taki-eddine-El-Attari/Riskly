@@ -8,7 +8,7 @@ from app.models.base import Base
 class ApoLog(Base):
     __tablename__ = "api_log"
 
-    id = Column(UUID(as_uuid=True), primary_key=True , defult=uuid.uuid4)
+    id = Column(UUID(as_uuid=True), primary_key=True , default=uuid.uuid4)
     analysis_id = Column(
         UUID(as_uuid=True),
         ForeignKey("analysis.id", ondelete="CASCADE"),
