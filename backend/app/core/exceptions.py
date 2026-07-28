@@ -117,10 +117,6 @@ class ExternalServiceUnavailableError(ExternalAPIError):
     def __init__(self, source_name: str):
         super().__init__(source_name, "Service temporairement indisponible.")
 
-
-# ---------------------------------------------------------------------------
-# Exceptions d'authentification (utilisées par auth_service / deps / auth API)
-# ---------------------------------------------------------------------------
 class AuthenticationError(RisklyException):
     status_code = 401
     def __init__(self, message: str = "Non authentifié."):
@@ -177,3 +173,12 @@ class TelegramAuthError(RisklyException):
     status_code = 401
     def __init__(self, message: str = "Vérification Telegram échouée (signature invalide ou expirée)."):
         super().__init__(message)
+
+class LimiteConcurrenceAtteinte(Exception):
+    def __init__(self, max_concurrent : int):
+        self.max_concurrent = max_concurrent
+        super().__init__(
+            f"Limite de {max_concurrent} analyses simultanées atteinte. "
+            "Attendez qu'une analyse se termine avant d'en lancer une nouvelle."
+        )
+                

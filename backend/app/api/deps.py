@@ -1,23 +1,16 @@
-import uuid
-
-from fastapi import Depends, Request
+from fastapi import Depends, Request, HTTPException, status
 from sqlalchemy.orm import Session
-
 from app.core.database import get_db
-from app.core.exceptions import AuthenticationError
+from app.repositories.user_repo import UserRepository
 from app.models.user import User
 
-
-def get_current_user(
-    request: Request,
-    db: Session = Depends(get_db),
-) -> User:
+def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
     user_id = request.session.get("user_id")
     if user_id is None:
-        raise AuthenticationError("Non authentifié.")
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Non authentifié")
 
-    user = db.query(User).filter(User.id == uuid.UUID(str(user_id))).first()
+    user = UserRepository(db).get_by_id(user_id)
     if user is None:
-        raise AuthenticationError("Utilisateur associé au token introuvable.")
-
+        request.session.clear()   
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Session invalide")
     return user

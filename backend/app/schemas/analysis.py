@@ -11,8 +11,10 @@ MAX_DOMAINS_PER_BATCH = 5
 
 class AnalysisStatus(str, Enum):
     PENDING = "pending"
+    IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
     FAILED = "failed"
+    PARTIAL = "partial"
 
 
 class Verdict(str, Enum):

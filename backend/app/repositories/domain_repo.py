@@ -1,5 +1,3 @@
-
-
 from uuid import UUID
 from datetime import date
 from typing import Optional, List

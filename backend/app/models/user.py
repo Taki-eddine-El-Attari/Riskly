@@ -1,80 +1,74 @@
 import uuid
-from sqlalchemy import (
-    BigInteger,
-    Column,
-    String,
-    DateTime,
-    CheckConstraint,
-    event,
-    text,
-)
-from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import relationship, validates
+from sqlalchemy import Column, String, DateTime, CheckConstraint , event, text
+from sqlalchemy.dialects.postgresql import  UUID
+from sqlalchemy.orm import relationship , validates
 from sqlalchemy.sql import func
 from app.models.base import Base
 
-
 class User(Base):
-    """Compte utilisateur — supporte deux méthodes d'auth (cf. table `users`) :
-    - locale    : username + password_hash
-    - telegram  : telegram_id (clé Telegram permanente) + telegram_username
-    `auth_method` indique laquelle a créé le compte ; `password_hash` est NULL
-    pour un compte Telegram."""
-
-    __tablename__ = "users"
-    __table_args__ = (
+    __tablename__= "users"
+    __table_args__ =(
         CheckConstraint(
             "role IN ('superadmin','admin','user')",
             name="check_valid_role",
         ),
         CheckConstraint(
             "auth_method IN ('local','telegram')",
-            name="check_valid_auth_method",
+            name="check_valid_auth_method"
+        ),
+        CheckConstraint(
+            "(email IS NOT NULL) OR (telegram_id IS NOT NULL)",
+            name="check_user_has_identifier",
         ),
     )
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(UUID(as_uuid=True), primary_key=True , default=uuid.uuid4)
 
-    username = Column(String(100), unique=True, nullable=False)
+    username = Column(String(255) ,unique=True, nullable=False)
 
-    telegram_id = Column(BigInteger, unique=True, index=True, nullable=True)
-    telegram_username = Column(String(100), nullable=True)
+    password_hash= Column(String(255), nullable = False)
 
-    # NULL pour un compte Telegram (pas de mot de passe).
-    password_hash = Column(String(255), nullable=True)
+    telegram_id=Column(BigInteger , unique=True, nullable=True,index=True)
 
-    role = Column(String(50), nullable=False, default="user")
-    auth_method = Column(String(20), nullable=False, default="local")
+    telegram_username =Column(String(100) ,nullable=True)
+
+
+    role= Column(String(50), default='user')
 
     entite = Column(String(100))
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    # TODO: rétablir une fois les modèles analysis corrigés et importés
-    # (aujourd'hui api_log.py/analysis.py ne s'importent pas → cassent le boot).
-    # analyses = relationship("Analysis", back_populates="user")
+    analyses=relationship("Analysis", back_populates="user")
+
 
     @validates("role")
-    def validate_role(self, key, role):
-        allowed = {"superadmin", "admin", "user"}
+    def validate_role(self,key, role):
+        allowed = { "superadmin" , "admin" ,"user"}
         if role not in allowed:
             raise ValueError(f"role invalide {role}. Attendu :{','.join(allowed)}")
-        return role
+        return role 
 
+    @property
+
+    def is_telegram_user(self)-> bool:
+        return self.auth_method == "telegram" and self.telegram_id is not None
 
 @event.listens_for(User, "before_insert")
 def enforce_single_superadmin_insert(mapper, connection, target):
     if target.role == "superadmin":
         existing = connection.execute(
             text('SELECT 1 FROM "users" WHERE role = :role LIMIT 1'),
-            {"role": "superadmin"},
+            {"role": "superadmin"}
         ).fetchone()
         if existing:
             raise ValueError("Un superadmin existe déjà. Supprimez-le d'abord.")
 
 
 @event.listens_for(User, "before_update")
-def enforce_single_superadmin(mapper, connection, target):
+
+def enforce_single_superadmin(mapper , connection , target):
+
     if target.role == "superadmin":
         existing = connection.execute(
             User.__table__.select().where(
@@ -82,5 +76,5 @@ def enforce_single_superadmin(mapper, connection, target):
                 User.__table__.c.id != target.id,
             )
         ).fetchone()
-        if existing:
+        if existing :
             raise ValueError("Un superAdmin existe déjà")

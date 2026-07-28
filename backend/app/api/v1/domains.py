@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.security import get_current_user, require_authenticated, require_admin
+from app.core.exceptions import LimiteConcurrenceAtteinteError
 from app.models.user import User
 from app.repositories.analysis_repo import AnalysisRepository
 from app.repositories.domain_repo import DomainRepository
@@ -15,16 +16,22 @@ from app.services import analysis_service
 analyses_router = APIRouter(prefix="/analyses", tags=["analyses"])
 domains_router = APIRouter(prefix="/domains", tags=["domains"])
 
-@analyses_router.post("", response_model=AnalysisOut, status_code=status.HTTP_201_CREATED)
+@analyses_router.post("/analyses", response_model=AnalysisOut, status_code=status.HTTP_201_CREATED)
 async def create_analysis(
     payload: AnalysisCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> AnalysisOut:
-    analysis = await analysis_service.analyze_domain(
-        db, domain_name=payload.domain_name, user_id=current_user.id
-    )
-    return AnalysisOut.model_validate(analysis)
+    try :
+        analysis = await analysis_service.analyze_domain(
+            db, domain_name= payload.domain_name , user_id=current_user.id
+        )
+    except LimiteConcurrenceAtteinteError as e:
+        raise HTTPException(
+            status.HTTP_429_TOO_MANY_REQUEST,
+            f"Limite de {e.limite} analyses simultanees atteinte",
+        )   
+    return AnalysisOut.model_validate(analysis) 
 
 @analyses_router.get("/{analysis_id}", response_model=AnalysisOut)
 async def get_analysis(

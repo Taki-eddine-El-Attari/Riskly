@@ -23,9 +23,11 @@ class DomainMetric(Base):
 
     rank_source = Column(String(100))
 
+    backlink_count = Column(Integer, default=0)
+
     referring_domains_count= Column(Integer , default=0)
 
-    backlink_ratio= Column(DECIMAL(5 ,2))
+    toxic_backlink_ratio = Column(DECIMAL(5, 2))
 
     nb_server_count = Column(Integer)
 

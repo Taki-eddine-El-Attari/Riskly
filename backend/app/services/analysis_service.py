@@ -2,21 +2,30 @@ from typing import Optional
 from uuid import UUID
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
+from app.core.exceptions import LimiteConcurrenceAtteinteError
 from app.repositories.domain_repo import DomainRepository
+from app.repositories.analysis_repo import AnalysisRepository
 from app.models.features import DomainMetric
 from app.models.analysis import Analysis
 from app.models.api_log import ApiLog
+from app.models.user import User
 from app.collectors.rank import RankCollector
 from app.collectors.backlinks import BacklinksCollector
 from app.services.scoring_service import calculate_authority_score
 from app.services.decision_matrix import compute_verdict
-
 
 async def analyze_domain(
     db: Session,
     domain_name: str,
     user_id: Optional[UUID] = None,
 ) -> Analysis:
+
+    if user_id is not None :
+        analysis_repo = AnalysisRepository(db)
+        active_count = analysis_repo.count_active_by_user(user_id)
+        if active_count >= settings.MAX_CONCURRENT_ANALYSES:
+          raise LimiteConcurrenceAtteinteError(settings.MAX_CONCURRENT_ANALYSES)
     domain_name = domain_name.lower().strip()
     domain_repo = DomainRepository(db)
     domain = domain_repo.get_or_create(domain_name)

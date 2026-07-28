@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from app.core.exceptions import AnalysisNotFoundError, InvalidAnalysisReferenceError
-from app.models.analysis import Analysis, AnalysisStatus, AnalysisVerdict
+from app.models.analysis import Analysis, AnalysisStatus, AnalysisVerdict, Analysis
 from app.models.api_log import ApiLog
 from app.models.base import utcnow
 
@@ -39,6 +39,15 @@ def update_analysis_status(db: Session, analysis_id: uuid.UUID, status: Analysis
     db.flush()
     return analysis
 
+def count_active_by_user(self,user_id: UUID)-> int :
+    return(
+        self.db.query(Analysis)
+        .filter(
+            Analysis.user_id == user_id,
+            Analysis.status.in_(["pending", "in_progress"]),
+        )
+        .count()
+    )
 
 def complete_analysis(
     db: Session,
