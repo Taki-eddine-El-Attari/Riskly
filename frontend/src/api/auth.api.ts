@@ -10,9 +10,9 @@ export function loginTelegram(data: TelegramAuthData): Promise<User> {
   return apiClient.post<User>("/api/v1/auth/telegram", data);
 }
 
-/** Inscription locale (username + mot de passe). */
-export function register(name: string, password: string): Promise<User> {
-  return apiClient.post<User>("/api/v1/auth/register", { name, password });
+/** Inscription locale (username + mot de passe). Ouvre la session. */
+export function register(name: string, password: string, entite?: string): Promise<User> {
+  return apiClient.post<User>("/api/v1/auth/register", { name, password, entite });
 }
 
 /** Connexion locale (username + mot de passe). Ouvre la session. */

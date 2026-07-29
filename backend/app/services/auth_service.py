@@ -27,19 +27,23 @@ class AuthService:
         self.db = db
         self.user_repo = UserRepository(db)
 
-    def register(self, username: str, password: str, entite: Optional[str] = None) -> User:
+    def register(
+        self, request: Request, username: str, password: str, entite: Optional[str] = None
+    ) -> User:
         if self.user_repo.exists(username):
             raise UsernameDejaUtiliseError(username)
 
         if len(password) < MIN_PASSWORD_LENGTH:
             raise MotDePasseFaibleError(MIN_PASSWORD_LENGTH)
 
-        return self.user_repo.create(
+        user = self.user_repo.create(
             username=username.lower().strip(),
             password_hash=hash_password(password),
             role="user",
             entite=entite,
         )
+        request.session["user_id"] = str(user.id)
+        return user
 
     def login(self, request: Request, username: str, password: str) -> User:
         # register() stocke le username en minuscules → normaliser la recherche.

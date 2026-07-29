@@ -7,15 +7,21 @@ import { PasswordInput } from "@/components/auth/PasswordInput";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import * as authApi from "@/api/auth.api";
+import { useAuth } from "@/hooks/useAuth";
+import { ApiError } from "@/lib/api-client";
 
 export default function Login() {
   const navigate = useNavigate();
+  const { refreshUser } = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [errors, setErrors] = useState<{ username?: string; password?: string }>({});
+  const [errors, setErrors] = useState<{ username?: string; password?: string; form?: string }>(
+    {},
+  );
   const [pending, setPending] = useState(false);
 
-  function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
     const errs: typeof errors = {};
     if (username.trim().length === 0)
@@ -25,7 +31,18 @@ export default function Login() {
     if (Object.keys(errs).length > 0) return;
 
     setPending(true);
-    setTimeout(() => navigate("/app"), 900);
+    try {
+      await authApi.login(username.trim(), password);
+      await refreshUser();
+      navigate("/app", { replace: true });
+    } catch (err) {
+      setPending(false);
+      if (err instanceof ApiError && err.status === 401) {
+        setErrors({ form: "Nom d'utilisateur ou mot de passe incorrect." });
+      } else {
+        setErrors({ form: "Une erreur est survenue. Veuillez réessayer." });
+      }
+    }
   }
 
   return (
@@ -86,6 +103,12 @@ export default function Login() {
             </p>
           )}
         </div>
+
+        {errors.form && (
+          <p role="alert" className="text-sm text-avoid">
+            {errors.form}
+          </p>
+        )}
 
         <Button type="submit" size="lg" className="w-full" disabled={pending}>
           {pending ? (

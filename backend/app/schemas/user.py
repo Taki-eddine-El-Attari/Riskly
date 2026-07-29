@@ -14,6 +14,7 @@ class UserRole(str, Enum):
 class UserRegister(BaseModel):
     name: str = Field(..., min_length=2, max_length=100)
     password: str = Field(..., min_length=8, max_length=128)
+    entite: str | None = Field(None, max_length=100)
 
     @field_validator("password")
     @classmethod

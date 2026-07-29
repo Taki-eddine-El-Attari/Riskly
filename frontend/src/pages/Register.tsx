@@ -8,16 +8,21 @@ import { PasswordStrength, scorePassword } from "@/components/auth/PasswordStren
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import * as authApi from "@/api/auth.api";
+import { useAuth } from "@/hooks/useAuth";
+import { ApiError } from "@/lib/api-client";
 
 interface Errors {
   username?: string;
   entity?: string;
   password?: string;
   confirm?: string;
+  form?: string;
 }
 
 export default function Register() {
   const navigate = useNavigate();
+  const { refreshUser } = useAuth();
   const [username, setUsername] = useState("");
   const [entity, setEntity] = useState("");
   const [password, setPassword] = useState("");
@@ -25,7 +30,7 @@ export default function Register() {
   const [errors, setErrors] = useState<Errors>({});
   const [pending, setPending] = useState(false);
 
-  function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
     const errs: Errors = {};
     if (username.trim().length < 3)
@@ -41,7 +46,20 @@ export default function Register() {
     if (Object.keys(errs).length > 0) return;
 
     setPending(true);
-    setTimeout(() => navigate("/app"), 900);
+    try {
+      await authApi.register(username.trim(), password, entity.trim());
+      await refreshUser();
+      navigate("/app", { replace: true });
+    } catch (err) {
+      setPending(false);
+      if (err instanceof ApiError && err.status === 409) {
+        setErrors({ username: "Ce nom d'utilisateur est déjà utilisé." });
+      } else if (err instanceof ApiError && err.status === 422) {
+        setErrors({ form: err.message });
+      } else {
+        setErrors({ form: "Une erreur est survenue. Veuillez réessayer." });
+      }
+    }
   }
 
   return (
@@ -132,6 +150,12 @@ export default function Register() {
             </p>
           )}
         </div>
+
+        {errors.form && (
+          <p role="alert" className="text-sm text-avoid">
+            {errors.form}
+          </p>
+        )}
 
         <Button type="submit" size="lg" className="w-full" disabled={pending}>
           {pending ? (

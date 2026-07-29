@@ -18,9 +18,10 @@ def get_auth_service(db: Session = Depends(get_db)) -> AuthService:
 @router.post("/register", response_model=UserRead, status_code=status.HTTP_201_CREATED)
 def register(
     payload: UserRegister,
+    request: Request,
     svc: AuthService = Depends(get_auth_service),
 ) -> User:
-    return svc.register(payload.name, payload.password)
+    return svc.register(request, payload.name, payload.password, payload.entite)
 
 
 @router.post("/login", response_model=UserRead)
