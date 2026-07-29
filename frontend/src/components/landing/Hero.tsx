@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useReducedMotion } from "motion/react";
 import { ArrowRight, Globe } from "lucide-react";
 import { BlurFade } from "./effects/BlurFade";
 import { BorderBeam } from "./effects/BorderBeam";
+import { useTypingPlaceholder } from "@/hooks/useTypingPlaceholder";
 
+// Mêmes exemples que le champ d'analyse de l'app (components/analysis/DomainInput).
 const examples = [
   "exemple-domaine.com",
   "boutique-mode.fr",
@@ -12,39 +13,11 @@ const examples = [
   "agence-web.ma",
 ];
 
-function useTypingPlaceholder(paused: boolean) {
-  const reduced = useReducedMotion();
-  const [phase, setPhase] = useState({ i: 0, len: 0, deleting: false });
-  const word = examples[phase.i];
-
-  useEffect(() => {
-    if (reduced || paused) return;
-    const done = !phase.deleting && phase.len === word.length;
-    const delay = phase.deleting ? 35 : done ? 1800 : 70;
-    const t = setTimeout(() => {
-      setPhase((p) => {
-        const w = examples[p.i];
-        if (!p.deleting) {
-          if (p.len === w.length) return { ...p, deleting: true };
-          return { ...p, len: p.len + 1 };
-        }
-        if (p.len === 0) {
-          return { i: (p.i + 1) % examples.length, len: 0, deleting: false };
-        }
-        return { ...p, len: p.len - 1 };
-      });
-    }, delay);
-    return () => clearTimeout(t);
-  }, [phase, paused, reduced, word.length]);
-
-  return reduced ? examples[0] : word.slice(0, phase.len);
-}
-
 export default function Hero() {
   const navigate = useNavigate();
   const [value, setValue] = useState("");
   const [focused, setFocused] = useState(false);
-  const typed = useTypingPlaceholder(focused || value.length > 0);
+  const typed = useTypingPlaceholder(examples, focused || value.length > 0);
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
