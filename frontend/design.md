@@ -416,10 +416,15 @@ Empilées dans `pages/Landing.tsx`.
 
 ## 12. Application — le design system produit (à construire)
 
-> **Toute l'app est `🚧 À construire`.** `App.tsx` route `/app`, `/history`, `/forgot-password` vers des placeholders.
-> Les couches `types/`, `api/`, `hooks/`, `context/`, `routes/` décrites dans `ARCHITECTURE.md` n'existent pas encore
-> (`src/lib` ne contient que `utils.ts`). Cette section fixe la **direction de design** pour ces écrans,
-> ancrée dans le modèle de données réel du backend.
+> **L'écran d'analyse (`/app`) est `✅ Implémenté`.** Le shell applicatif, `DomainInput`,
+> `AnalysisLoader`, `ScoreGauge`, `VerdictBadge`, `ReportCard`, `ReportList`, `ReportDetail`,
+> `FactorList`, `AlertList` et `MissingDataNotice` existent, avec les couches `types/`, `api/`,
+> `hooks/` (TanStack Query) et `routes/ProtectedRoute`. Les bandes de scores, verdicts et alertes
+> vivent dans `lib/scores.ts`.
+> **Restent `🚧 À construire`** : `/history` (table, suppression, toasts) et `/report/:id`
+> (la page réutilisera `ReportDetail` tel quel).
+> Tant que le backend n'expose pas `/analyses`, la page bascule sur un jeu de démonstration
+> signalé par un bandeau (`api/analyses.demo.ts`, drapeau `DEMO_FALLBACK`).
 
 ### 12.1 Modèle de données → vocabulaire visuel
 Le backend (`collect_features.py`) collecte, par domaine :
