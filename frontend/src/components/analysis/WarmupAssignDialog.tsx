@@ -1,3 +1,13 @@
+// ◐ Composant en réserve : construit et fonctionnel, monté nulle part.
+//
+// La saisie fait aujourd'hui de chaque champ de domaine sa propre zone de
+// dépôt, ce qui lève l'ambiguïté à la source — cette boîte n'a donc plus lieu
+// de s'ouvrir. Elle reste disponible pour un écran où le fichier arrive sans
+// cible désignée (import en masse, dépôt depuis l'historique).
+//
+// Usage : lui passer les fichiers déjà lus et la liste des domaines candidats ;
+// elle suggère, l'utilisateur tranche, `onConfirm` rend les couples retenus.
+
 import { useEffect, useState } from "react";
 import { Check, FileSpreadsheet } from "lucide-react";
 import {
@@ -9,7 +19,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { formatBytes } from "@/lib/warmup";
+import { formatBytes, matchDomainByFileName } from "@/lib/warmup";
 import type { WarmupFile } from "@/lib/warmup";
 import { cn } from "@/lib/utils";
 
@@ -42,30 +52,36 @@ function targetLabel(target: WarmupTarget): string {
 export function WarmupAssignDialog({
   files,
   targets,
-  suggestFor,
   onConfirm,
   onCancel,
 }: {
   /** Fichiers déposés, déjà lus et validés. Vide = boîte fermée. */
   files: WarmupFile[];
   targets: WarmupTarget[];
-  /** Domaine suggéré pour un fichier, parmi les lignes encore libres. */
-  suggestFor: (file: WarmupFile, taken: number[]) => number;
   onConfirm: (assignment: { file: WarmupFile; rowId: number }[]) => void;
   onCancel: () => void;
 }) {
   const [choices, setChoices] = useState<number[]>([]);
 
-  // Recalcule les suggestions à chaque nouveau dépôt.
+  // Suggestions recalculées à chaque nouveau dépôt : le fichier nommé d'après
+  // un domaine y va, les autres comblent les emplacements encore libres.
   useEffect(() => {
+    const domains = targets.map((t) => t.domain);
     const taken: number[] = [];
-    const initial = files.map((file) => {
-      const suggested = suggestFor(file, taken);
-      if (suggested !== IGNORE) taken.push(suggested);
-      return suggested;
-    });
-    setChoices(initial);
-  }, [files, suggestFor]);
+
+    setChoices(
+      files.map((file) => {
+        const byName = matchDomainByFileName(file.file.name, domains);
+        const suggested =
+          byName >= 0 && !taken.includes(targets[byName].rowId)
+            ? targets[byName].rowId
+            : (targets.find((t) => !t.hasWarmup && !taken.includes(t.rowId))?.rowId ?? IGNORE);
+
+        if (suggested !== IGNORE) taken.push(suggested);
+        return suggested;
+      }),
+    );
+  }, [files, targets]);
 
   const open = files.length > 0;
   const many = files.length > 1;

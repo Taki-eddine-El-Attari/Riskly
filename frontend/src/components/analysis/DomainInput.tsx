@@ -1,19 +1,11 @@
 import { useCallback, useMemo, useRef, useState } from "react";
-import { ArrowRight, FileSpreadsheet, Globe, Loader2, Paperclip, Plus, Upload, X } from "lucide-react";
+import { ArrowRight, FileSpreadsheet, Globe, Loader2, Paperclip, Plus, X } from "lucide-react";
 import { BorderBeam } from "@/components/landing/effects/BorderBeam";
 import { useTypingPlaceholder } from "@/hooks/useTypingPlaceholder";
 import { MAX_DOMAINS } from "@/lib/constants";
 import { isValidDomain, normalizeDomain, splitDomains } from "@/lib/domains";
-import {
-  formatBytes,
-  matchDomainByFileName,
-  readWarmupFile,
-  WARMUP_ACCEPT,
-  WarmupError,
-} from "@/lib/warmup";
+import { formatBytes, readWarmupFile, WARMUP_ACCEPT, WarmupError } from "@/lib/warmup";
 import type { WarmupFile } from "@/lib/warmup";
-import { WarmupAssignDialog } from "./WarmupAssignDialog";
-import type { WarmupTarget } from "./WarmupAssignDialog";
 import { cn } from "@/lib/utils";
 
 const EXAMPLES = [
@@ -51,9 +43,9 @@ const newRow = (value = ""): Row => ({ id: nextId++, value });
  * Le format est validé au fil de l'eau et les doublons sont signalés — un
  * domaine invalide est écarté sans bloquer les autres (PRD, UC-03 A2/A3).
  *
- * Warm-up : un CSV se dépose sur la ligne d'un domaine, ou n'importe où sur le
- * bloc — dans ce cas les fichiers sont répartis, en priorité vers le domaine
- * dont ils portent le nom. Le trombone ouvre le sélecteur pour ceux qui
+ * Warm-up : pendant un glisser, chaque champ devient sa propre zone de dépôt
+ * en pointillés. Le CSV va au domaine sur lequel on le lâche — c'est le geste
+ * qui désigne, rien n'est deviné. Le trombone ouvre le sélecteur pour ceux qui
  * préfèrent cliquer.
  */
 export function DomainInput({
@@ -69,8 +61,6 @@ export function DomainInput({
   const [focused, setFocused] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [fileError, setFileError] = useState<string | null>(null);
-  /** Fichiers déposés sur le bloc, en attente d'un domaine. */
-  const [pendingFiles, setPendingFiles] = useState<WarmupFile[]>([]);
   const inputRefs = useRef(new Map<number, HTMLInputElement>());
   const fileRefs = useRef(new Map<number, HTMLInputElement>());
   const dragDepth = useRef(0);
@@ -164,76 +154,13 @@ export function DomainInput({
     if (input) input.value = ""; // permet de re-choisir le même fichier
   }
 
-  /**
-   * Dépôt hors d'une ligne précise : rien n'indique à quel domaine le fichier
-   * appartient. On lit et valide, puis on ouvre la boîte de choix — sauf s'il
-   * n'y a qu'une seule ligne, auquel cas il n'y a rien à choisir.
-   */
-  async function spreadFiles(files: File[]) {
-    setFileError(null);
-
-    const read = await Promise.all(
-      files.map(async (file) => {
-        try {
-          return { warmup: await readWarmupFile(file), error: null as string | null };
-        } catch (err) {
-          return {
-            warmup: null,
-            error: err instanceof WarmupError ? err.message : "Fichier illisible.",
-          };
-        }
-      }),
-    );
-
-    const firstError = read.find((r) => r.error)?.error ?? null;
-    if (firstError) setFileError(firstError);
-
-    const valid = read.map((r) => r.warmup).filter((w): w is WarmupFile => w !== null);
-    if (valid.length === 0) return;
-
-    if (rows.length === 1) {
-      const [first] = valid;
-      setRows((current) => current.map((row, i) => (i === 0 ? { ...row, warmup: first } : row)));
-      if (valid.length > 1) {
-        setFileError("Un seul CSV par domaine : les fichiers en trop ont été ignorés.");
-      }
-      return;
-    }
-
-    setPendingFiles(valid.slice(0, rows.length));
-    if (valid.length > rows.length) {
-      setFileError(
-        `${valid.length - rows.length} fichier(s) en trop : il n'y a que ${rows.length} domaines.`,
-      );
-    }
-  }
-
-  /** Suggestion de départ dans la boîte de choix, jamais imposée. */
-  const suggestTarget = useCallback(
-    (file: WarmupFile, taken: number[]) => {
-      const byName = matchDomainByFileName(file.file.name, normalized);
-      if (byName >= 0 && !taken.includes(rows[byName].id)) return rows[byName].id;
-
-      const free = rows.find((row) => !row.warmup && !taken.includes(row.id));
-      return free ? free.id : -1;
-    },
-    [rows, normalized],
-  );
-
-  function applyAssignment(entries: { file: WarmupFile; rowId: number }[]) {
-    setRows((current) =>
-      current.map((row) => {
-        const match = entries.find((e) => e.rowId === row.id);
-        return match ? { ...row, warmup: match.file } : row;
-      }),
-    );
-    setPendingFiles([]);
-  }
-
   function csvFilesFrom(event: React.DragEvent): File[] {
     return [...event.dataTransfer.files];
   }
 
+  // Le glisser est suivi au niveau du formulaire, mais seul le dépôt SUR une
+  // ligne rattache : chaque champ devient sa propre zone en pointillés, et
+  // c'est vous qui désignez le domaine. Rien n'est deviné.
   function onFormDragEnter(event: React.DragEvent) {
     if (pending || !event.dataTransfer.types.includes("Files")) return;
     dragDepth.current += 1;
@@ -245,13 +172,15 @@ export function DomainInput({
     if (dragDepth.current === 0) setDragging(false);
   }
 
+  /** Dépôt à côté des champs : on le dit plutôt que de choisir à sa place. */
   function onFormDrop(event: React.DragEvent) {
     event.preventDefault();
     dragDepth.current = 0;
     setDragging(false);
     if (pending) return;
-    const files = csvFilesFrom(event);
-    if (files.length > 0) void spreadFiles(files);
+    if (csvFilesFrom(event).length > 0) {
+      setFileError("Déposez le fichier sur le domaine auquel il correspond.");
+    }
   }
 
   function onRowDrop(id: number, event: React.DragEvent) {
@@ -260,8 +189,12 @@ export function DomainInput({
     dragDepth.current = 0;
     setDragging(false);
     if (pending) return;
-    const [file] = csvFilesFrom(event);
-    if (file) void attachToRow(id, file);
+    const files = csvFilesFrom(event);
+    if (files.length === 0) return;
+    void attachToRow(id, files[0]);
+    if (files.length > 1) {
+      setFileError("Un seul CSV par domaine : seul le premier fichier a été retenu.");
+    }
   }
 
   function submit(event: React.FormEvent) {
@@ -271,17 +204,6 @@ export function DomainInput({
   }
 
   const attachedCount = rows.filter((r) => r.warmup).length;
-
-  const targets = useMemo<WarmupTarget[]>(
-    () =>
-      rows.map((row, i) => ({
-        rowId: row.id,
-        domain: normalized[i],
-        position: i + 1,
-        hasWarmup: row.warmup !== undefined,
-      })),
-    [rows, normalized],
-  );
 
   return (
     <form
@@ -298,7 +220,12 @@ export function DomainInput({
       {/* Champ principal — identique au hero de la landing. */}
       <div
         onDrop={(e) => onRowDrop(rows[0].id, e)}
-        className="relative w-full rounded-2xl border border-border bg-bg-elevated/80 p-2 shadow-2xl backdrop-blur transition-colors focus-within:border-accent/60"
+        className={cn(
+          "relative w-full rounded-2xl border bg-bg-elevated/80 p-2 shadow-2xl backdrop-blur transition-colors focus-within:border-accent/60",
+          dragging
+            ? "border-2 border-dashed border-accent bg-accent/5 focus-within:border-accent"
+            : "border-border",
+        )}
       >
         <BorderBeam size={120} duration={7} />
         {/* `flex-wrap` : à l'étroit (mobile), la pastille du CSV passe à la
@@ -370,7 +297,12 @@ export function DomainInput({
               <li key={row.id}>
                 <div
                   onDrop={(e) => onRowDrop(row.id, e)}
-                  className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-bg-elevated/60 px-4 py-1.5 transition-colors focus-within:border-accent/60"
+                  className={cn(
+                    "flex flex-wrap items-center gap-3 rounded-xl border bg-bg-elevated/60 px-4 py-1.5 transition-colors focus-within:border-accent/60",
+                    dragging
+                      ? "border-2 border-dashed border-accent bg-accent/5 focus-within:border-accent"
+                      : "border-border",
+                  )}
                 >
                   <Globe className="size-4 shrink-0 text-text-faint" aria-hidden />
                   <input
@@ -428,40 +360,24 @@ export function DomainInput({
         </p>
       </div>
 
-      <p className="mt-2 px-1 text-xs text-text-faint">
-        {attachedCount > 0
-          ? `${attachedCount} CSV de warm-up joint${attachedCount > 1 ? "s" : ""} · facultatif`
-          : "Vous pouvez glisser un CSV de warm-up par domaine — facultatif."}
+      <p
+        className={cn(
+          "mt-2 px-1 text-xs",
+          dragging ? "font-medium text-accent" : "text-text-faint",
+        )}
+      >
+        {dragging
+          ? "Déposez le CSV sur le domaine auquel il correspond."
+          : attachedCount > 0
+            ? `${attachedCount} CSV de warm-up joint${attachedCount > 1 ? "s" : ""} · facultatif`
+            : "Vous pouvez glisser un CSV de warm-up sur un domaine — facultatif."}
       </p>
 
-      {fileError && (
+      {fileError && !dragging && (
         <p className="mt-2 px-1 text-xs text-avoid" role="alert">
           {fileError}
         </p>
       )}
-
-      {/* Voile de dépôt : n'apparaît que pendant un glisser de fichiers. */}
-      {dragging && (
-        <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-2xl border-2 border-dashed border-accent bg-bg/90 backdrop-blur-sm">
-          <div className="text-center">
-            <Upload className="mx-auto size-6 text-accent" aria-hidden />
-            <p className="mt-2 text-sm font-medium text-text">Déposez vos CSV de warm-up</p>
-            <p className="mt-1 font-mono text-xs text-text-faint">
-              {rows.length > 1
-                ? "sur une ligne pour l'associer à ce domaine, ou ici pour choisir"
-                : "pour l'associer à ce domaine"}
-            </p>
-          </div>
-        </div>
-      )}
-
-      <WarmupAssignDialog
-        files={pendingFiles}
-        targets={targets}
-        suggestFor={suggestTarget}
-        onConfirm={applyAssignment}
-        onCancel={() => setPendingFiles([])}
-      />
     </form>
   );
 }
