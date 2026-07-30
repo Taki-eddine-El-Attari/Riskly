@@ -21,15 +21,12 @@ import type { Analysis } from "@/types/analysis";
 export function DownloadMenu({
   analyses,
   label,
-  demo = false,
   variant = "ghost",
   className,
 }: {
   analyses: Analysis[];
   /** Texte du bouton. Absent → bouton icône seule. */
   label?: string;
-  /** Rapports de démonstration : les fichiers produits le mentionnent. */
-  demo?: boolean;
   variant?: "ghost" | "outline";
   className?: string;
 }) {
@@ -77,7 +74,7 @@ export function DownloadMenu({
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
 
-        <DropdownMenuItem onSelect={() => void run(() => exportPdf(analyses, { demo }))}>
+        <DropdownMenuItem onSelect={() => void run(() => exportPdf(analyses))}>
           <FileText aria-hidden />
           <span>
             Rapport PDF
@@ -85,7 +82,7 @@ export function DownloadMenu({
           </span>
         </DropdownMenuItem>
 
-        <DropdownMenuItem onSelect={() => void run(() => exportCsv(analyses, { demo }))}>
+        <DropdownMenuItem onSelect={() => void run(() => exportCsv(analyses))}>
           <FileSpreadsheet aria-hidden />
           <span>
             Tableau CSV

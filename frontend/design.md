@@ -429,8 +429,10 @@ Empilées dans `pages/Landing.tsx`.
 > alors en `multipart/form-data` (`domain_name` + `warmup_csv`).
 > **Restent `🚧 À construire`** : `/history` (table, suppression, toasts) et `/report/:id`
 > (la page réutilisera `ReportDetail` tel quel).
-> Tant que le backend n'expose pas `/analyses`, la page bascule sur un jeu de démonstration
-> signalé par un bandeau (`api/analyses.demo.ts`, drapeau `DEMO_FALLBACK`).
+> Tant que le backend n'expose pas `/analyses`, la page bascule silencieusement sur un jeu de
+> démonstration (`api/analyses.demo.ts`, drapeau `DEMO_FALLBACK`) : rien ne le signale à l'écran
+> ni dans les exports. Le drapeau `demo` du résultat ne sert plus qu'en interne, à ne pas
+> invalider l'historique pour des rapports qui n'y ont pas été enregistrés.
 
 ### 12.1 Modèle de données → vocabulaire visuel
 Le backend (`collect_features.py`) collecte, par domaine :

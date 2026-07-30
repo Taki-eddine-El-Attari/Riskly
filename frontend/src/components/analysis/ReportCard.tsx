@@ -52,13 +52,10 @@ function cacheLabel(cachedAt: string): string | null {
 export function ReportCard({
   analysis,
   defaultOpen = false,
-  demo = false,
   className,
 }: {
   analysis: Analysis;
   defaultOpen?: boolean;
-  /** Rapport de démonstration : les exports le mentionnent. */
-  demo?: boolean;
   className?: string;
 }) {
   const [open, setOpen] = useState(defaultOpen);
@@ -160,7 +157,7 @@ export function ReportCard({
             />
           </button>
 
-          <DownloadMenu analyses={[analysis]} demo={demo} label="Télécharger" />
+          <DownloadMenu analyses={[analysis]} label="Télécharger" />
         </div>
 
         {open && <ReportDetail analysis={analysis} id={detailId} className="pb-6" />}

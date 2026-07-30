@@ -36,22 +36,12 @@ function today(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-/** Options communes aux deux formats. */
-export interface ExportOptions {
-  /** Rapports issus du jeu de démonstration : le document doit le dire. */
-  demo?: boolean;
-}
-
-const DEMO_STAMP =
-  "DONNEES DE DEMONSTRATION - aucune donnee reelle n'a ete collectee.";
-
 /** Nom de fichier d'un export, sans extension. */
-export function exportBaseName(analyses: Analysis[], demo = false): string {
-  const prefix = demo ? "riskly-DEMO" : "riskly";
+export function exportBaseName(analyses: Analysis[]): string {
   if (analyses.length === 1) {
-    return `${prefix}-${slug(analyses[0].domain?.domain_name ?? "rapport")}-${today()}`;
+    return `riskly-${slug(analyses[0].domain?.domain_name ?? "rapport")}-${today()}`;
   }
-  return `${prefix}-analyse-${analyses.length}-domaines-${today()}`;
+  return `riskly-analyse-${analyses.length}-domaines-${today()}`;
 }
 
 function domainName(analysis: Analysis): string {
@@ -144,20 +134,17 @@ function csvRow(analysis: Analysis): string[] {
 }
 
 /** Tableau comparatif, séparateur `;` (Excel francophone) et BOM UTF-8. */
-export function analysesToCsv(analyses: Analysis[], options: ExportOptions = {}): string {
+export function analysesToCsv(analyses: Analysis[]): string {
   const lines = [
-    ...(options.demo ? [csvCell(DEMO_STAMP)] : []),
     CSV_COLUMNS.join(";"),
     ...analyses.map((a) => csvRow(a).map(csvCell).join(";")),
   ];
   return `﻿${lines.join("\r\n")}\r\n`;
 }
 
-export function exportCsv(analyses: Analysis[], options: ExportOptions = {}) {
-  const blob = new Blob([analysesToCsv(analyses, options)], {
-    type: "text/csv;charset=utf-8",
-  });
-  downloadBlob(blob, `${exportBaseName(analyses, options.demo)}.csv`);
+export function exportCsv(analyses: Analysis[]) {
+  const blob = new Blob([analysesToCsv(analyses)], { type: "text/csv;charset=utf-8" });
+  downloadBlob(blob, `${exportBaseName(analyses)}.csv`);
 }
 
 // ── PDF ────────────────────────────────────────────────────────────────────
@@ -224,21 +211,13 @@ function pageFooter(doc: Doc, page: number, total: number) {
   write(doc, `${page} / ${total}`, PAGE.width - PAGE.margin, PAGE.height - 11, { align: "right" });
 }
 
-function pageHeader(doc: Doc, subtitle: string, demo = false) {
+function pageHeader(doc: Doc, subtitle: string) {
   doc.setFont("helvetica", "bold").setFontSize(14).setTextColor(INK.text);
   write(doc, "RISKLY", PAGE.margin, PAGE.margin);
   doc.setFont("helvetica", "normal").setFontSize(8).setTextColor(INK.faint);
   write(doc, subtitle, PAGE.width - PAGE.margin, PAGE.margin, { align: "right" });
   doc.setDrawColor(INK.border);
   doc.line(PAGE.margin, PAGE.margin + 3, PAGE.width - PAGE.margin, PAGE.margin + 3);
-
-  // Un export de démonstration doit se reconnaître même imprimé, hors contexte.
-  if (demo) {
-    doc.setFillColor(INK.avoid);
-    doc.rect(PAGE.margin, PAGE.margin + 5, CONTENT_WIDTH, 6, "F");
-    doc.setFont("helvetica", "bold").setFontSize(7.5).setTextColor("#FFFFFF");
-    write(doc, DEMO_STAMP, PAGE.margin + 3, PAGE.margin + 9.2);
-  }
 }
 
 /** Pavé de verdict : rectangle teinté + libellé, comme le badge de l'interface. */
@@ -295,10 +274,10 @@ function sectionTitle(doc: Doc, x: number, y: number, title: string) {
   write(doc, title.toUpperCase(), x, y);
 }
 
-function renderReportPage(doc: Doc, analysis: Analysis, demo: boolean) {
-  pageHeader(doc, `Rapport d'analyse - ${formatDate(analysis.requested_at) || today()}`, demo);
+function renderReportPage(doc: Doc, analysis: Analysis) {
+  pageHeader(doc, `Rapport d'analyse - ${formatDate(analysis.requested_at) || today()}`);
 
-  let y = PAGE.margin + 14 + (demo ? 8 : 0);
+  let y = PAGE.margin + 14;
 
   doc.setFont("courier", "bold").setFontSize(16).setTextColor(INK.text);
   write(doc, domainName(analysis), PAGE.margin, y);
@@ -438,10 +417,10 @@ function renderReportPage(doc: Doc, analysis: Analysis, demo: boolean) {
 }
 
 /** Page de synthèse d'un lot : le tableau comparatif, trié par risque croissant. */
-function renderSummaryPage(doc: Doc, analyses: Analysis[], demo: boolean) {
-  pageHeader(doc, `Analyse de ${analyses.length} domaines - ${today()}`, demo);
+function renderSummaryPage(doc: Doc, analyses: Analysis[]) {
+  pageHeader(doc, `Analyse de ${analyses.length} domaines - ${today()}`);
 
-  let y = PAGE.margin + 14 + (demo ? 8 : 0);
+  let y = PAGE.margin + 14;
   doc.setFont("helvetica", "bold").setFontSize(16).setTextColor(INK.text);
   write(doc, "Synthese comparative", PAGE.margin, y);
 
@@ -500,10 +479,9 @@ function renderSummaryPage(doc: Doc, analyses: Analysis[], demo: boolean) {
 }
 
 /** Génère le PDF : synthèse comparative si lot, puis une page par domaine. */
-export async function exportPdf(analyses: Analysis[], options: ExportOptions = {}) {
+export async function exportPdf(analyses: Analysis[]) {
   if (analyses.length === 0) return;
 
-  const demo = options.demo ?? false;
   const { jsPDF } = await import("jspdf");
   const doc = new jsPDF({ unit: "mm", format: "a4" }) as Doc;
   doc.setLineWidth(0.2);
@@ -513,13 +491,13 @@ export async function exportPdf(analyses: Analysis[], options: ExportOptions = {
   let page = 0;
 
   if (withSummary) {
-    renderSummaryPage(doc, analyses, demo);
+    renderSummaryPage(doc, analyses);
     pageFooter(doc, ++page, totalPages);
   }
 
   for (const analysis of analyses) {
     if (page > 0) doc.addPage();
-    renderReportPage(doc, analysis, demo);
+    renderReportPage(doc, analysis);
     pageFooter(doc, ++page, totalPages);
   }
 
@@ -531,5 +509,5 @@ export async function exportPdf(analyses: Analysis[], options: ExportOptions = {
     creator: "Riskly",
   });
 
-  downloadBlob(doc.output("blob"), `${exportBaseName(analyses, demo)}.pdf`);
+  downloadBlob(doc.output("blob"), `${exportBaseName(analyses)}.pdf`);
 }
