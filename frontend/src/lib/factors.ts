@@ -153,3 +153,70 @@ export function sortFactors(factors: Factor[]): Factor[] {
     (a, b) => Math.abs(b.contribution) - Math.abs(a.contribution),
   );
 }
+
+// ── Lecture en jauge ───────────────────────────────────────────────────────
+
+export interface FactorGauge {
+  /** Remplissage de l'arc, 0 à 1. Repère visuel uniquement. */
+  ratio: number;
+  /** Le chiffre, court, au centre de la jauge. */
+  value: string;
+  /** Son unité, sous le chiffre. */
+  unit: string;
+}
+
+/** Échelles d'affichage : jusqu'où l'arc doit être plein. */
+const SCALES: Record<string, { max: number; log?: boolean; unit: string }> = {
+  open_page_rank: { max: 10, unit: "/ 10" },
+  rank_value: { max: 10, unit: "/ 10" },
+  referring_domains: { max: 5000, log: true, unit: "sites" },
+  backlink_count: { max: 20000, log: true, unit: "liens" },
+  nbr_serv: { max: 6, unit: "serveurs" },
+  nb_server_count: { max: 6, unit: "serveurs" },
+  domain_len: { max: 30, unit: "caractères" },
+  nbr_hyp: { max: 5, unit: "tirets" },
+};
+
+function clamp01(value: number): number {
+  return Math.min(1, Math.max(0, value));
+}
+
+/**
+ * Traduit un signal chiffré en jauge.
+ *
+ * L'arc est un REPÈRE VISUEL, pas une mesure : il situe la valeur sur une
+ * échelle d'affichage (10 ans pour l'âge, 5 000 domaines référents…), et c'est
+ * le chiffre au centre qui fait foi. Les signaux non chiffrés — présence en
+ * base de menaces, blacklist, extension — renvoient `null` : ils se lisent en
+ * pastille, pas en jauge.
+ */
+export function factorGauge(factor: Factor): FactorGauge | null {
+  const key = factor.feature.toLowerCase();
+
+  if (key === "age_domaine" || key === "domain_age") {
+    if (typeof factor.value !== "number") return null;
+    const days = factor.value > 100 ? factor.value : factor.value * 365;
+    const years = days / 365;
+    return {
+      ratio: clamp01(years / 10), // 10 ans = arc plein
+      value:
+        years >= 1
+          ? String(Math.floor(years))
+          : String(Math.max(0, Math.round(days / 30))),
+      unit: years >= 1 ? (years >= 2 ? "ans" : "an") : "mois",
+    };
+  }
+
+  const scale = SCALES[key];
+  if (!scale || typeof factor.value !== "number") return null;
+
+  const ratio = scale.log
+    ? clamp01(Math.log10(1 + factor.value) / Math.log10(1 + scale.max))
+    : clamp01(factor.value / scale.max);
+
+  return {
+    ratio,
+    value: factor.value.toLocaleString("fr-FR", { maximumFractionDigits: 1 }),
+    unit: scale.unit,
+  };
+}

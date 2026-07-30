@@ -61,7 +61,7 @@ riskly-frontend/
 │   │       ├── ReportDetail.tsx    #     rapport complet 
 │   │       ├── ScoreGauge.tsx      #     score 0–100 + bande d'interprétation
 │   │       ├── VerdictBadge.tsx    #     Bon achat / Risqué / À éviter
-│   │       ├── FactorList.tsx      #     facteurs explicatifs en langage courant
+│   │       ├── FactorGauges.tsx    #     facteurs explicatifs en jauges, langage courant
 │   │       ├── AlertList.tsx       #     alertes caractéristiques (récent, blacklist, historique...)
 │   │       └── MissingDataNotice.tsx #   données non collectées
 │   │
