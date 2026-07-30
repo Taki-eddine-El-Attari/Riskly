@@ -418,7 +418,7 @@ Empilées dans `pages/Landing.tsx`.
 
 > **L'écran d'analyse (`/app`) est `✅ Implémenté`.** Le shell applicatif, `DomainInput`,
 > `AnalysisLoader`, `ScoreGauge`, `VerdictBadge`, `ReportCard`, `ReportList`, `ReportDetail`,
-> `FactorList`, `AlertList`, `MissingDataNotice` et `DownloadMenu` existent, avec les couches
+> `FactorGauges`, `AlertList`, `MissingDataNotice` et `DownloadMenu` existent, avec les couches
 > `types/`, `api/`, `hooks/` (TanStack Query) et `routes/ProtectedRoute`. Les bandes de scores,
 > verdicts et alertes vivent dans `lib/scores.ts`.
 > **Export** : `lib/report-export.ts` produit le PDF (jsPDF en import dynamique — synthèse
@@ -486,8 +486,8 @@ Affichées **à part**, elles **ne modifient ni le score ni le verdict** :
 | `VerdictBadge` | Bon achat / Risqué / À éviter | Extraction du motif §9 : `bg/10 text border/30`, mono uppercase |
 | `ReportCard` | Résumé d'un domaine | `rounded-xl border bg-elevated p-6` ; domaine mono, deux `ScoreGauge`, `VerdictBadge`, alertes clés |
 | `ReportList` | Liste comparative | **Groupée par verdict**, triée par risque croissant ; cartes côte à côte |
-| `ReportDetail` / `ReportPage` | Rapport complet | Scores + verdict en tête, `FactorList` (SHAP), `AlertList`, tableau des données brutes (RDAP, DNS, pays, Tranco, PageRank, TLD), `MissingDataNotice` |
-| `FactorList` | Facteurs SHAP | Chaque facteur : libellé en français courant + sens (augmente/diminue le risque) + barre de magnitude ; hausse-risque en `avoid`, baisse-risque en `good` |
+| `ReportDetail` / `ReportPage` | Rapport complet | Empilé, pleine largeur : `FactorGauges`, `AlertList`, puis le tableau des données brutes sur deux colonnes (RDAP, DNS, pays, PageRank, TLD) et `MissingDataNotice` |
+| `FactorGauges` | Facteurs explicatifs | **Une ligne de mini-jauges** pour les signaux chiffrés (âge, autorité, domaines référents, serveurs, tirets) : chiffre en mono au centre, l'arc situe la valeur sur son échelle d'affichage (`lib/factors.ts`, repère visuel — le chiffre fait foi). Les signaux binaires ou catégoriels (base de menaces, blacklist, extension) deviennent des jauges PLEINES (tout vert / tout rouge). Couleur unique et constante : `good` = allège le risque, `avoid` = l'alourdit |
 | `AlertList` | Les 4 alertes | Lignes icône + libellé + explication courte ; informatives (bordure gauche accent), la menace en `avoid` ; jamais alarmiste sur le reste |
 | `MissingDataNotice` | Données non collectées | Neutre, `text-faint`, icône info ; liste les sources en échec sans dramatiser (« donnée indisponible », pas « erreur ») |
 

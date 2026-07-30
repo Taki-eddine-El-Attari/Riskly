@@ -153,3 +153,95 @@ export function sortFactors(factors: Factor[]): Factor[] {
     (a, b) => Math.abs(b.contribution) - Math.abs(a.contribution),
   );
 }
+
+// ── Lecture en jauge ───────────────────────────────────────────────────────
+
+export interface FactorGauge {
+  /** Remplissage de l'arc, 0 à 1. Repère visuel uniquement. */
+  ratio: number;
+  /** Le chiffre, court, au centre de la jauge. */
+  value: string;
+  /** Son unité, sous le chiffre. */
+  unit: string;
+  /**
+   * Signal sans échelle (présence/absence, extension) : l'arc est plein et la
+   * couleur seule porte le sens — tout vert ou tout rouge selon la direction.
+   */
+  full?: boolean;
+}
+
+/**
+ * Signaux binaires ou catégoriels : pas d'échelle, donc pas de remplissage
+ * partiel. On affiche un état court au centre et l'arc reste plein — le sens
+ * vient de la couleur (direction du facteur).
+ */
+const CATEGORICAL: Record<string, (value: Factor["value"]) => { value: string; unit: string }> = {
+  is_in_threat_db: (v) => ({ value: v ? "Trouvé" : "Aucune", unit: "menace" }),
+  is_blacklisted: (v) => ({ value: v ? "Listé" : "Aucune", unit: "blacklist" }),
+  tld: (v) => ({
+    value: typeof v === "string" ? (v.startsWith(".") ? v : `.${v}`) : "—",
+    unit: "extension",
+  }),
+};
+
+/** Échelles d'affichage : jusqu'où l'arc doit être plein. */
+const SCALES: Record<string, { max: number; log?: boolean; unit: string }> = {
+  open_page_rank: { max: 10, unit: "/ 10" },
+  rank_value: { max: 10, unit: "/ 10" },
+  referring_domains: { max: 5000, log: true, unit: "sites" },
+  backlink_count: { max: 20000, log: true, unit: "liens" },
+  nbr_serv: { max: 6, unit: "serveurs" },
+  nb_server_count: { max: 6, unit: "serveurs" },
+  domain_len: { max: 30, unit: "caractères" },
+  nbr_hyp: { max: 5, unit: "tirets" },
+};
+
+function clamp01(value: number): number {
+  return Math.min(1, Math.max(0, value));
+}
+
+/**
+ * Traduit un signal en jauge.
+ *
+ * Pour un signal CHIFFRÉ, l'arc est un repère visuel — il situe la valeur sur
+ * une échelle d'affichage (10 ans pour l'âge, 5 000 domaines référents…) — et
+ * c'est le chiffre au centre qui fait foi. Pour un signal SANS ÉCHELLE (présence
+ * en base de menaces, blacklist, extension), l'arc est plein : la couleur seule
+ * porte le sens, tout vert ou tout rouge selon la direction du facteur.
+ * Renvoie `null` uniquement pour un signal inconnu, qui retombe en pastille.
+ */
+export function factorGauge(factor: Factor): FactorGauge | null {
+  const key = factor.feature.toLowerCase();
+
+  if (key === "age_domaine" || key === "domain_age") {
+    if (typeof factor.value !== "number") return null;
+    const days = factor.value > 100 ? factor.value : factor.value * 365;
+    const years = days / 365;
+    return {
+      ratio: clamp01(years / 10), // 10 ans = arc plein
+      value:
+        years >= 1
+          ? String(Math.floor(years))
+          : String(Math.max(0, Math.round(days / 30))),
+      unit: years >= 1 ? (years >= 2 ? "ans" : "an") : "mois",
+    };
+  }
+
+  const categorical = CATEGORICAL[key];
+  if (categorical) {
+    return { ratio: 1, full: true, ...categorical(factor.value) };
+  }
+
+  const scale = SCALES[key];
+  if (!scale || typeof factor.value !== "number") return null;
+
+  const ratio = scale.log
+    ? clamp01(Math.log10(1 + factor.value) / Math.log10(1 + scale.max))
+    : clamp01(factor.value / scale.max);
+
+  return {
+    ratio,
+    value: factor.value.toLocaleString("fr-FR", { maximumFractionDigits: 1 }),
+    unit: scale.unit,
+  };
+}
