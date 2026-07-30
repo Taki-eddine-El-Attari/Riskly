@@ -1,17 +1,18 @@
 import { useEffect, useState } from "react";
 import { Check, Loader2 } from "lucide-react";
 import { useReducedMotion } from "motion/react";
-import { ANALYSIS_BUDGET_MS, SOURCES } from "@/lib/constants";
+import { LOADER_SEQUENCE_MS, SOURCES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+
+const STEP_MS = LOADER_SEQUENCE_MS / SOURCES.length;
 
 /**
  * L'attente d'une analyse (jusqu'à 15 s par domaine), habillée en terminal —
  * l'esthétique de la landing, réemployée là où l'utilisateur patiente.
  *
- * Honnêteté de l'affichage : les sources s'allument au rythme du budget de
- * temps annoncé, mais la dernière ligne reste en cours tant que la réponse
- * réelle n'est pas arrivée. On ne coche jamais une étape qu'on ne peut pas
- * vérifier.
+ * Les sources se cochent une à une sur 5 secondes, puis la ligne « calcul du
+ * score » prend le relais et tourne jusqu'à l'arrivée de la réponse réelle :
+ * l'écran ne prétend jamais que l'analyse est finie avant qu'elle le soit.
  */
 export function AnalysisLoader({
   domains,
@@ -23,19 +24,13 @@ export function AnalysisLoader({
   const reduced = useReducedMotion();
   const [step, setStep] = useState(0);
 
-  // Le budget vaut par domaine, la collecte est parallèle entre sources.
-  const interval = Math.max(
-    600,
-    (ANALYSIS_BUDGET_MS * Math.max(1, domains.length)) / (SOURCES.length + 2),
-  );
-
   useEffect(() => {
-    if (reduced) return;
-    // On s'arrête avant la dernière source : elle reste « en cours ».
-    if (step >= SOURCES.length - 1) return;
-    const t = setTimeout(() => setStep((s) => s + 1), interval);
+    if (reduced || step >= SOURCES.length) return;
+    const t = setTimeout(() => setStep((s) => s + 1), STEP_MS);
     return () => clearTimeout(t);
-  }, [step, interval, reduced]);
+  }, [step, reduced]);
+
+  const sequenceDone = !reduced && step >= SOURCES.length;
 
   return (
     <div
@@ -94,6 +89,30 @@ export function AnalysisLoader({
               </li>
             );
           })}
+
+          {/* Le calcul reste en cours tant que la réponse n'est pas là. */}
+          <li
+            className={cn(
+              "flex items-center gap-3 border-t border-border pt-2.5 font-mono text-xs",
+              !sequenceDone && "opacity-40",
+            )}
+          >
+            <span className="flex size-4 shrink-0 items-center justify-center">
+              {sequenceDone ? (
+                <Loader2
+                  className="size-3.5 animate-spin text-accent motion-reduce:animate-none"
+                  aria-hidden
+                />
+              ) : (
+                <span className="size-1.5 rounded-full bg-border" aria-hidden />
+              )}
+            </span>
+            <span className={sequenceDone ? "text-text-muted" : "text-text-faint"}>
+              Calcul du score et des facteurs
+            </span>
+            <span className="h-px flex-1 bg-border" aria-hidden />
+            <span className="text-text-faint">{sequenceDone ? "en cours" : "en attente"}</span>
+          </li>
         </ul>
 
         <p className="mt-5 border-t border-border pt-4 text-xs text-text-muted">

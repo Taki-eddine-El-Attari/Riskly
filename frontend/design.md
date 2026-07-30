@@ -418,9 +418,15 @@ Empilées dans `pages/Landing.tsx`.
 
 > **L'écran d'analyse (`/app`) est `✅ Implémenté`.** Le shell applicatif, `DomainInput`,
 > `AnalysisLoader`, `ScoreGauge`, `VerdictBadge`, `ReportCard`, `ReportList`, `ReportDetail`,
-> `FactorList`, `AlertList` et `MissingDataNotice` existent, avec les couches `types/`, `api/`,
-> `hooks/` (TanStack Query) et `routes/ProtectedRoute`. Les bandes de scores, verdicts et alertes
-> vivent dans `lib/scores.ts`.
+> `FactorList`, `AlertList`, `MissingDataNotice` et `DownloadMenu` existent, avec les couches
+> `types/`, `api/`, `hooks/` (TanStack Query) et `routes/ProtectedRoute`. Les bandes de scores,
+> verdicts et alertes vivent dans `lib/scores.ts`.
+> **Export** : `lib/report-export.ts` produit le PDF (jsPDF en import dynamique — synthèse
+> comparative puis une page par domaine) et le CSV comparatif. Bouton par carte, plus un
+> « Tout télécharger » dès qu'il y a plusieurs domaines.
+> **Warm-up** : chaque domaine accepte un CSV facultatif (`lib/warmup.ts`), au trombone ou par
+> glisser-déposer ; un fichier nommé d'après un domaine rejoint ce domaine. La requête passe
+> alors en `multipart/form-data` (`domain_name` + `warmup_csv`).
 > **Restent `🚧 À construire`** : `/history` (table, suppression, toasts) et `/report/:id`
 > (la page réutilisera `ReportDetail` tel quel).
 > Tant que le backend n'expose pas `/analyses`, la page bascule sur un jeu de démonstration

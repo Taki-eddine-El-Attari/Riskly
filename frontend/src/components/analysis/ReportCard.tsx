@@ -3,6 +3,7 @@ import { ChevronDown, Clock } from "lucide-react";
 import { ScoreGauge } from "./ScoreGauge";
 import { VerdictBadge } from "./VerdictBadge";
 import { ReportDetail } from "./ReportDetail";
+import { DownloadMenu } from "./DownloadMenu";
 import { cn } from "@/lib/utils";
 import { ALERTS, toneBadge, VERDICTS } from "@/lib/scores";
 import type { Analysis } from "@/types/analysis";
@@ -51,10 +52,13 @@ function cacheLabel(cachedAt: string): string | null {
 export function ReportCard({
   analysis,
   defaultOpen = false,
+  demo = false,
   className,
 }: {
   analysis: Analysis;
   defaultOpen?: boolean;
+  /** Rapport de démonstration : les exports le mentionnent. */
+  demo?: boolean;
   className?: string;
 }) {
   const [open, setOpen] = useState(defaultOpen);
@@ -138,22 +142,26 @@ export function ReportCard({
           verdictTone === "avoid" && "border-t-avoid/20",
         )}
       >
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          aria-expanded={open}
-          aria-controls={detailId}
-          className="flex w-full items-center justify-between gap-2 py-3 text-sm text-text-muted outline-none transition-colors duration-150 hover:text-text focus-visible:text-text"
-        >
-          <span>{open ? "Masquer le détail" : "Voir le détail du rapport"}</span>
-          <ChevronDown
-            className={cn(
-              "size-4 transition-transform duration-150 motion-reduce:transition-none",
-              open && "rotate-180",
-            )}
-            aria-hidden
-          />
-        </button>
+        <div className="flex items-center justify-between gap-2 py-2">
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            aria-expanded={open}
+            aria-controls={detailId}
+            className="inline-flex items-center gap-2 rounded-lg px-1 py-1.5 text-sm text-text-muted outline-none transition-colors duration-150 hover:text-text focus-visible:ring-[3px] focus-visible:ring-accent/30"
+          >
+            <span>{open ? "Masquer le détail" : "Voir le détail du rapport"}</span>
+            <ChevronDown
+              className={cn(
+                "size-4 transition-transform duration-150 motion-reduce:transition-none",
+                open && "rotate-180",
+              )}
+              aria-hidden
+            />
+          </button>
+
+          <DownloadMenu analyses={[analysis]} demo={demo} label="Télécharger" />
+        </div>
 
         {open && <ReportDetail analysis={analysis} id={detailId} className="pb-6" />}
       </div>

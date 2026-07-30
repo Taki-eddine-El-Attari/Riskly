@@ -3,8 +3,10 @@ import { AlertCircle, FlaskConical, RotateCcw } from "lucide-react";
 import { AppShell } from "@/components/app/AppShell";
 import { AnalysisLoader } from "@/components/analysis/AnalysisLoader";
 import { DomainInput } from "@/components/analysis/DomainInput";
+import { DownloadMenu } from "@/components/analysis/DownloadMenu";
 import { ReportList } from "@/components/analysis/ReportList";
 import { Button } from "@/components/ui/button";
+import type { DomainEntry } from "@/api/analyses.api";
 import { useAnalyses } from "@/hooks/useAnalyses";
 import { useAuth } from "@/hooks/useAuth";
 import { MAX_DOMAINS } from "@/lib/constants";
@@ -14,7 +16,7 @@ import { cn } from "@/lib/utils";
 export default function Analyze() {
   const { user } = useAuth();
   const analyses = useAnalyses();
-  const [submitted, setSubmitted] = useState<string[]>([]);
+  const [submitted, setSubmitted] = useState<DomainEntry[]>([]);
   const resultsRef = useRef<HTMLDivElement>(null);
 
   const result = analyses.data;
@@ -26,9 +28,9 @@ export default function Analyze() {
     resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [hasResults]);
 
-  function run(domains: string[]) {
-    setSubmitted(domains);
-    analyses.mutate(domains);
+  function run(entries: DomainEntry[]) {
+    setSubmitted(entries);
+    analyses.mutate(entries);
   }
 
   return (
@@ -60,7 +62,12 @@ export default function Analyze() {
 
       {/* Résultats */}
       <section ref={resultsRef} className="mx-auto max-w-6xl px-6 py-12">
-        {analyses.isPending && <AnalysisLoader domains={submitted} className="mx-auto max-w-2xl" />}
+        {analyses.isPending && (
+          <AnalysisLoader
+            domains={submitted.map((e) => e.domain)}
+            className="mx-auto max-w-2xl"
+          />
+        )}
 
         {analyses.isError && !analyses.isPending && (
           <ErrorPanel
@@ -96,21 +103,34 @@ export default function Analyze() {
                     {result.results.length}{" "}
                     {result.results.length > 1 ? "rapports" : "rapport"} · triés par risque croissant
                   </p>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      analyses.reset();
-                      setSubmitted([]);
-                      window.scrollTo({ top: 0, behavior: "smooth" });
-                    }}
-                  >
-                    <RotateCcw aria-hidden />
-                    Nouvelle analyse
-                  </Button>
+
+                  <div className="flex items-center gap-2">
+                    {/* Dès qu'il y a plusieurs domaines, un seul geste suffit
+                        pour tout emporter — synthèse comparative comprise. */}
+                    {result.results.length > 1 && (
+                      <DownloadMenu
+                        analyses={result.results}
+                        demo={result.demo}
+                        variant="outline"
+                        label={`Tout télécharger (${result.results.length})`}
+                      />
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        analyses.reset();
+                        setSubmitted([]);
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }}
+                    >
+                      <RotateCcw aria-hidden />
+                      Nouvelle analyse
+                    </Button>
+                  </div>
                 </div>
 
-                <ReportList analyses={result.results} />
+                <ReportList analyses={result.results} demo={result.demo} />
               </>
             )}
           </div>

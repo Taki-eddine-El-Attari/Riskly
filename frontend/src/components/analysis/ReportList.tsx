@@ -33,15 +33,18 @@ function groupByVerdict(analyses: Analysis[]): [Verdict | "sans_verdict", Analys
  */
 export function ReportList({
   analyses,
+  demo = false,
   className,
 }: {
   analyses: Analysis[];
+  /** Rapports de démonstration : les exports le mentionnent. */
+  demo?: boolean;
   className?: string;
 }) {
   if (analyses.length === 0) return null;
 
   if (analyses.length === 1) {
-    return <ReportCard analysis={analyses[0]} defaultOpen className={className} />;
+    return <ReportCard analysis={analyses[0]} defaultOpen demo={demo} className={className} />;
   }
 
   const groups = groupByVerdict(analyses);
@@ -70,7 +73,7 @@ export function ReportList({
 
             <div className="mt-4 space-y-4">
               {items.map((analysis) => (
-                <ReportCard key={analysis.id} analysis={analysis} />
+                <ReportCard key={analysis.id} analysis={analysis} demo={demo} />
               ))}
             </div>
           </section>

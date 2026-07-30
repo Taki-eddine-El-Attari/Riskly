@@ -24,13 +24,17 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
+  // Sur un corps multipart, seul le navigateur peut poser le Content-Type :
+  // il doit y ajouter la frontière (boundary) qu'il vient de générer.
+  const isMultipart = init.body instanceof FormData;
+
   try {
     const res = await fetch(`${API_BASE_URL}${path}`, {
       ...init,
       credentials: "include",
       signal: controller.signal,
       headers: {
-        "Content-Type": "application/json",
+        ...(isMultipart ? {} : { "Content-Type": "application/json" }),
         ...init.headers,
       },
     });
@@ -65,5 +69,8 @@ export const apiClient = {
       method: "POST",
       body: body === undefined ? undefined : JSON.stringify(body),
     }),
+  /** POST multipart — pour les requêtes qui portent un fichier. */
+  postForm: <T>(path: string, form: FormData) =>
+    request<T>(path, { method: "POST", body: form }),
   delete: <T>(path: string) => request<T>(path, { method: "DELETE" }),
 };
