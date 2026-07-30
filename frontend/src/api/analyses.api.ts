@@ -64,10 +64,30 @@ export function parseAnalysis(raw: Record<string, unknown>): Analysis {
   };
 }
 
-/** Lance l'analyse d'UN domaine. */
-export async function createAnalysis(domainName: string): Promise<Analysis> {
+/** Un domaine à analyser, avec son CSV de warm-up optionnel. */
+export interface DomainEntry {
+  domain: string;
+  warmup?: File;
+}
+
+/**
+ * Lance l'analyse d'UN domaine.
+ *
+ * Contrat attendu côté backend :
+ * - sans warm-up → `application/json` : `{ "domain_name": "..." }` ;
+ * - avec warm-up → `multipart/form-data` : champ `domain_name` + fichier
+ *   `warmup_csv`. Le CSV est facultatif : l'analyse aboutit sans lui.
+ */
+export async function createAnalysis(entry: DomainEntry): Promise<Analysis> {
+  if (entry.warmup) {
+    const form = new FormData();
+    form.append("domain_name", entry.domain);
+    form.append("warmup_csv", entry.warmup, entry.warmup.name);
+    return parseAnalysis(await apiClient.postForm<Record<string, unknown>>(BASE, form));
+  }
+
   const raw = await apiClient.post<Record<string, unknown>>(BASE, {
-    domain_name: domainName,
+    domain_name: entry.domain,
   });
   return parseAnalysis(raw);
 }
@@ -83,8 +103,8 @@ function isEndpointUnavailable(err: unknown): boolean {
  * Le backend n'expose qu'un endpoint mono-domaine : on parallélise et on isole
  * les échecs — un domaine qui tombe n'empêche pas les autres (PRD, UC-03 A7).
  */
-export async function createAnalyses(domains: string[]): Promise<AnalysisBatchResult> {
-  const settled = await Promise.allSettled(domains.map(createAnalysis));
+export async function createAnalyses(entries: DomainEntry[]): Promise<AnalysisBatchResult> {
+  const settled = await Promise.allSettled(entries.map(createAnalysis));
 
   const results: Analysis[] = [];
   const failed: AnalysisBatchResult["failed"] = [];
@@ -97,7 +117,7 @@ export async function createAnalyses(domains: string[]): Promise<AnalysisBatchRe
     }
     if (isEndpointUnavailable(outcome.reason)) endpointMissing = true;
     failed.push({
-      domain: domains[i],
+      domain: entries[i].domain,
       reason:
         outcome.reason instanceof Error
           ? outcome.reason.message
@@ -108,7 +128,7 @@ export async function createAnalyses(domains: string[]): Promise<AnalysisBatchRe
   // Repli de démonstration — voir analyses.demo.ts.
   if (DEMO_FALLBACK && endpointMissing && results.length === 0) {
     return {
-      results: domains.map(demoAnalysis).map(withComputedVerdict),
+      results: entries.map((e) => withComputedVerdict(demoAnalysis(e.domain))),
       failed: [],
       demo: true,
     };

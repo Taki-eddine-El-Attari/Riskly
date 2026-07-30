@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { AlertCircle, FlaskConical, RotateCcw } from "lucide-react";
+import { AlertCircle, RotateCcw } from "lucide-react";
 import { AppShell } from "@/components/app/AppShell";
 import { AnalysisLoader } from "@/components/analysis/AnalysisLoader";
 import { DomainInput } from "@/components/analysis/DomainInput";
+import { DownloadMenu } from "@/components/analysis/DownloadMenu";
 import { ReportList } from "@/components/analysis/ReportList";
 import { Button } from "@/components/ui/button";
+import type { DomainEntry } from "@/api/analyses.api";
 import { useAnalyses } from "@/hooks/useAnalyses";
 import { useAuth } from "@/hooks/useAuth";
 import { MAX_DOMAINS } from "@/lib/constants";
@@ -14,7 +16,7 @@ import { cn } from "@/lib/utils";
 export default function Analyze() {
   const { user } = useAuth();
   const analyses = useAnalyses();
-  const [submitted, setSubmitted] = useState<string[]>([]);
+  const [submitted, setSubmitted] = useState<DomainEntry[]>([]);
   const resultsRef = useRef<HTMLDivElement>(null);
 
   const result = analyses.data;
@@ -26,9 +28,9 @@ export default function Analyze() {
     resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [hasResults]);
 
-  function run(domains: string[]) {
-    setSubmitted(domains);
-    analyses.mutate(domains);
+  function run(entries: DomainEntry[]) {
+    setSubmitted(entries);
+    analyses.mutate(entries);
   }
 
   return (
@@ -60,7 +62,12 @@ export default function Analyze() {
 
       {/* Résultats */}
       <section ref={resultsRef} className="mx-auto max-w-6xl px-6 py-12">
-        {analyses.isPending && <AnalysisLoader domains={submitted} className="mx-auto max-w-2xl" />}
+        {analyses.isPending && (
+          <AnalysisLoader
+            domains={submitted.map((e) => e.domain)}
+            className="mx-auto max-w-2xl"
+          />
+        )}
 
         {analyses.isError && !analyses.isPending && (
           <ErrorPanel
@@ -71,8 +78,6 @@ export default function Analyze() {
 
         {!analyses.isPending && result && (
           <div className="space-y-6">
-            {result.demo && <DemoNotice />}
-
             {result.failed.length > 0 && (
               <div className="rounded-lg border border-avoid/30 bg-avoid/10 p-4">
                 <p className="text-sm font-medium text-avoid">
@@ -96,18 +101,30 @@ export default function Analyze() {
                     {result.results.length}{" "}
                     {result.results.length > 1 ? "rapports" : "rapport"} · triés par risque croissant
                   </p>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      analyses.reset();
-                      setSubmitted([]);
-                      window.scrollTo({ top: 0, behavior: "smooth" });
-                    }}
-                  >
-                    <RotateCcw aria-hidden />
-                    Nouvelle analyse
-                  </Button>
+
+                  <div className="flex items-center gap-2">
+                    {/* Dès qu'il y a plusieurs domaines, un seul geste suffit
+                        pour tout emporter — synthèse comparative comprise. */}
+                    {result.results.length > 1 && (
+                      <DownloadMenu
+                        analyses={result.results}
+                        variant="outline"
+                        label={`Tout télécharger (${result.results.length})`}
+                      />
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        analyses.reset();
+                        setSubmitted([]);
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }}
+                    >
+                      <RotateCcw aria-hidden />
+                      Nouvelle analyse
+                    </Button>
+                  </div>
                 </div>
 
                 <ReportList analyses={result.results} />
@@ -152,23 +169,6 @@ function VerdictLegend() {
         faible signifie « aucun signal négatif détecté », pas « domaine sain » :
         la décision d'achat reste la vôtre.
       </p>
-    </div>
-  );
-}
-
-function DemoNotice() {
-  return (
-    <div className="flex gap-3 rounded-lg border border-accent/30 bg-accent/10 p-4">
-      <FlaskConical className="mt-0.5 size-4 shrink-0 text-accent" aria-hidden />
-      <div className="text-sm">
-        <p className="font-medium text-text">Données de démonstration</p>
-        <p className="mt-1 leading-relaxed text-text-muted">
-          L'API d'analyse n'a pas répondu : les rapports ci-dessous sont des
-          exemples, générés localement pour illustrer l'interface. Aucune donnée
-          réelle n'a été collectée et rien n'a été enregistré dans votre
-          historique.
-        </p>
-      </div>
     </div>
   );
 }
