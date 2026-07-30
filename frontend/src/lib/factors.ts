@@ -163,7 +163,26 @@ export interface FactorGauge {
   value: string;
   /** Son unité, sous le chiffre. */
   unit: string;
+  /**
+   * Signal sans échelle (présence/absence, extension) : l'arc est plein et la
+   * couleur seule porte le sens — tout vert ou tout rouge selon la direction.
+   */
+  full?: boolean;
 }
+
+/**
+ * Signaux binaires ou catégoriels : pas d'échelle, donc pas de remplissage
+ * partiel. On affiche un état court au centre et l'arc reste plein — le sens
+ * vient de la couleur (direction du facteur).
+ */
+const CATEGORICAL: Record<string, (value: Factor["value"]) => { value: string; unit: string }> = {
+  is_in_threat_db: (v) => ({ value: v ? "Trouvé" : "Aucune", unit: "menace" }),
+  is_blacklisted: (v) => ({ value: v ? "Listé" : "Aucune", unit: "blacklist" }),
+  tld: (v) => ({
+    value: typeof v === "string" ? (v.startsWith(".") ? v : `.${v}`) : "—",
+    unit: "extension",
+  }),
+};
 
 /** Échelles d'affichage : jusqu'où l'arc doit être plein. */
 const SCALES: Record<string, { max: number; log?: boolean; unit: string }> = {
@@ -182,13 +201,14 @@ function clamp01(value: number): number {
 }
 
 /**
- * Traduit un signal chiffré en jauge.
+ * Traduit un signal en jauge.
  *
- * L'arc est un REPÈRE VISUEL, pas une mesure : il situe la valeur sur une
- * échelle d'affichage (10 ans pour l'âge, 5 000 domaines référents…), et c'est
- * le chiffre au centre qui fait foi. Les signaux non chiffrés — présence en
- * base de menaces, blacklist, extension — renvoient `null` : ils se lisent en
- * pastille, pas en jauge.
+ * Pour un signal CHIFFRÉ, l'arc est un repère visuel — il situe la valeur sur
+ * une échelle d'affichage (10 ans pour l'âge, 5 000 domaines référents…) — et
+ * c'est le chiffre au centre qui fait foi. Pour un signal SANS ÉCHELLE (présence
+ * en base de menaces, blacklist, extension), l'arc est plein : la couleur seule
+ * porte le sens, tout vert ou tout rouge selon la direction du facteur.
+ * Renvoie `null` uniquement pour un signal inconnu, qui retombe en pastille.
  */
 export function factorGauge(factor: Factor): FactorGauge | null {
   const key = factor.feature.toLowerCase();
@@ -205,6 +225,11 @@ export function factorGauge(factor: Factor): FactorGauge | null {
           : String(Math.max(0, Math.round(days / 30))),
       unit: years >= 1 ? (years >= 2 ? "ans" : "an") : "mois",
     };
+  }
+
+  const categorical = CATEGORICAL[key];
+  if (categorical) {
+    return { ratio: 1, full: true, ...categorical(factor.value) };
   }
 
   const scale = SCALES[key];

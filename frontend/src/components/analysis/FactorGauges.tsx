@@ -16,9 +16,9 @@ function valueSize(value: string): string {
  * Ce qui a pesé dans le score, en une ligne de jauges.
  *
  * Les signaux chiffrés (âge, autorité, domaines référents…) se lisent en
- * jauge : le chiffre au centre fait foi, l'arc situe la valeur sur son échelle.
- * Les signaux binaires ou catégoriels — base de menaces, blacklist, extension —
- * n'ont pas d'échelle : ils se lisent en pastille, en dessous.
+ * jauge remplie à hauteur de la valeur ; les signaux sans échelle — base de
+ * menaces, blacklist, extension — en jauge PLEINE, la couleur seule portant le
+ * sens. Un signal inconnu retombe en pastille (défensif).
  *
  * La couleur ne dit qu'une chose, la même partout : vert, ce signal allège le
  * risque ; rouge, il l'alourdit.
@@ -54,14 +54,18 @@ export function FactorGauges({ factors, className }: { factors: Factor[]; classN
               >
                 <div className="relative size-[80px]">
                   <svg viewBox="0 0 80 80" className="size-full -rotate-90" aria-hidden>
-                    <circle
-                      cx="40"
-                      cy="40"
-                      r={RADIUS}
-                      fill="none"
-                      strokeWidth="5"
-                      className="stroke-border"
-                    />
+                    {/* Piste de fond : masquée sous une jauge pleine, qui doit
+                        se lire comme un anneau uni tout vert ou tout rouge. */}
+                    {!gauge.full && (
+                      <circle
+                        cx="40"
+                        cy="40"
+                        r={RADIUS}
+                        fill="none"
+                        strokeWidth="5"
+                        className="stroke-border"
+                      />
+                    )}
                     <circle
                       cx="40"
                       cy="40"
