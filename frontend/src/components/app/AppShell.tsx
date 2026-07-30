@@ -121,10 +121,9 @@ export function AppShell({ children }: { children: ReactNode }) {
       <main className="flex-1">{children}</main>
 
       <footer className="border-t border-border">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-6 py-5 font-mono text-xs text-text-faint">
-          <span>RDAP · Open PageRank · PhishTank · URLhaus · OpenPhish · DNS · ip-api</span>
-          <span>Aide à la décision — la décision d'achat reste la vôtre.</span>
-        </div>
+        <p className="mx-auto max-w-6xl px-6 py-5 text-center font-mono text-xs text-text-faint">
+          © 2026 Riskly · Domain Risk Analyzer
+        </p>
       </footer>
     </div>
   );

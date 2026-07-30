@@ -259,9 +259,11 @@ export function DomainInput({
         className="relative w-full rounded-2xl border border-border bg-bg-elevated/80 p-2 shadow-2xl backdrop-blur transition-colors focus-within:border-accent/60"
       >
         <BorderBeam size={120} duration={7} />
-        <div className="flex items-center gap-3 px-3">
+        {/* `flex-wrap` : à l'étroit (mobile), la pastille du CSV passe à la
+            ligne au lieu d'écraser le champ. */}
+        <div className="flex flex-wrap items-center gap-3 px-3">
           <Globe className="size-5 shrink-0 text-text-faint" aria-hidden />
-          <div className="relative min-w-0 flex-1 overflow-hidden">
+          <div className="relative min-w-[7rem] flex-1 overflow-hidden">
             <input
               ref={(el) => registerRef(rows[0].id, el)}
               value={rows[0].value}
@@ -284,12 +286,13 @@ export function DomainInput({
             )}
           </div>
 
-          <WarmupButton
+          <WarmupSlot
             rowId={rows[0].id}
             warmup={rows[0].warmup}
             disabled={pending}
             registerFileRef={registerFileRef}
             onPick={attachToRow}
+            onRemove={() => detachFromRow(rows[0].id)}
           />
 
           <button
@@ -315,14 +318,6 @@ export function DomainInput({
       </div>
 
       <RowFeedback issue={issues[0]} className="px-3" />
-      {rows[0].warmup && (
-        <WarmupChip
-          warmup={rows[0].warmup}
-          disabled={pending}
-          onRemove={() => detachFromRow(rows[0].id)}
-          className="mx-5 mt-2"
-        />
-      )}
 
       {/* Domaines 2 à 5. */}
       {rows.length > 1 && (
@@ -333,7 +328,7 @@ export function DomainInput({
               <li key={row.id}>
                 <div
                   onDrop={(e) => onRowDrop(row.id, e)}
-                  className="flex items-center gap-3 rounded-xl border border-border bg-bg-elevated/60 px-4 transition-colors focus-within:border-accent/60"
+                  className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-bg-elevated/60 px-4 py-1.5 transition-colors focus-within:border-accent/60"
                 >
                   <Globe className="size-4 shrink-0 text-text-faint" aria-hidden />
                   <input
@@ -347,14 +342,15 @@ export function DomainInput({
                     spellCheck={false}
                     disabled={pending}
                     placeholder="autre-domaine.com"
-                    className="w-full min-w-0 flex-1 bg-transparent py-3 font-mono text-sm text-text outline-none placeholder:text-text-faint disabled:opacity-60"
+                    className="w-full min-w-[7rem] flex-1 bg-transparent py-1.5 font-mono text-sm text-text outline-none placeholder:text-text-faint disabled:opacity-60"
                   />
-                  <WarmupButton
+                  <WarmupSlot
                     rowId={row.id}
                     warmup={row.warmup}
                     disabled={pending}
                     registerFileRef={registerFileRef}
                     onPick={attachToRow}
+                    onRemove={() => detachFromRow(row.id)}
                   />
                   <button
                     type="button"
@@ -367,14 +363,6 @@ export function DomainInput({
                   </button>
                 </div>
                 <RowFeedback issue={issues[index]} className="px-4" />
-                {row.warmup && (
-                  <WarmupChip
-                    warmup={row.warmup}
-                    disabled={pending}
-                    onRemove={() => detachFromRow(row.id)}
-                    className="mx-4 mt-2"
-                  />
-                )}
               </li>
             );
           })}
@@ -426,88 +414,93 @@ export function DomainInput({
   );
 }
 
-/** Trombone : ouvre le sélecteur de fichier de la ligne. */
-function WarmupButton({
+/**
+ * L'emplacement du CSV, à droite du nom de domaine, dans le champ lui-même.
+ *
+ * Vide, c'est un trombone discret. Rempli, il devient une pastille sur deux
+ * lignes — le nom du fichier, puis ce qu'il contient — de sorte que le fichier
+ * reste visuellement rattaché à SON domaine plutôt que posé sous le champ.
+ */
+function WarmupSlot({
   rowId,
   warmup,
   disabled,
   registerFileRef,
   onPick,
+  onRemove,
 }: {
   rowId: number;
   warmup?: WarmupFile;
   disabled: boolean;
   registerFileRef: (id: number, el: HTMLInputElement | null) => void;
   onPick: (id: number, file: File) => void;
+  onRemove: () => void;
 }) {
   const inputId = `warmup-${rowId}`;
 
+  const fileInput = (
+    <input
+      ref={(el) => registerFileRef(rowId, el)}
+      id={inputId}
+      type="file"
+      accept={WARMUP_ACCEPT}
+      className="sr-only"
+      disabled={disabled}
+      onChange={(e) => {
+        const file = e.target.files?.[0];
+        if (file) onPick(rowId, file);
+      }}
+    />
+  );
+
+  if (!warmup) {
+    return (
+      <>
+        {fileInput}
+        <label
+          htmlFor={inputId}
+          title="Joindre un CSV de warm-up (facultatif)"
+          aria-label="Joindre un CSV de warm-up"
+          className={cn(
+            "shrink-0 cursor-pointer rounded-md p-1.5 text-text-faint outline-none transition-colors duration-150",
+            "hover:bg-bg hover:text-text focus-within:ring-[3px] focus-within:ring-accent/30",
+            disabled && "pointer-events-none opacity-50",
+          )}
+        >
+          <Paperclip className="size-4" aria-hidden />
+        </label>
+      </>
+    );
+  }
+
   return (
     <>
-      <input
-        ref={(el) => registerFileRef(rowId, el)}
-        id={inputId}
-        type="file"
-        accept={WARMUP_ACCEPT}
-        className="sr-only"
-        disabled={disabled}
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (file) onPick(rowId, file);
-        }}
-      />
-      <label
-        htmlFor={inputId}
-        title={warmup ? `Warm-up joint : ${warmup.file.name}` : "Joindre un CSV de warm-up (facultatif)"}
-        aria-label={warmup ? `Remplacer le CSV de warm-up` : "Joindre un CSV de warm-up"}
-        className={cn(
-          "shrink-0 cursor-pointer rounded-md p-1.5 outline-none transition-colors duration-150",
-          "hover:bg-bg hover:text-text focus-within:ring-[3px] focus-within:ring-accent/30",
-          warmup ? "text-accent" : "text-text-faint",
-          disabled && "pointer-events-none opacity-50",
-        )}
-      >
-        <Paperclip className="size-4" aria-hidden />
-      </label>
-    </>
-  );
-}
+      {fileInput}
+      <div className="flex min-w-0 shrink-0 items-center gap-2 rounded-lg border border-accent/30 bg-accent/10 py-1 pl-2 pr-1">
+        <FileSpreadsheet className="size-3.5 shrink-0 text-accent" aria-hidden />
 
-/** Le fichier joint, avec son poids et son nombre de lignes. */
-function WarmupChip({
-  warmup,
-  disabled,
-  onRemove,
-  className,
-}: {
-  warmup: WarmupFile;
-  disabled: boolean;
-  onRemove: () => void;
-  className?: string;
-}) {
-  return (
-    <div
-      className={cn(
-        "inline-flex max-w-full items-center gap-2 rounded-lg border border-accent/30 bg-accent/10 py-1.5 pl-2.5 pr-1.5",
-        className,
-      )}
-    >
-      <FileSpreadsheet className="size-3.5 shrink-0 text-accent" aria-hidden />
-      <span className="truncate font-mono text-xs text-text">{warmup.file.name}</span>
-      <span className="shrink-0 font-mono text-[10px] text-text-faint">
-        {warmup.rows !== null && `${warmup.rows.toLocaleString("fr-FR")} lignes · `}
-        {formatBytes(warmup.file.size)}
-      </span>
-      <button
-        type="button"
-        onClick={onRemove}
-        disabled={disabled}
-        aria-label={`Retirer ${warmup.file.name}`}
-        className="shrink-0 rounded p-0.5 text-text-faint outline-none transition-colors hover:text-text focus-visible:ring-[3px] focus-visible:ring-accent/30 disabled:opacity-50"
-      >
-        <X className="size-3.5" aria-hidden />
-      </button>
-    </div>
+        {/* Cliquer la pastille remplace le fichier ; la croix le retire. */}
+        <label htmlFor={inputId} className="min-w-0 cursor-pointer" title="Remplacer le fichier">
+          <span className="block max-w-[9rem] truncate font-mono text-[11px] leading-tight text-text sm:max-w-[13rem]">
+            {warmup.file.name}
+          </span>
+          <span className="block font-mono text-[10px] leading-tight text-text-faint">
+            {warmup.rows !== null && `${warmup.rows.toLocaleString("fr-FR")} lignes · `}
+            {formatBytes(warmup.file.size)}
+          </span>
+        </label>
+
+        <button
+          type="button"
+          onClick={onRemove}
+          disabled={disabled}
+          aria-label={`Retirer ${warmup.file.name}`}
+          className="shrink-0 rounded p-0.5 text-text-faint outline-none transition-colors hover:text-text focus-visible:ring-[3px] focus-visible:ring-accent/30 disabled:opacity-50"
+        >
+          <X className="size-3.5" aria-hidden />
+        </button>
+      </div>
+    </>
   );
 }
 
