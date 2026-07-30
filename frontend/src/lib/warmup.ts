@@ -56,40 +56,14 @@ export async function readWarmupFile(file: File): Promise<WarmupFile> {
 }
 
 /**
- * Associe des fichiers déposés en vrac aux domaines saisis.
- * Un fichier nommé d'après un domaine (`exemple-domaine.com.csv`,
- * `warmup_exemple-domaine.csv`) rejoint ce domaine ; les autres comblent les
- * emplacements libres dans l'ordre.
+ * Cherche, parmi les domaines saisis, celui dont le fichier porte le nom
+ * (`exemple-domaine.com.csv`, `warmup_exemple-domaine.csv`).
+ * Renvoie son index, ou `-1` si aucun ne correspond.
+ *
+ * Sert de suggestion quand on demande à l'utilisateur de choisir : le nom du
+ * fichier est un indice fort, jamais une décision prise à sa place.
  */
-export function matchFilesToDomains(
-  files: File[],
-  domains: string[],
-  taken: boolean[],
-): Map<number, File> {
-  const assignment = new Map<number, File>();
-  const claimed = [...taken];
-  const remaining: File[] = [];
-
-  for (const file of files) {
-    const haystack = file.name.toLowerCase().replace(/\.csv$/, "");
-    const index = domains.findIndex(
-      (domain, i) =>
-        domain.length > 0 && !claimed[i] && !assignment.has(i) && haystack.includes(domain),
-    );
-    if (index >= 0) {
-      assignment.set(index, file);
-      claimed[index] = true;
-    } else {
-      remaining.push(file);
-    }
-  }
-
-  for (const file of remaining) {
-    const index = domains.findIndex((_, i) => !claimed[i] && !assignment.has(i));
-    if (index < 0) break;
-    assignment.set(index, file);
-    claimed[index] = true;
-  }
-
-  return assignment;
+export function matchDomainByFileName(fileName: string, domains: string[]): number {
+  const haystack = fileName.toLowerCase().replace(/\.csv$/, "");
+  return domains.findIndex((domain) => domain.length > 0 && haystack.includes(domain));
 }

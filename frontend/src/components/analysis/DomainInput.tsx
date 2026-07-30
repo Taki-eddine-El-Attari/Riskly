@@ -6,12 +6,14 @@ import { MAX_DOMAINS } from "@/lib/constants";
 import { isValidDomain, normalizeDomain, splitDomains } from "@/lib/domains";
 import {
   formatBytes,
-  matchFilesToDomains,
+  matchDomainByFileName,
   readWarmupFile,
   WARMUP_ACCEPT,
   WarmupError,
 } from "@/lib/warmup";
 import type { WarmupFile } from "@/lib/warmup";
+import { WarmupAssignDialog } from "./WarmupAssignDialog";
+import type { WarmupTarget } from "./WarmupAssignDialog";
 import { cn } from "@/lib/utils";
 
 const EXAMPLES = [
@@ -67,6 +69,8 @@ export function DomainInput({
   const [focused, setFocused] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [fileError, setFileError] = useState<string | null>(null);
+  /** Fichiers déposés sur le bloc, en attente d'un domaine. */
+  const [pendingFiles, setPendingFiles] = useState<WarmupFile[]>([]);
   const inputRefs = useRef(new Map<number, HTMLInputElement>());
   const fileRefs = useRef(new Map<number, HTMLInputElement>());
   const dragDepth = useRef(0);
@@ -160,22 +164,20 @@ export function DomainInput({
     if (input) input.value = ""; // permet de re-choisir le même fichier
   }
 
-  /** Dépôt hors d'une ligne précise : on répartit sur les domaines saisis. */
+  /**
+   * Dépôt hors d'une ligne précise : rien n'indique à quel domaine le fichier
+   * appartient. On lit et valide, puis on ouvre la boîte de choix — sauf s'il
+   * n'y a qu'une seule ligne, auquel cas il n'y a rien à choisir.
+   */
   async function spreadFiles(files: File[]) {
     setFileError(null);
-    const assignment = matchFilesToDomains(
-      files,
-      normalized,
-      rows.map((r) => r.warmup !== undefined),
-    );
 
     const read = await Promise.all(
-      [...assignment.entries()].map(async ([index, file]) => {
+      files.map(async (file) => {
         try {
-          return { index, warmup: await readWarmupFile(file), error: null as string | null };
+          return { warmup: await readWarmupFile(file), error: null as string | null };
         } catch (err) {
           return {
-            index,
             warmup: null,
             error: err instanceof WarmupError ? err.message : "Fichier illisible.",
           };
@@ -185,18 +187,47 @@ export function DomainInput({
 
     const firstError = read.find((r) => r.error)?.error ?? null;
     if (firstError) setFileError(firstError);
-    if (files.length > assignment.size && !firstError) {
-      setFileError(
-        `${files.length - assignment.size} fichier(s) non rattaché(s) : ajoutez d'abord les domaines correspondants.`,
-      );
+
+    const valid = read.map((r) => r.warmup).filter((w): w is WarmupFile => w !== null);
+    if (valid.length === 0) return;
+
+    if (rows.length === 1) {
+      const [first] = valid;
+      setRows((current) => current.map((row, i) => (i === 0 ? { ...row, warmup: first } : row)));
+      if (valid.length > 1) {
+        setFileError("Un seul CSV par domaine : les fichiers en trop ont été ignorés.");
+      }
+      return;
     }
 
+    setPendingFiles(valid.slice(0, rows.length));
+    if (valid.length > rows.length) {
+      setFileError(
+        `${valid.length - rows.length} fichier(s) en trop : il n'y a que ${rows.length} domaines.`,
+      );
+    }
+  }
+
+  /** Suggestion de départ dans la boîte de choix, jamais imposée. */
+  const suggestTarget = useCallback(
+    (file: WarmupFile, taken: number[]) => {
+      const byName = matchDomainByFileName(file.file.name, normalized);
+      if (byName >= 0 && !taken.includes(rows[byName].id)) return rows[byName].id;
+
+      const free = rows.find((row) => !row.warmup && !taken.includes(row.id));
+      return free ? free.id : -1;
+    },
+    [rows, normalized],
+  );
+
+  function applyAssignment(entries: { file: WarmupFile; rowId: number }[]) {
     setRows((current) =>
-      current.map((row, i) => {
-        const match = read.find((r) => r.index === i && r.warmup);
-        return match?.warmup ? { ...row, warmup: match.warmup } : row;
+      current.map((row) => {
+        const match = entries.find((e) => e.rowId === row.id);
+        return match ? { ...row, warmup: match.file } : row;
       }),
     );
+    setPendingFiles([]);
   }
 
   function csvFilesFrom(event: React.DragEvent): File[] {
@@ -240,6 +271,17 @@ export function DomainInput({
   }
 
   const attachedCount = rows.filter((r) => r.warmup).length;
+
+  const targets = useMemo<WarmupTarget[]>(
+    () =>
+      rows.map((row, i) => ({
+        rowId: row.id,
+        domain: normalized[i],
+        position: i + 1,
+        hasWarmup: row.warmup !== undefined,
+      })),
+    [rows, normalized],
+  );
 
   return (
     <form
@@ -405,11 +447,21 @@ export function DomainInput({
             <Upload className="mx-auto size-6 text-accent" aria-hidden />
             <p className="mt-2 text-sm font-medium text-text">Déposez vos CSV de warm-up</p>
             <p className="mt-1 font-mono text-xs text-text-faint">
-              sur une ligne pour l'associer à ce domaine, ou ici pour les répartir
+              {rows.length > 1
+                ? "sur une ligne pour l'associer à ce domaine, ou ici pour choisir"
+                : "pour l'associer à ce domaine"}
             </p>
           </div>
         </div>
       )}
+
+      <WarmupAssignDialog
+        files={pendingFiles}
+        targets={targets}
+        suggestFor={suggestTarget}
+        onConfirm={applyAssignment}
+        onCancel={() => setPendingFiles([])}
+      />
     </form>
   );
 }
