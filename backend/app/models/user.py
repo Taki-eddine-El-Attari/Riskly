@@ -30,6 +30,8 @@ class User(Base):
 
     telegram_username =Column(String(100) ,nullable=True)
 
+    photo_url = Column(String(1024), nullable=True)
+
 
     role= Column(String(50), default='user')
 

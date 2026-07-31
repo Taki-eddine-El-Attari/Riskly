@@ -10,6 +10,7 @@ export interface User {
   /** Identifiant Telegram permanent — présent seulement pour un compte Telegram. */
   telegram_id: number | null;
   telegram_username: string | null;
+  photo_url: string | null;
   role: Role;
   auth_method: AuthMethod;
   entite: string | null;

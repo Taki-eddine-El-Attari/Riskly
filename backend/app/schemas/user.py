@@ -51,6 +51,7 @@ class UserRead(BaseModel):
     username: str
     telegram_id: int | None = None
     telegram_username: str | None = None
+    photo_url: str | None = None
     role: UserRole
     auth_method: str
     entite: str | None = None

@@ -74,6 +74,7 @@ class AuthService:
             telegram_id=data.id,
             telegram_username=data.username,
             first_name=data.first_name,
+            photo_url=data.photo_url,
         )
         request.session["user_id"] = str(user.id)
         return user

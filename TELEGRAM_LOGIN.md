@@ -60,3 +60,5 @@ Ouvre le site **via le domaine déclaré à BotFather** (pas `localhost`) → pa
 | `VITE_TELEGRAM_BOT_ID` | chiffres avant `:` du token (non secret) | `frontend/.env` |
 | `SECRET_KEY` | tu la génères (aléatoire) | `backend/.env` |
 | `DATABASE_URL` | ton hébergeur Postgres | `backend/.env` |
+
+python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000

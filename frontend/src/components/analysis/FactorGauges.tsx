@@ -2,27 +2,15 @@ import { cn } from "@/lib/utils";
 import { factorDirection, factorGauge, factorLabel, factorValue, sortFactors } from "@/lib/factors";
 import type { Factor } from "@/types/analysis";
 
-const RADIUS = 29;
+const RADIUS = 34;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
-/** Le chiffre doit tenir dans le cercle : « 2 656 » a besoin de moins de corps. */
 function valueSize(value: string): string {
   if (value.length >= 7) return "text-[11px]";
   if (value.length >= 5) return "text-sm";
   return "text-base";
 }
 
-/**
- * Ce qui a pesé dans le score, en une ligne de jauges.
- *
- * Les signaux chiffrés (âge, autorité, domaines référents…) se lisent en
- * jauge remplie à hauteur de la valeur ; les signaux sans échelle — base de
- * menaces, blacklist, extension — en jauge PLEINE, la couleur seule portant le
- * sens. Un signal inconnu retombe en pastille (défensif).
- *
- * La couleur ne dit qu'une chose, la même partout : vert, ce signal allège le
- * risque ; rouge, il l'alourdit.
- */
 export function FactorGauges({ factors, className }: { factors: Factor[]; className?: string }) {
   const sorted = sortFactors(factors);
   if (sorted.length === 0) return null;
@@ -41,9 +29,7 @@ export function FactorGauges({ factors, className }: { factors: Factor[]; classN
       </h4>
 
       {gauges.length > 0 && (
-        // Une seule ligne dès qu'il y a la place ; centré tant qu'on déborde
-        // (mobile, ou beaucoup de signaux).
-        <ul className="mt-4 flex flex-wrap justify-center gap-x-3 gap-y-5 xl:justify-start">
+        <ul className="mt-4 flex flex-wrap justify-center gap-x-3 gap-y-5 xl:justify-center">
           {gauges.map(({ factor, gauge }) => {
             const direction = factorDirection(factor.contribution);
             const raisesRisk = direction.tone === "avoid";
@@ -51,17 +37,15 @@ export function FactorGauges({ factors, className }: { factors: Factor[]; classN
             return (
               <li
                 key={factor.feature}
-                className="flex w-[5.75rem] flex-col items-center text-center"
+                className="flex w-[7rem] flex-col items-center text-center"
                 title={`${factorLabel(factor.feature)} : ${factorValue(factor)} — ${direction.label}`}
               >
-                <div className="relative size-[68px]">
-                  <svg viewBox="0 0 68 68" className="size-full -rotate-90" aria-hidden>
-                    {/* Piste de fond : masquée sous une jauge pleine, qui doit
-                        se lire comme un anneau uni tout vert ou tout rouge. */}
+                <div className="relative size-[80px]">
+                  <svg viewBox="0 0 80 80" className="size-full -rotate-90" aria-hidden>            
                     {!gauge.full && (
                       <circle
-                        cx="34"
-                        cy="34"
+                        cx="40"
+                        cy="40"
                         r={RADIUS}
                         fill="none"
                         strokeWidth="5"
@@ -69,8 +53,8 @@ export function FactorGauges({ factors, className }: { factors: Factor[]; classN
                       />
                     )}
                     <circle
-                      cx="34"
-                      cy="34"
+                      cx="40"
+                      cy="40"
                       r={RADIUS}
                       fill="none"
                       strokeWidth="5"
@@ -81,7 +65,7 @@ export function FactorGauges({ factors, className }: { factors: Factor[]; classN
                     />
                   </svg>
 
-                  <div className="absolute inset-0 flex flex-col items-center justify-center px-1.5">
+                  <div className="absolute inset-0 flex flex-col items-center justify-center px-2">
                     <span
                       className={cn(
                         "font-mono font-medium leading-none tabular-nums",
@@ -115,7 +99,7 @@ export function FactorGauges({ factors, className }: { factors: Factor[]; classN
       )}
 
       {pills.length > 0 && (
-        <ul className="mt-5 flex flex-wrap gap-2">
+        <ul className="mt-5 flex flex-wrap justify-center gap-2">
           {pills.map((factor) => {
             const direction = factorDirection(factor.contribution);
             const raisesRisk = direction.tone === "avoid";

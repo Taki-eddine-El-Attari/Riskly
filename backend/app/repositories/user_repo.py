@@ -18,12 +18,15 @@ class UserRepository:
         telegram_id: int,
         telegram_username: Optional[str],
         first_name: Optional[str] = None,
+        photo_url: Optional[str] = None,
     ) -> User:
         """Crée le compte au 1er login Telegram (auth_method='telegram'),
-        sinon rafraîchit le telegram_username. La clé est telegram_id."""
+        sinon rafraîchit le telegram_username et la photo_url. La clé est telegram_id."""
         user = self.get_by_telegram_id(telegram_id)
         if user is not None:
             user.telegram_username = telegram_username
+            if photo_url:
+                user.photo_url = photo_url
             self.db.commit()
             self.db.refresh(user)
             return user
@@ -41,6 +44,7 @@ class UserRepository:
             telegram_id=telegram_id,
             telegram_username=telegram_username,
             username=username,
+            photo_url=photo_url,
             role="user",
             auth_method="telegram",
             password_hash=None,

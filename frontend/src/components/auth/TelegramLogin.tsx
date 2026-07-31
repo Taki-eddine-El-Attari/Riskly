@@ -75,7 +75,7 @@ export function TelegramLogin({ className }: { className?: string }) {
           .loginTelegram(user)
           .then((account) => {
             const handle = account.telegram_username ?? account.username;
-            setSuccess(`Connecté en tant que @${handle} — compte enregistré.`);
+            setSuccess(`Connecté en tant que @${handle}`);
             return refreshUser();
           })
           .then(() => {
@@ -101,7 +101,10 @@ export function TelegramLogin({ className }: { className?: string }) {
         onClick={handleClick}
       >
         {pending && !success ? (
-          <Loader2 className="size-5 animate-spin text-text-muted" />
+          <div className="flex items-center gap-2">
+            <Loader2 className="size-5 animate-spin text-text-muted" />
+            <span className="text-sm">Connexion en cours…</span>
+          </div>
         ) : (
           <>
             <TelegramIcon />

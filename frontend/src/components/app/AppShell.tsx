@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { LogOut, User as UserIcon } from "lucide-react";
 import { RisklyLogo } from "@/components/landing/RisklyLogo";
@@ -27,6 +27,7 @@ const ROLE_LABELS: Record<string, string> = {
 
 function UserMenu() {
   const { user, logout } = useAuth();
+  const [imgError, setImgError] = useState(false);
   const initial = user?.username?.charAt(0).toUpperCase() ?? "?";
 
   return (
@@ -35,9 +36,18 @@ function UserMenu() {
         className="flex items-center gap-2 rounded-lg py-1 pl-1 pr-2 text-sm outline-none transition-colors duration-150 hover:bg-bg-elevated focus-visible:ring-[3px] focus-visible:ring-accent/30"
         aria-label="Menu utilisateur"
       >
-        <span className="flex size-7 items-center justify-center rounded-md border border-border bg-bg-elevated font-mono text-xs text-text-muted">
-          {initial}
-        </span>
+        {user?.photo_url && !imgError ? (
+          <img
+            src={user.photo_url}
+            alt={user.username}
+            onError={() => setImgError(true)}
+            className="size-7 rounded-md border border-border object-cover"
+          />
+        ) : (
+          <span className="flex size-7 items-center justify-center rounded-md border border-border bg-bg-elevated font-mono text-xs text-text-muted">
+            {initial}
+          </span>
+        )}
         <span className="hidden max-w-[10rem] truncate font-mono text-xs text-text-muted sm:block">
           {user?.username ?? "…"}
         </span>
