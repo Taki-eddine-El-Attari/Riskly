@@ -9,9 +9,16 @@ import type {
   AnalysisBatchResult,
   AnalysisPage,
   Factor,
+  Verdict,
 } from "@/types/analysis";
 import { normalizeVerdict } from "@/types/analysis";
 import { demoAnalysis } from "./analyses.demo";
+import {
+  deleteDemoAnalysis,
+  readDemoAnalysis,
+  readDemoHistory,
+  saveDemoAnalyses,
+} from "@/lib/demo-history";
 
 const BASE = "/api/v1/analyses";
 
@@ -127,11 +134,11 @@ export async function createAnalyses(entries: DomainEntry[]): Promise<AnalysisBa
 
   // Repli de démonstration — voir analyses.demo.ts.
   if (DEMO_FALLBACK && endpointMissing && results.length === 0) {
-    return {
-      results: entries.map((e) => withComputedVerdict(demoAnalysis(e.domain))),
-      failed: [],
-      demo: true,
-    };
+    const demoResults = entries.map((e) => withComputedVerdict(demoAnalysis(e.domain)));
+    // On enregistre le lot pour qu'il apparaisse dans l'historique (voir
+    // demo-history.ts) : sans backend, c'est la seule mémoire des analyses.
+    saveDemoAnalyses(demoResults);
+    return { results: demoResults, failed: [], demo: true };
   }
 
   return { results, failed };
@@ -147,18 +154,84 @@ function withComputedVerdict(analysis: Analysis): Analysis {
   };
 }
 
-/** Historique paginé de l'utilisateur connecté. */
-export function getHistory(page = 1, pageSize = 20): Promise<AnalysisPage> {
-  return apiClient.get<AnalysisPage>(`${BASE}?page=${page}&page_size=${pageSize}`);
+/** Paramètres de consultation de l'historique — miroir des query params backend. */
+export interface HistoryParams {
+  page?: number;
+  pageSize?: number;
+  sortBy?: "requested_at" | "risk_score" | "authority_score";
+  order?: "asc" | "desc";
+  verdict?: Verdict | null;
+}
+
+/** Une entrée d'historique locale se reconnaît à son identifiant `demo-…`. */
+function isDemoId(id: string): boolean {
+  return id.startsWith("demo-");
+}
+
+/**
+ * Historique paginé de l'utilisateur connecté.
+ * Quand l'endpoint n'est pas (encore) monté, on sert l'historique local des
+ * analyses de démonstration — cohérent avec le repli de la page d'analyse.
+ */
+export async function getHistory(params: HistoryParams = {}): Promise<AnalysisPage> {
+  const page = params.page ?? 1;
+  const pageSize = params.pageSize ?? 20;
+  const sortBy = params.sortBy ?? "requested_at";
+  const order = params.order ?? "desc";
+
+  const query = new URLSearchParams({
+    page: String(page),
+    page_size: String(pageSize),
+    sort_by: sortBy,
+    order,
+  });
+  if (params.verdict) query.set("verdict", params.verdict);
+
+  try {
+    return await apiClient.get<AnalysisPage>(`${BASE}?${query.toString()}`);
+  } catch (err) {
+    if (DEMO_FALLBACK && isEndpointUnavailable(err)) {
+      return readDemoHistory({ page, pageSize, sortBy, order, verdict: params.verdict });
+    }
+    throw err;
+  }
 }
 
 /** Rapport détaillé d'une analyse. */
 export async function getAnalysis(id: string): Promise<Analysis> {
-  const raw = await apiClient.get<Record<string, unknown>>(`${BASE}/${id}`);
-  return parseAnalysis(raw);
+  // Un rapport de démonstration ne vit que localement : inutile d'appeler l'API.
+  if (isDemoId(id)) {
+    const stored = readDemoAnalysis(id);
+    if (stored) return stored;
+    throw new ApiError(404, "Analyse introuvable.");
+  }
+
+  try {
+    const raw = await apiClient.get<Record<string, unknown>>(`${BASE}/${id}`);
+    return parseAnalysis(raw);
+  } catch (err) {
+    if (DEMO_FALLBACK && isEndpointUnavailable(err)) {
+      const stored = readDemoAnalysis(id);
+      if (stored) return stored;
+    }
+    throw err;
+  }
 }
 
 /** Retire une analyse de l'historique personnel. */
-export function deleteAnalysis(id: string): Promise<void> {
-  return apiClient.delete<void>(`${BASE}/${id}`);
+export async function deleteAnalysis(id: string): Promise<void> {
+  if (isDemoId(id)) {
+    deleteDemoAnalysis(id);
+    return;
+  }
+
+  try {
+    await apiClient.delete<void>(`${BASE}/${id}`);
+  } catch (err) {
+    if (DEMO_FALLBACK && isEndpointUnavailable(err)) {
+      deleteDemoAnalysis(id);
+      return;
+    }
+    throw err;
+  }
 }
