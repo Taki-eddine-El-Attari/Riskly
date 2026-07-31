@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 import { factorDirection, factorGauge, factorLabel, factorValue, sortFactors } from "@/lib/factors";
 import type { Factor } from "@/types/analysis";
 
-const RADIUS = 34;
+const RADIUS = 29;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
 /** Le chiffre doit tenir dans le cercle : « 2 656 » a besoin de moins de corps. */
@@ -41,7 +41,9 @@ export function FactorGauges({ factors, className }: { factors: Factor[]; classN
       </h4>
 
       {gauges.length > 0 && (
-        <ul className="mt-4 flex flex-wrap items-start gap-x-6 gap-y-5">
+        // Une seule ligne dès qu'il y a la place ; centré tant qu'on déborde
+        // (mobile, ou beaucoup de signaux).
+        <ul className="mt-4 flex flex-wrap justify-center gap-x-3 gap-y-5 xl:justify-start">
           {gauges.map(({ factor, gauge }) => {
             const direction = factorDirection(factor.contribution);
             const raisesRisk = direction.tone === "avoid";
@@ -49,17 +51,17 @@ export function FactorGauges({ factors, className }: { factors: Factor[]; classN
             return (
               <li
                 key={factor.feature}
-                className="flex w-[7rem] flex-col items-center text-center"
+                className="flex w-[5.75rem] flex-col items-center text-center"
                 title={`${factorLabel(factor.feature)} : ${factorValue(factor)} — ${direction.label}`}
               >
-                <div className="relative size-[80px]">
-                  <svg viewBox="0 0 80 80" className="size-full -rotate-90" aria-hidden>
+                <div className="relative size-[68px]">
+                  <svg viewBox="0 0 68 68" className="size-full -rotate-90" aria-hidden>
                     {/* Piste de fond : masquée sous une jauge pleine, qui doit
                         se lire comme un anneau uni tout vert ou tout rouge. */}
                     {!gauge.full && (
                       <circle
-                        cx="40"
-                        cy="40"
+                        cx="34"
+                        cy="34"
                         r={RADIUS}
                         fill="none"
                         strokeWidth="5"
@@ -67,8 +69,8 @@ export function FactorGauges({ factors, className }: { factors: Factor[]; classN
                       />
                     )}
                     <circle
-                      cx="40"
-                      cy="40"
+                      cx="34"
+                      cy="34"
                       r={RADIUS}
                       fill="none"
                       strokeWidth="5"
@@ -79,7 +81,7 @@ export function FactorGauges({ factors, className }: { factors: Factor[]; classN
                     />
                   </svg>
 
-                  <div className="absolute inset-0 flex flex-col items-center justify-center px-2">
+                  <div className="absolute inset-0 flex flex-col items-center justify-center px-1.5">
                     <span
                       className={cn(
                         "font-mono font-medium leading-none tabular-nums",
