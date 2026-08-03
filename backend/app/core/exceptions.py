@@ -174,6 +174,31 @@ class TelegramAuthError(RisklyException):
     def __init__(self, message: str = "Vérification Telegram échouée (signature invalide ou expirée)."):
         super().__init__(message)
 
+class InvalidWarmupFileError(RisklyException):
+    status_code = 422
+
+    def __init__(self, message: str = "Fichier de warm-up invalide."):
+        super().__init__(message)
+
+
+class WarmupFileTooLargeError(RisklyException):
+    status_code = 413
+
+    def __init__(self, max_bytes: int):
+        self.max_bytes = max_bytes
+        mo = max_bytes / (1024 * 1024)
+        super().__init__(
+            f"Fichier de warm-up trop volumineux : {mo:.0f} Mo maximum."
+        )
+
+
+class WarmupFileNotFoundError(RisklyException):
+    status_code = 404
+
+    def __init__(self, message: str = "Fichier de warm-up introuvable."):
+        super().__init__(message)
+
+
 class LimiteConcurrenceAtteinte(Exception):
     def __init__(self, max_concurrent : int):
         self.max_concurrent = max_concurrent

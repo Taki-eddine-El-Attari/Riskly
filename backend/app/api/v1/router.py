@@ -1,9 +1,10 @@
 from fastapi import APIRouter
-from app.api.v1 import auth
+from app.api.v1 import auth, warmup
 
 router = APIRouter(prefix="/api/v1")
 
 router.include_router(auth.router)
+router.include_router(warmup.router)
 
 # NOTE : domains/history sont encore en cours :
 # `require_authenticated` vs `require_autheticated`, `domains.router` vs

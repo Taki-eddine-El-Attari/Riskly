@@ -19,6 +19,7 @@ from app.models import (  # noqa: F401
     traffic_history,
     reputation_event,
     acquisition_result,
+    warmup_file,
 )
 
 app = FastAPI(title="Riskly API")

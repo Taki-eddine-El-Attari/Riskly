@@ -40,6 +40,16 @@ export interface Domain {
   first_analysis: string | null;
 }
 
+/** Métadonnées du CSV de warm-up fourni à l'analyse (jamais son contenu). */
+export interface WarmupInfo {
+  /** Nom du fichier tel que fourni par l'utilisateur. */
+  name: string;
+  /** Taille en octets. */
+  size: number;
+  /** Lignes de données (en-tête exclu). `null` si le comptage a échoué. */
+  rows: number | null;
+}
+
 export interface DomainMetric {
   rank_value: number | null;
   rank_source: string | null;
@@ -69,6 +79,8 @@ export interface Analysis {
   missing_sources?: string[];
   cached_at?: string | null;
   metric?: DomainMetric | null;
+  /** CSV de warm-up joint à la demande, s'il y en a un. */
+  warmup?: WarmupInfo | null;
 }
 
 export interface AnalysisBatchResult {
@@ -85,6 +97,8 @@ export interface AnalysisSummary {
   verdict: Verdict | null;
   requested_at: string | null;
   status: AnalysisStatus | null;
+  /** CSV de warm-up joint à la demande, s'il y en a un. */
+  warmup?: WarmupInfo | null;
 }
 
 export interface AnalysisPage {

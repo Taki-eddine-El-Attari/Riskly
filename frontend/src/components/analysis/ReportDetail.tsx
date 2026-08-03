@@ -1,7 +1,9 @@
+import { FileSpreadsheet } from "lucide-react";
 import { AlertList } from "./AlertList";
 import { FactorGauges } from "./FactorGauges";
 import { MissingDataNotice } from "./MissingDataNotice";
 import { cn } from "@/lib/utils";
+import { formatBytes } from "@/lib/warmup";
 import type { Analysis } from "@/types/analysis";
 
 /** Une ligne du tableau des données collectées. */
@@ -46,7 +48,7 @@ export function ReportDetail({
   id?: string;
   className?: string;
 }) {
-  const { domain, metric } = analysis;
+  const { domain, metric, warmup } = analysis;
   const factors = analysis.shap_values ?? [];
   const alerts = analysis.alerts ?? [];
   const missing = analysis.missing_sources ?? [];
@@ -108,6 +110,25 @@ export function ReportDetail({
           />
         </dl>
       </section>
+
+      {warmup && (
+        <section>
+          <h4 className="font-mono text-[11px] uppercase tracking-widest text-text-faint">
+            Fichier de warm-up fourni
+          </h4>
+          <div className="mt-3 flex items-center gap-3 rounded-lg border border-border bg-bg-elevated/40 px-4 py-3">
+            <FileSpreadsheet className="size-4 shrink-0 text-accent" aria-hidden />
+            <div className="min-w-0">
+              <p className="truncate font-mono text-sm text-text">{warmup.name}</p>
+              <p className="mt-0.5 font-mono text-xs text-text-faint">
+                {warmup.rows !== null &&
+                  `${warmup.rows.toLocaleString("fr-FR")} ligne${warmup.rows > 1 ? "s" : ""} · `}
+                {formatBytes(warmup.size)}
+              </p>
+            </div>
+          </div>
+        </section>
+      )}
 
       {missing.length > 0 && <MissingDataNotice sources={missing} />}
     </div>
