@@ -4,6 +4,8 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import TelegramCallback from "./pages/TelegramCallback";
 import Analyze from "./pages/Analyze";
+import History from "./pages/History";
+import ReportPage from "./pages/ReportPage";
 import ProtectedRoute from "./routes/ProtectedRoute";
 
 function Placeholder({ title }: { title: string }) {
@@ -27,8 +29,8 @@ export default function App() {
       <Route element={<ProtectedRoute />}>
       
         <Route path="/app" element={<Analyze />} />
-        <Route path="/history" element={<Placeholder title="/history" />} />
-
+        <Route path="/history" element={<History />} />
+        <Route path="/history/:id" element={<ReportPage />} />
       </Route>
 
     </Routes>
