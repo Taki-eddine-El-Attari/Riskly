@@ -6,9 +6,7 @@ import App from "./App";
 import { AuthProvider } from "./context/AuthContext";
 import "./index.css";
 
-// Les analyses sont longues et un rapport ne se recalcule jamais à la
-// consultation (PRD, UC-06) : pas de refetch au retour d'onglet, pas de
-// nouvelle tentative automatique.
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {

@@ -1,8 +1,6 @@
 @import "tailwindcss";
 
-/*
- * Thème par défaut = SOMBRE (identité Riskly, dark-first).
- */
+
 @theme {
   --color-bg: #0a0e1a;
   --color-bg-elevated: #111627;
@@ -20,9 +18,7 @@
   --font-mono: "JetBrains Mono", monospace;
 }
 
-/*
- * Thème clair.
- */
+
 @layer base {
   .light {
     --color-bg: #f7f8fa;
@@ -32,10 +28,10 @@
     --color-text: #0d1220;
     --color-text-muted: #565d73;
     --color-text-faint: #868da0;
-    --color-accent: #0e7490; /* cyan-700 : lisible sur blanc, reste « cyan » */
-    --color-good: #047857; /* émeraude-700 */
-    --color-risky: #b45309; /* ambre-700 : l'ambre vif est illisible sur blanc */
-    --color-avoid: #dc2626; /* rouge-600 */
+    --color-accent: #0e7490; 
+    --color-good: #047857;
+    --color-risky: #b45309; 
+    --color-avoid: #dc2626; 
     color-scheme: light;
   }
 
@@ -43,18 +39,13 @@
     color-scheme: dark;
   }
 
-  /* Transition douce des surfaces à la bascule de thème. */
   html,
   body {
     transition: background-color 220ms ease, color 220ms ease;
   }
 }
 
-/*
- * Bascule de thème : fondu « fade in / out » plein écran via la View Transition
- * API (déclenché dans lib/theme.ts). On règle juste la durée du fondu croisé
- * par défaut (old = ancien thème, new = nouveau thème).
- */
+
 ::view-transition-old(root),
 ::view-transition-new(root) {
   animation-duration: 400ms;
@@ -68,7 +59,6 @@
   }
 }
 
-/* BorderBeam (adapté de magicui) : lueur qui parcourt la bordure d'un conteneur */
 .border-beam-layer {
   pointer-events: none;
   position: absolute;
@@ -106,7 +96,7 @@
 
 html {
   scroll-behavior: smooth;
-  scroll-padding-top: 5rem; /* compense la navbar sticky (h-16) */
+  scroll-padding-top: 5rem; 
 }
 
 body {
@@ -120,13 +110,11 @@ body {
   background-color: color-mix(in srgb, var(--color-accent) 30%, transparent);
 }
 
-/* Texte outline (bordure seule, remplissage transparent) */
 .text-outline {
   color: transparent;
   -webkit-text-stroke: 1.5px var(--color-text-faint);
 }
 
-/* Fond du hero : grille + halo cyan qui respire */
 .hero-grid {
   background-image: linear-gradient(var(--color-border) 1px, transparent 1px),
     linear-gradient(90deg, var(--color-border) 1px, transparent 1px);
@@ -153,7 +141,6 @@ body {
   }
 }
 
-/* Curseur de frappe dans l'input du hero */
 .typing-caret {
   animation: caret-blink 1s steps(1) infinite;
 }
@@ -164,7 +151,6 @@ body {
   }
 }
 
-/* Pyramides 3D au-dessus des marqueurs du globe (pages auth) */
 .globe-pyramid {
   animation: pyramid-spin 4s linear infinite;
 }

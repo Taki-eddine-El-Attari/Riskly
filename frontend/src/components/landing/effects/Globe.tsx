@@ -3,10 +3,6 @@ import createGlobe from "cobe";
 import { useReducedMotion } from "motion/react";
 import { useTheme } from "@/lib/theme";
 
-// Globe cobe : points de présence (TLD) + arcs vers les sources de données.
-// Les étiquettes flottantes s'accrochent aux ancres CSS exposées par cobe
-// (--cobe-<id> / --cobe-visible-<id>), rendues uniquement si le navigateur
-// supporte CSS Anchor Positioning, sinon le globe reste seul (dégradation propre).
 
 interface GlobeMarker {
   id: string;
@@ -28,7 +24,6 @@ interface GlobeProps {
   speed?: number;
 }
 
-// Villes → TLD analysés (clin d'œil : .ma, .cf).
 const defaultMarkers: GlobeMarker[] = [
   { id: "tld-com", location: [38.95, -77.45], label: ".com" },
   { id: "tld-io", location: [37.62, -122.38], label: ".io" },
@@ -42,7 +37,6 @@ const defaultMarkers: GlobeMarker[] = [
   { id: "tld-in", location: [19.09, 72.87], label: ".in" },
 ];
 
-// Chaque arc = une requête vers une source croisée par Riskly.
 const defaultArcs: GlobeArc[] = [
   { id: "src-rdap", from: [38.95, -77.45], to: [49.01, 2.55], source: "RDAP" },
   { id: "src-phishtank", from: [37.62, -122.38], to: [35.55, 139.78], source: "PhishTank" },

@@ -86,11 +86,6 @@ function UserMenu() {
   );
 }
 
-/**
- * Le cadre de l'application connectée : barre supérieure fine plutôt qu'une
- * sidebar (design.md §12.6). Même grammaire que la navbar de la landing,
- * sans les CTA marketing, et plus dense.
- */
 export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col">

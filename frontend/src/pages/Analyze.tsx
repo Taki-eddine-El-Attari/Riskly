@@ -22,7 +22,6 @@ export default function Analyze() {
   const result = analyses.data;
   const hasResults = !analyses.isPending && (result?.results.length ?? 0) > 0;
 
-  // Après une attente de plusieurs secondes, on amène l'utilisateur au rapport.
   useEffect(() => {
     if (!hasResults) return;
     resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -102,9 +101,7 @@ export default function Analyze() {
                     {result.results.length > 1 ? "rapports" : "rapport"} · triés par risque croissant
                   </p>
 
-                  <div className="flex items-center gap-2">
-                    {/* Dès qu'il y a plusieurs domaines, un seul geste suffit
-                        pour tout emporter — synthèse comparative comprise. */}
+                  <div className="flex items-center gap-2">            
                     {result.results.length > 1 && (
                       <DownloadMenu
                         analyses={result.results}
@@ -139,7 +136,6 @@ export default function Analyze() {
   );
 }
 
-/** État initial : comment se lisent les résultats à venir. */
 function VerdictLegend() {
   return (
     <div className="mx-auto max-w-3xl">

@@ -5,7 +5,6 @@ import { BlurFade } from "./effects/BlurFade";
 import { BorderBeam } from "./effects/BorderBeam";
 import { useTypingPlaceholder } from "@/hooks/useTypingPlaceholder";
 
-// Mêmes exemples que le champ d'analyse de l'app (components/analysis/DomainInput).
 const examples = [
   "exemple-domaine.com",
   "boutique-mode.fr",
@@ -26,10 +25,8 @@ export default function Hero() {
 
   return (
     <section className="relative overflow-hidden">
-      {/* Couches de fond : grille, halo, RISKLY en outline */}
       <div className="hero-grid pointer-events-none absolute inset-0" aria-hidden />
       <div className="hero-glow pointer-events-none absolute inset-0" aria-hidden />
-      {/* SVG Filter qui génère le contour externe exact de la police sans les lignes internes de chevauchement de glyphes */}
       <svg width="0" height="0" className="pointer-events-none absolute size-0 overflow-hidden" aria-hidden>
         <defs>
           <filter id="text-outline-filter" x="-20%" y="-20%" width="140%" height="140%">

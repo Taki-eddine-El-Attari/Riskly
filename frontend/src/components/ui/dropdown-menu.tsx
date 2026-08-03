@@ -3,8 +3,6 @@ import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 
 import { cn } from "@/lib/utils";
 
-// shadcn/ui (new-york) thémé aux tokens Riskly : surface `bg-elevated`,
-// séparation par bordure, focus cyan. Cf. design.md §8.
 
 const DropdownMenu = DropdownMenuPrimitive.Root;
 const DropdownMenuTrigger = DropdownMenuPrimitive.Trigger;

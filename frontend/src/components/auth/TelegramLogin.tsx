@@ -7,7 +7,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { TELEGRAM_BOT_ID } from "@/lib/constants";
 import type { TelegramAuthData } from "@/types/auth";
 
-// API exposée par https://telegram.org/js/telegram-widget.js
 declare global {
   interface Window {
     Telegram?: {
@@ -32,12 +31,6 @@ function TelegramIcon() {
   );
 }
 
-/**
- * Bouton « Se connecter avec Telegram » — TOUJOURS affiché, indépendamment de
- * la configuration. Au clic, ouvre la popup officielle Telegram
- * (window.Telegram.Login.auth), puis transmet les données signées au backend
- * qui vérifie le hash, enregistre le compte et ouvre la session.
- */
 export function TelegramLogin({ className }: { className?: string }) {
   const navigate = useNavigate();
   const { refreshUser } = useAuth();

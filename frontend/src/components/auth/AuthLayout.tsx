@@ -14,7 +14,6 @@ function Logo() {
   );
 }
 
-/** Séparateur « ou » entre OAuth et formulaire email. */
 export function AuthDivider({ label }: { label: string }) {
   return (
     <div className="my-6 flex items-center gap-4" role="separator" aria-label={label}>
@@ -27,10 +26,7 @@ export function AuthDivider({ label }: { label: string }) {
   );
 }
 
-/**
- * Écran scindé des pages auth : panneau globe (branding) à gauche,
- * formulaire à droite. Le panneau gauche disparaît sous lg.
- */
+
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
     <main className="grid min-h-screen lg:grid-cols-2">
@@ -63,8 +59,6 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
       {/* Panneau formulaire */}
       <section className="flex flex-col px-6 py-8 sm:px-10">
         <header className="flex items-center justify-between">
-          {/* Logo masqué en desktop (présent dans le panneau gauche), l'espace
-              est conservé pour garder la bascule alignée à droite. */}
           <div className="lg:invisible">
             <Logo />
           </div>

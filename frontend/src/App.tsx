@@ -17,17 +17,20 @@ function Placeholder({ title }: { title: string }) {
 export default function App() {
   return (
     <Routes>
+
       <Route path="/" element={<Landing />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/telegram/callback" element={<TelegramCallback />} />
       <Route path="/forgot-password" element={<Placeholder title="/forgot-password" />} />
 
-      {/* Toute l'application connectée exige une session (PRD, CA-02). */}
       <Route element={<ProtectedRoute />}>
+      
         <Route path="/app" element={<Analyze />} />
         <Route path="/history" element={<Placeholder title="/history" />} />
+
       </Route>
+
     </Routes>
   );
 }
