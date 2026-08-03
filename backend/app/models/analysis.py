@@ -66,3 +66,11 @@ class Analysis(UUIDPrimaryKeyMixin, Base):
         order_by="ApiLog.call_date.desc()",
     )
 
+    # CSV de warm-up joint à la demande (0 ou 1). Supprimé avec l'analyse ;
+    # le fichier sur disque est nettoyé par le service de stockage.
+    warmup_file: Mapped[Optional["WarmupFile"]] = relationship(
+        back_populates="analysis",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
+

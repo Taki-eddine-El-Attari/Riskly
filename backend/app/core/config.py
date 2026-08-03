@@ -25,6 +25,24 @@ class Settings(BaseSettings):
 
     MAX_CONCURRENT_ANALYSES: int = 5
 
+    # --- Stockage des CSV de warm-up (volume privé, hors dépôt) --------------
+    # Répertoire dédié, en dehors de l'arborescence servie par le serveur web.
+    # DOIT résider sur un volume chiffré au repos (chiffrement disque/LUKS ou
+    # SSE côté objet) — le service n'ajoute pas de chiffrement applicatif.
+    WARMUP_STORAGE_DIR: str = "/var/lib/riskly/warmup"
+    # Plafond de taille par fichier (5 Mio, aligné sur la validation front).
+    WARMUP_MAX_SIZE_BYTES: int = 5 * 1024 * 1024
+    # Extensions autorisées (minuscules, sans le point), séparées par virgule.
+    WARMUP_ALLOWED_EXTENSIONS: str = "csv"
+
+    @property
+    def WARMUP_ALLOWED_EXTENSIONS_SET(self) -> set[str]:
+        return {
+            e.strip().lower().lstrip(".")
+            for e in self.WARMUP_ALLOWED_EXTENSIONS.split(",")
+            if e.strip()
+        }
+
     @property
     def CORS_ORIGINS_LIST(self) -> list[str]:
         return [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]
