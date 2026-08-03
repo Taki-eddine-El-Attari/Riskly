@@ -4,9 +4,6 @@ import { X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-// shadcn/ui (new-york) thémé aux tokens Riskly : voile sombre, surface
-// `bg-elevated`, bordure plutôt qu'ombre portée. Cf. design.md §8.
-
 const Dialog = DialogPrimitive.Root;
 const DialogTrigger = DialogPrimitive.Trigger;
 const DialogClose = DialogPrimitive.Close;

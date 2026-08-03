@@ -3,11 +3,7 @@ import { Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import type { Role } from "@/types/auth";
 
-/**
- * Protège une route : exige une session, et optionnellement un rôle.
- * L'authentification est obligatoire pour toute fonctionnalité d'analyse
- * (PRD §3.2, CA-02).
- */
+
 export function ProtectedRoute({ roles }: { roles?: Role[] }) {
   const { user, status } = useAuth();
   const location = useLocation();
@@ -21,7 +17,6 @@ export function ProtectedRoute({ roles }: { roles?: Role[] }) {
   }
 
   if (status === "unauthenticated" || !user) {
-    // `state.from` permet de revenir où l'utilisateur voulait aller.
     return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   }
 

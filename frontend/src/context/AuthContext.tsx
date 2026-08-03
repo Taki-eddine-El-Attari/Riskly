@@ -9,12 +9,10 @@ export type SessionStatus = "loading" | "authenticated" | "unauthenticated";
 export interface AuthContextValue {
   user: User | null;
   status: SessionStatus;
-  /** Recharge l'utilisateur depuis le cookie de session (à appeler après un login Telegram). */
   refreshUser: () => Promise<void>;
   logout: () => Promise<void>;
 }
 
-// eslint-disable-next-line react-refresh/only-export-components
 export const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -27,7 +25,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(current);
       setStatus("authenticated");
     } catch (err) {
-      // 401 = pas de session valide : état normal, pas une erreur à remonter.
       if (!(err instanceof ApiError) || err.status !== 401) {
         console.error("Échec du chargement de la session", err);
       }
@@ -45,7 +42,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Au montage : on tente de restaurer la session depuis le cookie.
   useEffect(() => {
     void refreshUser();
   }, [refreshUser]);

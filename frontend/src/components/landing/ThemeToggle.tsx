@@ -2,11 +2,6 @@ import { Moon, Sun } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 
-/**
- * Bouton de bascule clair / sombre.
- * Affiche l'icône de la CIBLE (soleil en sombre → « passer au clair »,
- * lune en clair → « passer au sombre »). Icônes en fondu-croisé.
- */
 export function ThemeToggle({ className }: { className?: string }) {
   const { theme, toggle } = useTheme();
   const isLight = theme === "light";

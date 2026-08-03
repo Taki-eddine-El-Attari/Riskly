@@ -5,18 +5,12 @@ import * as authApi from "@/api/auth.api";
 import { useAuth } from "@/hooks/useAuth";
 import type { TelegramAuthData } from "@/types/auth";
 
-/**
- * Point d'atterrissage de la redirection Telegram (data-auth-url).
- * Reconstruit le payload à partir de la query string, le transmet au backend
- * pour vérification, puis — une fois le cookie de session posé — recharge
- * l'utilisateur et redirige vers l'application.
- */
 export default function TelegramCallback() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const { refreshUser } = useAuth();
   const [error, setError] = useState<string | null>(null);
-  const ran = useRef(false); // garde-fou StrictMode (double effet en dev)
+  const ran = useRef(false); 
 
   useEffect(() => {
     if (ran.current) return;

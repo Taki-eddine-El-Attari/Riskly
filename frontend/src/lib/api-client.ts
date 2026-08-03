@@ -1,13 +1,5 @@
 import { API_BASE_URL } from "./constants";
 
-/**
- * Instance HTTP minimale (fetch).
- * - baseURL centralisée
- * - `credentials: "include"` : le cookie de session HttpOnly voyage avec chaque requête
- * - timeout 90 s (les analyses peuvent être longues)
- * - AUCUNE injection de token : la session est portée par le cookie, pas par le JS
- */
-
 const TIMEOUT_MS = 90_000;
 
 export class ApiError extends Error {
@@ -23,9 +15,6 @@ export class ApiError extends Error {
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
-
-  // Sur un corps multipart, seul le navigateur peut poser le Content-Type :
-  // il doit y ajouter la frontière (boundary) qu'il vient de générer.
   const isMultipart = init.body instanceof FormData;
 
   try {
@@ -45,7 +34,6 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
         const body = await res.json();
         message = body.detail ?? body.message ?? message;
       } catch {
-        /* corps non-JSON : on garde le statusText */
       }
       throw new ApiError(res.status, message);
     }
@@ -69,7 +57,6 @@ export const apiClient = {
       method: "POST",
       body: body === undefined ? undefined : JSON.stringify(body),
     }),
-  /** POST multipart — pour les requêtes qui portent un fichier. */
   postForm: <T>(path: string, form: FormData) =>
     request<T>(path, { method: "POST", body: form }),
   delete: <T>(path: string) => request<T>(path, { method: "DELETE" }),
