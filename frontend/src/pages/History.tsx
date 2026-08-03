@@ -3,8 +3,10 @@ import { Link } from "react-router-dom";
 import {
   AlertCircle,
   ArrowUpRight,
+  Check,
   ChevronDown,
   Clock,
+  FileSpreadsheet,
   Loader2,
   RotateCcw,
   Search,
@@ -15,6 +17,12 @@ import { DownloadMenu } from "@/components/analysis/DownloadMenu";
 import { ReportDetail } from "@/components/analysis/ReportDetail";
 import { VerdictBadge } from "@/components/analysis/VerdictBadge";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useAnalysis } from "@/hooks/useAnalysis";
 import { useDeleteAnalysis } from "@/hooks/useDeleteAnalysis";
 import { useHistory } from "@/hooks/useHistory";
@@ -103,20 +111,10 @@ export default function History() {
             ))}
           </div>
 
-          <label className="flex items-center gap-2 font-mono text-xs text-text-faint">
+          <div className="flex items-center gap-2 font-mono text-xs text-text-faint">
             Trier
-            <select
-              value={sort}
-              onChange={(e) => changeSort(e.target.value as Sort)}
-              className="rounded-lg border border-border bg-bg-elevated px-2.5 py-1.5 text-xs text-text outline-none transition-colors duration-150 hover:border-border-hover focus-visible:ring-[3px] focus-visible:ring-accent/30"
-            >
-              {SORTS.map((s) => (
-                <option key={s.value} value={s.value}>
-                  {s.label}
-                </option>
-              ))}
-            </select>
-          </label>
+            <SortSelect value={sort} onChange={changeSort} />
+          </div>
         </div>
 
         <div className="mt-8">
@@ -233,10 +231,22 @@ function HistoryRow({ item }: { item: AnalysisSummary }) {
               <span className="truncate font-mono text-base text-text">{domainName}</span>
               <VerdictBadge verdict={item.verdict} size="sm" />
             </div>
-            <span className="mt-1 flex items-center gap-1.5 font-mono text-xs text-text-faint">
-              <Clock className="size-3" aria-hidden />
-              {formatDateTime(item.requested_at)}
-            </span>
+            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+              <span className="flex items-center gap-1.5 font-mono text-xs text-text-faint">
+                <Clock className="size-3" aria-hidden />
+                {formatDateTime(item.requested_at)}
+              </span>
+              {item.warmup && (
+                <span
+                  className="flex min-w-0 items-center gap-1 font-mono text-xs text-text-faint"
+                  title={`Warm-up : ${item.warmup.name}`}
+                >
+                  <FileSpreadsheet className="size-3 shrink-0 text-accent" aria-hidden />
+                  <span className="max-w-[12rem] truncate">{item.warmup.name}</span>
+                  {item.warmup.rows !== null && <span>· {item.warmup.rows} l.</span>}
+                </span>
+              )}
+            </div>
           </div>
         </button>
 
@@ -367,6 +377,57 @@ function FilterChip({
     >
       {children}
     </button>
+  );
+}
+
+/**
+ * Menu de tri façon select moderne, bâti sur le `dropdown-menu` maison (Radix) —
+ * même grammaire que le reste de l'app, surface elevated, focus cyan, coche sur
+ * l'option active. Aucune dépendance supplémentaire.
+ */
+function SortSelect({
+  value,
+  onChange,
+}: {
+  value: Sort;
+  onChange: (sort: Sort) => void;
+}) {
+  const current = SORTS.find((s) => s.value === value) ?? SORTS[0];
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        className={cn(
+          "group inline-flex items-center gap-2 rounded-lg border border-border bg-bg-elevated px-3 py-1.5 text-xs text-text outline-none transition-colors duration-150",
+          "hover:border-border-hover focus-visible:ring-[3px] focus-visible:ring-accent/30 data-[state=open]:border-accent/60",
+        )}
+      >
+        <span className="font-mono">{current.label}</span>
+        <ChevronDown
+          className="size-3.5 text-text-faint transition-transform duration-150 group-data-[state=open]:rotate-180 motion-reduce:transition-none"
+          aria-hidden
+        />
+      </DropdownMenuTrigger>
+
+      <DropdownMenuContent align="end" className="min-w-[11rem]">
+        {SORTS.map((s) => {
+          const active = s.value === value;
+          return (
+            <DropdownMenuItem
+              key={s.value}
+              onSelect={() => onChange(s.value)}
+              className={cn("justify-between font-mono text-xs", active && "text-text")}
+            >
+              {s.label}
+              <Check
+                className={cn("size-3.5 text-accent", active ? "opacity-100" : "opacity-0")}
+                aria-hidden
+              />
+            </DropdownMenuItem>
+          );
+        })}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 

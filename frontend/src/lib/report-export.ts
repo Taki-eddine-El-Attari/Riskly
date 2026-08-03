@@ -7,6 +7,7 @@
 import { authorityBand, riskBand, VERDICTS } from "./scores";
 import { ALERTS } from "./scores";
 import { factorLabel, factorValue, sortFactors } from "./factors";
+import { formatBytes } from "./warmup";
 import type { Analysis } from "@/types/analysis";
 
 // ── Utilitaires ────────────────────────────────────────────────────────────
@@ -66,6 +67,15 @@ function alertLabels(analysis: Analysis): string[] {
   return (analysis.alerts ?? []).map((a) => ALERTS[a.code]?.label ?? a.code);
 }
 
+/** « warmup.csv (12 Ko, 148 lignes) » — vide si aucun fichier joint. */
+function warmupText(analysis: Analysis): string {
+  const w = analysis.warmup;
+  if (!w) return "";
+  const parts = [formatBytes(w.size)];
+  if (typeof w.rows === "number") parts.push(`${w.rows} lignes`);
+  return `${w.name} (${parts.join(", ")})`;
+}
+
 function formatDate(value: string | null | undefined): string {
   if (!value) return "";
   const date = new Date(value);
@@ -92,6 +102,9 @@ const CSV_COLUMNS = [
   "Serveurs de noms",
   "Blacklists DNS",
   "Sources non collectees",
+  "Fichier de warm-up",
+  "Taille du warm-up",
+  "Lignes du warm-up",
   "Date d'analyse",
 ] as const;
 
@@ -129,6 +142,9 @@ function csvRow(analysis: Analysis): string[] {
         : "Aucune liste"
       : "",
     (analysis.missing_sources ?? []).join(" | "),
+    analysis.warmup?.name ?? "",
+    analysis.warmup ? formatBytes(analysis.warmup.size) : "",
+    typeof analysis.warmup?.rows === "number" ? String(analysis.warmup.rows) : "",
     formatDate(analysis.requested_at),
   ];
 }
@@ -402,6 +418,15 @@ function renderReportPage(doc: Doc, analysis: Analysis) {
         : "",
     ],
   ]);
+
+  if (analysis.warmup) {
+    y += 4;
+    sectionTitle(doc, PAGE.margin, y, "Fichier de warm-up fourni");
+    y += 5;
+    doc.setFont("courier", "normal").setFontSize(8).setTextColor(INK.text);
+    write(doc, warmupText(analysis), PAGE.margin, y);
+    y += 6;
+  }
 
   const missing = analysis.missing_sources ?? [];
   if (missing.length > 0) {

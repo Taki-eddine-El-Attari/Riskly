@@ -15,10 +15,10 @@ const EXAMPLES = [
   "agence-web.ma",
 ];
 
-/** Un domaine soumis, avec son CSV de warm-up optionnel. */
+/** Un domaine soumis, avec son CSV de warm-up optionnel (fichier + comptage). */
 export interface DomainEntry {
   domain: string;
-  warmup?: File;
+  warmup?: WarmupFile;
 }
 
 interface Row {
@@ -94,7 +94,7 @@ export function DomainInput({
   const entries = useMemo<DomainEntry[]>(
     () =>
       rows
-        .map((row, i) => ({ domain: normalized[i], warmup: row.warmup?.file, issue: issues[i] }))
+        .map((row, i) => ({ domain: normalized[i], warmup: row.warmup, issue: issues[i] }))
         .filter((e) => e.domain.length > 0 && e.issue === null)
         .map(({ domain, warmup }) => ({ domain, warmup })),
     [rows, normalized, issues],

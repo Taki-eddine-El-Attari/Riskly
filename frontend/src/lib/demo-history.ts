@@ -96,6 +96,7 @@ function summarize(a: Analysis): AnalysisSummary {
     verdict: a.verdict,
     requested_at: a.requested_at,
     status: a.status,
+    warmup: a.warmup ?? null,
   };
 }
 

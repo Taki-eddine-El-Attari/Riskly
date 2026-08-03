@@ -10,8 +10,10 @@ import type {
   AnalysisPage,
   Factor,
   Verdict,
+  WarmupInfo,
 } from "@/types/analysis";
 import { normalizeVerdict } from "@/types/analysis";
+import type { WarmupFile } from "@/lib/warmup";
 import { demoAnalysis } from "./analyses.demo";
 import {
   deleteDemoAnalysis,
@@ -27,6 +29,19 @@ function num(value: unknown): number | null {
   if (value === null || value === undefined || value === "") return null;
   const n = typeof value === "number" ? value : Number(value);
   return Number.isFinite(n) ? n : null;
+}
+
+/** Normalise les métadonnées de warm-up renvoyées par le backend (à venir). */
+function parseWarmup(raw: unknown): WarmupInfo | null {
+  if (typeof raw !== "object" || raw === null) return null;
+  const w = raw as Record<string, unknown>;
+  const name = typeof w.name === "string" ? w.name : "";
+  if (name.length === 0) return null;
+  return {
+    name,
+    size: num(w.size) ?? 0,
+    rows: num(w.rows),
+  };
 }
 
 function parseFactors(raw: unknown): Factor[] | null {
@@ -68,13 +83,19 @@ export function parseAnalysis(raw: Record<string, unknown>): Analysis {
     missing_sources: (raw.missing_sources as string[]) ?? undefined,
     cached_at: (raw.cached_at as string) ?? null,
     metric: (raw.metric as Analysis["metric"]) ?? null,
+    warmup: parseWarmup(raw.warmup),
   };
 }
 
-/** Un domaine à analyser, avec son CSV de warm-up optionnel. */
+/** Un domaine à analyser, avec son CSV de warm-up optionnel (fichier + comptage). */
 export interface DomainEntry {
   domain: string;
-  warmup?: File;
+  warmup?: WarmupFile;
+}
+
+/** Métadonnées affichables d'un warm-up — jamais son contenu. */
+function warmupInfoOf(warmup: WarmupFile): WarmupInfo {
+  return { name: warmup.file.name, size: warmup.file.size, rows: warmup.rows };
 }
 
 /**
@@ -86,11 +107,17 @@ export interface DomainEntry {
  *   `warmup_csv`. Le CSV est facultatif : l'analyse aboutit sans lui.
  */
 export async function createAnalysis(entry: DomainEntry): Promise<Analysis> {
+  // Le backend ne renvoie pas (encore) les métadonnées du fichier : on les
+  // porte depuis la saisie pour qu'elles apparaissent dans le rapport, les
+  // exports et l'historique. Le contenu du CSV, lui, ne quitte pas la requête.
+  const info = entry.warmup ? warmupInfoOf(entry.warmup) : null;
+
   if (entry.warmup) {
     const form = new FormData();
     form.append("domain_name", entry.domain);
-    form.append("warmup_csv", entry.warmup, entry.warmup.name);
-    return parseAnalysis(await apiClient.postForm<Record<string, unknown>>(BASE, form));
+    form.append("warmup_csv", entry.warmup.file, entry.warmup.file.name);
+    const parsed = parseAnalysis(await apiClient.postForm<Record<string, unknown>>(BASE, form));
+    return info ? { ...parsed, warmup: parsed.warmup ?? info } : parsed;
   }
 
   const raw = await apiClient.post<Record<string, unknown>>(BASE, {
@@ -134,7 +161,10 @@ export async function createAnalyses(entries: DomainEntry[]): Promise<AnalysisBa
 
   // Repli de démonstration — voir analyses.demo.ts.
   if (DEMO_FALLBACK && endpointMissing && results.length === 0) {
-    const demoResults = entries.map((e) => withComputedVerdict(demoAnalysis(e.domain)));
+    const demoResults = entries.map((e) => {
+      const analysis = withComputedVerdict(demoAnalysis(e.domain));
+      return e.warmup ? { ...analysis, warmup: warmupInfoOf(e.warmup) } : analysis;
+    });
     // On enregistre le lot pour qu'il apparaisse dans l'historique (voir
     // demo-history.ts) : sans backend, c'est la seule mémoire des analyses.
     saveDemoAnalyses(demoResults);
