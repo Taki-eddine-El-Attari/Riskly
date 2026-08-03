@@ -26,7 +26,14 @@ import {
 import { useAnalysis } from "@/hooks/useAnalysis";
 import { useDeleteAnalysis } from "@/hooks/useDeleteAnalysis";
 import { useHistory } from "@/hooks/useHistory";
-import { riskBand, toneText, VERDICT_ORDER, VERDICTS } from "@/lib/scores";
+import {
+  emailHealthBand,
+  profitabilityBand,
+  riskBand,
+  toneText,
+  VERDICT_ORDER,
+  VERDICTS,
+} from "@/lib/scores";
 import { cn } from "@/lib/utils";
 import type { AnalysisSummary, Verdict } from "@/types/analysis";
 
@@ -164,9 +171,13 @@ export default function History() {
 
 // ── Ligne d'historique ───────────────────────────────────────────────────────
 
-function scoreTone(kind: "risk" | "authority", score: number | null): string {
+type ScoreKind = "risk" | "authority" | "profitability" | "email_health";
+
+function scoreTone(kind: ScoreKind, score: number | null): string {
   if (score === null) return "text-text-faint";
   if (kind === "authority") return toneText.accent;
+  if (kind === "profitability") return toneText[profitabilityBand(score).tone];
+  if (kind === "email_health") return toneText[emailHealthBand(score).tone];
   return toneText[riskBand(score).tone];
 }
 
@@ -183,17 +194,24 @@ function formatDateTime(value: string | null): string {
   });
 }
 
+const READOUT_LABEL: Record<ScoreKind, string> = {
+  risk: "Risque",
+  authority: "Autorité",
+  profitability: "Rentabilité",
+  email_health: "Warm-up",
+};
+
 function ScoreReadout({
   kind,
   score,
 }: {
-  kind: "risk" | "authority";
+  kind: ScoreKind;
   score: number | null;
 }) {
   return (
     <div className="text-right">
       <span className="block font-mono text-[10px] uppercase tracking-widest text-text-faint">
-        {kind === "risk" ? "Risque" : "Autorité"}
+        {READOUT_LABEL[kind]}
       </span>
       <span className={cn("font-mono text-xl font-medium tabular-nums", scoreTone(kind, score))}>
         {score === null ? "—" : Math.round(score)}
@@ -253,6 +271,10 @@ function HistoryRow({ item }: { item: AnalysisSummary }) {
         <div className="hidden shrink-0 items-start gap-6 sm:flex">
           <ScoreReadout kind="risk" score={item.risk_score} />
           <ScoreReadout kind="authority" score={item.authority_score} />
+          {item.email_health_score !== null && (
+            <ScoreReadout kind="email_health" score={item.email_health_score} />
+          )}
+          <ScoreReadout kind="profitability" score={item.profitability_score} />
         </div>
 
         <div className="flex shrink-0 items-center gap-1">

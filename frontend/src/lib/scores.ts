@@ -32,6 +32,15 @@ export const AUTHORITY_BANDS: Band[] = [
   { label: "Autorité forte", tone: "accent", min: 66, max: 100 },
 ];
 
+// Contrairement au risque, une rentabilité élevée est une bonne nouvelle :
+// mêmes tons (good/risky/avoid) que le risque, mais appliqués dans l'autre
+// sens (score haut → good, score bas → avoid).
+export const PROFITABILITY_BANDS: Band[] = [
+  { label: "Rentabilité faible", tone: "avoid", min: 0, max: 33 },
+  { label: "Rentabilité moyenne", tone: "risky", min: 34, max: 66 },
+  { label: "Rentabilité forte", tone: "good", min: 67, max: 100 },
+];
+
 export function riskBand(score: number): Band {
   return RISK_BANDS.find((b) => score <= b.max) ?? RISK_BANDS[RISK_BANDS.length - 1];
 }
@@ -40,6 +49,29 @@ export function authorityBand(score: number): Band {
   return (
     AUTHORITY_BANDS.find((b) => score <= b.max) ??
     AUTHORITY_BANDS[AUTHORITY_BANDS.length - 1]
+  );
+}
+
+export function profitabilityBand(score: number): Band {
+  return (
+    PROFITABILITY_BANDS.find((b) => score <= b.max) ??
+    PROFITABILITY_BANDS[PROFITABILITY_BANDS.length - 1]
+  );
+}
+
+// Sortie du modèle de warm-up : probabilité de réussite d'une campagne email.
+// Même sens de lecture que la rentabilité (haut = bon), seuil aligné sur celui
+// du modèle lui-même (0.4, cf. le bundle .pkl).
+export const EMAIL_HEALTH_BANDS: Band[] = [
+  { label: "Réputation fragile", tone: "avoid", min: 0, max: 39 },
+  { label: "Réputation correcte", tone: "risky", min: 40, max: 69 },
+  { label: "Réputation solide", tone: "good", min: 70, max: 100 },
+];
+
+export function emailHealthBand(score: number): Band {
+  return (
+    EMAIL_HEALTH_BANDS.find((b) => score <= b.max) ??
+    EMAIL_HEALTH_BANDS[EMAIL_HEALTH_BANDS.length - 1]
   );
 }
 

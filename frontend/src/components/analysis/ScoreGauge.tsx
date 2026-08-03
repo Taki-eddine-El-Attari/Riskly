@@ -4,15 +4,32 @@ import { cn } from "@/lib/utils";
 import {
   authorityBand,
   authorityIntensity,
+  emailHealthBand,
+  profitabilityBand,
   riskBand,
   toneStroke,
   toneText,
 } from "@/lib/scores";
+import type { Band } from "@/lib/scores";
 
 const RADIUS = 42;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
-type Kind = "risk" | "authority";
+type Kind = "risk" | "authority" | "profitability" | "email_health";
+
+const KIND_LABEL: Record<Kind, string> = {
+  risk: "Risque",
+  authority: "Autorité",
+  profitability: "Rentabilité",
+  email_health: "Warm-up",
+};
+
+const KIND_BAND: Record<Kind, (score: number) => Band> = {
+  risk: riskBand,
+  authority: authorityBand,
+  profitability: profitabilityBand,
+  email_health: emailHealthBand,
+};
 
 /**
  * Score 0–100 en jauge circulaire, avec sa bande d'interprétation.
@@ -53,7 +70,7 @@ export function ScoreGauge({
     };
   }, [score, reduced, motionValue]);
 
-  const band = score === null ? null : kind === "risk" ? riskBand(score) : authorityBand(score);
+  const band = score === null ? null : KIND_BAND[kind](score);
   const tone = band?.tone ?? "faint";
   const opacity = kind === "authority" && score !== null ? authorityIntensity(score) : 1;
   const offset = CIRCUMFERENCE * (1 - Math.min(100, Math.max(0, shown)) / 100);
@@ -107,7 +124,7 @@ export function ScoreGauge({
 
       <p className="text-center">
         <span className="block font-mono text-[10px] uppercase tracking-widest text-text-faint">
-          {kind === "risk" ? "Risque" : "Autorité"}
+          {KIND_LABEL[kind]}
         </span>
         <span className={cn("mt-0.5 block text-xs font-medium", toneText[tone])}>
           {band ? band.label : "Non calculé"}

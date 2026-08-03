@@ -65,6 +65,14 @@ class BaseCollector(ABC):
                 params=params,
                 headers=headers,
                 timeout=self.timeout,
+                # Indispensable pour RDAP : rdap.org repond 302 vers le serveur
+                # RDAP du registre (ex. rdap.verisign.com). Sans cela le corps
+                # est vide -> JSONDecodeError -> whois toujours en echec ->
+                # domain_age toujours 0. Le script d'entrainement
+                # (collect_fe_4.py) suivait deja les redirections : ne pas les
+                # suivre ici creerait un ecart entrainement/inference sur la
+                # feature la plus determinante du modele de risque.
+                follow_redirects=True,
             )
         except httpx.TimeoutException as exc:
             raise ExternalAPITimeoutError(source_name=self.source_name) from exc

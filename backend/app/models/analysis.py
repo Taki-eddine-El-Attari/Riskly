@@ -14,22 +14,32 @@ class AnalysisStatus(str, enum.Enum):
     FAILED = "failed"
 
 class AnalysisVerdict(str, enum.Enum):
-    BON_ACHAT = "bon_achat"
-    RISQUE = "risque"
-    A_EVITER = "a_eviter"
+    BON_ACHAT = "Bon achat"
+    RISQUE = "Risque"
+    A_EVITER = "A eviter"
+
+# `Enum(SomePyEnum)` sérialise par `.name` (ex. "RISQUE") par défaut, pas par
+# `.value` — `values_callable` force l'usage de `.value` pour matcher les
+# valeurs déjà présentes en base (colonnes varchar, contrainte CHECK sur
+# `verdict` avec les libellés exacts "Bon achat"/"Risque"/"A eviter").
+def _enum_values(enum_cls):
+    return [e.value for e in enum_cls]
 
 class Analysis(UUIDPrimaryKeyMixin, Base):
     __tablename__ = "analysis"
     status: Mapped[AnalysisStatus] = mapped_column(
-        Enum(AnalysisStatus, name="analysis_status"),
+        Enum(AnalysisStatus, name="analysis_status", values_callable=_enum_values),
         nullable=False,
         default=AnalysisStatus.PENDING,
     )
     profitability_score: Mapped[Optional[float]] = mapped_column(Numeric(6, 2), nullable=True)
     risk_score: Mapped[Optional[float]] = mapped_column(Numeric(6, 2), nullable=True)
     authority_score: Mapped[Optional[float]] = mapped_column(Numeric(6, 2), nullable=True)
+    # Sortie brute du modèle de warm-up. NULL = aucun CSV fourni, le modèle
+    # n'a pas tourné (à distinguer d'un score de 0, qui serait un vrai résultat).
+    email_health_score: Mapped[Optional[float]] = mapped_column(Numeric(6, 2), nullable=True)
     verdict: Mapped[Optional[AnalysisVerdict]] = mapped_column(
-        Enum(AnalysisVerdict, name="analysis_verdict"),
+        Enum(AnalysisVerdict, name="analysis_verdict", values_callable=_enum_values),
         nullable=True,
     )
 

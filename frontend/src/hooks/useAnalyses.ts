@@ -22,8 +22,7 @@ export function useAnalyses() {
 
   return useMutation<AnalysisBatchResult, Error, DomainEntry[]>({
     mutationFn: (entries) => createAnalyses(entries),
-    onSuccess: (data) => {
-      if (data.demo) return; // rien n'a été enregistré côté serveur
+    onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: analysesKeys.history });
     },
   });

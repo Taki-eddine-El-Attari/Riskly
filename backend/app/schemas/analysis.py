@@ -4,23 +4,37 @@ from typing import Optional
 from enum import Enum
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 
-from app.schemas.domain import DomainOut
+from app.schemas.domain import DomainOut, DomainMetricOut
 
 MAX_DOMAINS_PER_BATCH = 5
 
 
 class AnalysisStatus(str, Enum):
     PENDING = "pending"
-    IN_PROGRESS = "in_progress"
+    RUNNING = "running"
     COMPLETED = "completed"
     FAILED = "failed"
-    PARTIAL = "partial"
 
 
 class Verdict(str, Enum):
+    """Format exact stocké en base (contrainte CHECK `analysis_verdict_check`)."""
     BON_ACHAT = "Bon achat"
     RISQUE = "Risque"
     A_EVITER = "A eviter"
+
+
+class VerdictFilter(str, Enum):
+    """Format envoyé par le frontend (snake_case) pour filtrer l'historique."""
+    BON_ACHAT = "bon_achat"
+    RISQUE = "risque"
+    A_EVITER = "a_eviter"
+
+
+VERDICT_FILTER_TO_STORED: dict["VerdictFilter", Verdict] = {
+    VerdictFilter.BON_ACHAT: Verdict.BON_ACHAT,
+    VerdictFilter.RISQUE: Verdict.RISQUE,
+    VerdictFilter.A_EVITER: Verdict.A_EVITER,
+}
 
 
 class AnalysisCreate(BaseModel):
@@ -58,6 +72,8 @@ class AnalysisOut(BaseModel):
     risk_score: Optional[float] = Field(None, ge=0, le=100)
     authority_score: Optional[float] = Field(None, ge=0, le=100)
     profitability_score: Optional[float] = Field(None, ge=0, le=100)
+    # None = aucun CSV de warm-up fourni (modèle non exécuté).
+    email_health_score: Optional[float] = Field(None, ge=0, le=100)
 
     verdict: Optional[Verdict] = None
     shap_values: Optional[list[ShapFactor]] = None
@@ -66,6 +82,9 @@ class AnalysisOut(BaseModel):
     completed_at: Optional[datetime] = None
 
     domain: Optional[DomainOut] = None
+    # L'attribut ORM s'appelle `domain_metric` (cf. models/analysis.py), mais
+    # le frontend attend `metric` (types/analysis.ts) — d'où l'alias.
+    metric: Optional[DomainMetricOut] = Field(None, validation_alias="domain_metric")
 
 
 class AnalysisBatchResponse(BaseModel):
@@ -80,6 +99,15 @@ class AnalysisSummary(BaseModel):
     domain_name: str
     risk_score: Optional[float] = None
     authority_score: Optional[float] = None
+    profitability_score: Optional[float] = None
+    email_health_score: Optional[float] = None
     verdict: Optional[Verdict] = None
     requested_at: Optional[datetime] = None
     status: Optional[AnalysisStatus] = None
+
+
+class AnalysisList(BaseModel):
+    items: list[AnalysisSummary]
+    total: int
+    page: int
+    page_size: int

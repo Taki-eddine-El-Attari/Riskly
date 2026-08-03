@@ -29,7 +29,10 @@ class DomainMetric(Base):
 
     toxic_backlink_ratio = Column(DECIMAL(5, 2))
 
-    nb_server_count = Column(Integer)
+    # Attribut Python conservé (déjà utilisé par le frontend/schemas) ; la
+    # colonne physique réelle en base s'appelle `ns_server_count` (voir
+    # riskly_db.sql).
+    nb_server_count = Column("ns_server_count", Integer)
 
     raw_data= Column(JSONB)
 

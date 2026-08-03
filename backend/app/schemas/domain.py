@@ -22,3 +22,28 @@ class DomainOut(BaseModel):
     whois_creation_date: Optional[date] = None
     whois_expiration_date: Optional[date] = None
     first_analysis: Optional[datetime] = None
+
+
+class DomainList(BaseModel):
+    items: list[DomainOut]
+    total: int
+    page: int
+    page_size: int
+
+
+class DomainMetricOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    is_blacklisted: Optional[bool] = None
+    rank_value: Optional[float] = None
+    rank_source: Optional[str] = None
+    backlink_count: Optional[int] = None
+    referring_domains_count: Optional[int] = None
+    toxic_backlink_ratio: Optional[float] = None
+    nb_server_count: Optional[int] = None
+    calculated_at: Optional[datetime] = None
+
+
+class DomainWithLatestMetric(DomainOut):
+    latest_metric: Optional[DomainMetricOut] = None

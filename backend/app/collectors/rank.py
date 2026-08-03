@@ -1,9 +1,16 @@
 import asyncio
+import logging
 import httpx
 from dataclasses import dataclass
 from typing import Optional
 from app.core.config import settings
-from app.core.exceptions import CollectorError, CollectorTimeout, CollectorRateLimit
+from app.core.exceptions import (
+    ExternalAPIError,
+    ExternalAPIRateLimitError,
+    ExternalAPITimeoutError,
+)
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -15,7 +22,11 @@ class RankData:
 
 
 class RankCollector:
-    OPENPAGERANK_URL = "https://openpagerank.com/api/v1.0/getPageRank"
+    # API "OpenPageRank" de Keywords Everywhere (PAS domcop.com/openpagerank.com,
+    # qui est un service distinct avec un autre format de cle/auth). Confirme
+    # via `collect_fe_4.py` (script ayant servi a construire le dataset
+    # d'entrainement) : Bearer token + POST JSON, cle au format `opr_live_...`.
+    OPENPAGERANK_URL = "https://openpagerank.keywordseverywhere.com/v1/domains/bulk"
     TIMEOUT_SECONDS = 10.0
 
     def __init__(self):
@@ -23,9 +34,14 @@ class RankCollector:
 
     async def collect(self, domain: str) -> RankData:
         try:
-            return await self._fetch_openpagerank(domain)
-        except (CollectorTimeout, CollectorRateLimit, CollectorError) as e:
-            print(f"[RankCollector] echec pour {domain}: {e}")
+            result = await self._fetch_openpagerank(domain)
+            logger.info(
+                "[RankCollector] %s -> rank=%s referring_domains=%s",
+                domain, result.rank_value, result.referring_domains,
+            )
+            return result
+        except ExternalAPIError as e:
+            logger.warning("[RankCollector] echec pour %s: %s", domain, e)
 
         return RankData(
             rank_value=None,
@@ -36,21 +52,20 @@ class RankCollector:
 
     async def _fetch_openpagerank(self, domain: str) -> RankData:
         if not self.api_key:
-            raise CollectorError("OpenPageRank", "Cle API non configuree")
+            raise ExternalAPIError("OpenPageRank", "Cle API non configuree")
 
-        headers = {"API-OPR": self.api_key}
-        params = {"domains[]": domain}
+        headers = {"Authorization": f"Bearer {self.api_key}"}
 
         try:
             async with httpx.AsyncClient(timeout=self.TIMEOUT_SECONDS) as client:
-                response = await client.get(
-                    self.OPENPAGERANK_URL, headers=headers, params=params
+                response = await client.post(
+                    self.OPENPAGERANK_URL, headers=headers, json={"domains": [domain]}
                 )
 
                 if response.status_code == 429:
-                    raise CollectorRateLimit("OpenPageRank", "Quota depasse")
+                    raise ExternalAPIRateLimitError("OpenPageRank")
                 if response.status_code >= 500:
-                    raise CollectorError(
+                    raise ExternalAPIError(
                         "OpenPageRank", f"Erreur serveur {response.status_code}"
                     )
 
@@ -59,29 +74,27 @@ class RankCollector:
                 return self._parse_openpagerank_response(data)
 
         except httpx.TimeoutException:
-            raise CollectorTimeout(
-                "OpenPageRank", f"Timeout apres {self.TIMEOUT_SECONDS}s"
-            )
+            raise ExternalAPITimeoutError("OpenPageRank")
         except httpx.HTTPStatusError as e:
-            raise CollectorError("OpenPageRank", f"HTTP {e.response.status_code}")
+            raise ExternalAPIError("OpenPageRank", f"HTTP {e.response.status_code}")
         except httpx.RequestError as e:
-            raise CollectorError("OpenPageRank", f"Erreur reseau: {e}")
+            raise ExternalAPIError("OpenPageRank", f"Erreur reseau: {e}")
 
     def _parse_openpagerank_response(self, data: dict) -> RankData:
         try:
-            results = data.get("response", [])
-            if not results:
+            results = data.get("results", [])
+            if not results or not results[0].get("found"):
                 return RankData(rank_value=None, rank_source="OpenPageRank", raw_response=data)
 
             result = results[0]
             return RankData(
-                rank_value=float(result.get("page_rank_decimal", 0)),
+                rank_value=float(result.get("open_page_rank", 0)),
                 rank_source="OpenPageRank",
-                referring_domains=None,
+                referring_domains=result.get("referring_domains"),
                 raw_response=data,
             )
-        except (KeyError, ValueError, TypeError) as e:
-            raise CollectorError("OpenPageRank", f"Format de reponse inattendu: {e}")
+        except (KeyError, ValueError, TypeError, IndexError) as e:
+            raise ExternalAPIError("OpenPageRank", f"Format de reponse inattendu: {e}")
 
     async def collect_batch(self, domains: list[str]) -> dict[str, RankData]:
         """Collecte le rank pour plusieurs domaines en parallele."""

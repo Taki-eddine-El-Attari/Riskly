@@ -65,6 +65,13 @@ export interface Analysis {
 
   risk_score: number | null;
   authority_score: number | null;
+  /** Score global de rentabilite/reussite d'un warm-up (0-100). */
+  profitability_score: number | null;
+  /**
+   * Sortie brute du modele de warm-up (0-100). `null` quand aucun CSV n'a ete
+   * fourni : le modele n'a pas tourne du tout — a ne pas confondre avec 0.
+   */
+  email_health_score: number | null;
 
   verdict: Verdict | null;
   shap_values: Factor[] | null;
@@ -86,7 +93,6 @@ export interface Analysis {
 export interface AnalysisBatchResult {
   results: Analysis[];
   failed: { domain: string; reason: string }[];
-  demo?: boolean;
 }
 
 export interface AnalysisSummary {
@@ -94,6 +100,8 @@ export interface AnalysisSummary {
   domain_name: string;
   risk_score: number | null;
   authority_score: number | null;
+  profitability_score: number | null;
+  email_health_score: number | null;
   verdict: Verdict | null;
   requested_at: string | null;
   status: AnalysisStatus | null;

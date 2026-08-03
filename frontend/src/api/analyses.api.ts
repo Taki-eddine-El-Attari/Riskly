@@ -1,8 +1,7 @@
 // COUCHE 1 — ACCÈS. Aucune logique de présentation ici : on parle HTTP et on
 // renvoie des objets conformes à `types/analysis.ts`.
 
-import { apiClient, ApiError } from "@/lib/api-client";
-import { DEMO_FALLBACK } from "@/lib/constants";
+import { apiClient } from "@/lib/api-client";
 import { computeVerdict } from "@/lib/scores";
 import type {
   Analysis,
@@ -14,13 +13,6 @@ import type {
 } from "@/types/analysis";
 import { normalizeVerdict } from "@/types/analysis";
 import type { WarmupFile } from "@/lib/warmup";
-import { demoAnalysis } from "./analyses.demo";
-import {
-  deleteDemoAnalysis,
-  readDemoAnalysis,
-  readDemoHistory,
-  saveDemoAnalyses,
-} from "@/lib/demo-history";
 
 const BASE = "/api/v1/analyses";
 
@@ -72,6 +64,8 @@ export function parseAnalysis(raw: Record<string, unknown>): Analysis {
     status: (raw.status as Analysis["status"]) ?? null,
     risk_score: risk,
     authority_score: authority,
+    profitability_score: num(raw.profitability_score),
+    email_health_score: num(raw.email_health_score),
     verdict:
       verdict ??
       (risk !== null && authority !== null ? computeVerdict(risk, authority) : null),
@@ -126,12 +120,6 @@ export async function createAnalysis(entry: DomainEntry): Promise<Analysis> {
   return parseAnalysis(raw);
 }
 
-/** Vrai quand l'API d'analyse n'est pas (encore) joignable — pas quand elle refuse. */
-function isEndpointUnavailable(err: unknown): boolean {
-  if (err instanceof ApiError) return err.status === 404 || err.status === 501;
-  return err instanceof TypeError; // fetch a échoué : serveur injoignable
-}
-
 /**
  * Lance l'analyse d'un lot de 1 à 5 domaines.
  * Le backend n'expose qu'un endpoint mono-domaine : on parallélise et on isole
@@ -142,14 +130,12 @@ export async function createAnalyses(entries: DomainEntry[]): Promise<AnalysisBa
 
   const results: Analysis[] = [];
   const failed: AnalysisBatchResult["failed"] = [];
-  let endpointMissing = false;
 
   settled.forEach((outcome, i) => {
     if (outcome.status === "fulfilled") {
       results.push(outcome.value);
       return;
     }
-    if (isEndpointUnavailable(outcome.reason)) endpointMissing = true;
     failed.push({
       domain: entries[i].domain,
       reason:
@@ -159,29 +145,7 @@ export async function createAnalyses(entries: DomainEntry[]): Promise<AnalysisBa
     });
   });
 
-  // Repli de démonstration — voir analyses.demo.ts.
-  if (DEMO_FALLBACK && endpointMissing && results.length === 0) {
-    const demoResults = entries.map((e) => {
-      const analysis = withComputedVerdict(demoAnalysis(e.domain));
-      return e.warmup ? { ...analysis, warmup: warmupInfoOf(e.warmup) } : analysis;
-    });
-    // On enregistre le lot pour qu'il apparaisse dans l'historique (voir
-    // demo-history.ts) : sans backend, c'est la seule mémoire des analyses.
-    saveDemoAnalyses(demoResults);
-    return { results: demoResults, failed: [], demo: true };
-  }
-
   return { results, failed };
-}
-
-function withComputedVerdict(analysis: Analysis): Analysis {
-  if (analysis.verdict || analysis.risk_score === null || analysis.authority_score === null) {
-    return analysis;
-  }
-  return {
-    ...analysis,
-    verdict: computeVerdict(analysis.risk_score, analysis.authority_score),
-  };
 }
 
 /** Paramètres de consultation de l'historique — miroir des query params backend. */
@@ -193,16 +157,7 @@ export interface HistoryParams {
   verdict?: Verdict | null;
 }
 
-/** Une entrée d'historique locale se reconnaît à son identifiant `demo-…`. */
-function isDemoId(id: string): boolean {
-  return id.startsWith("demo-");
-}
-
-/**
- * Historique paginé de l'utilisateur connecté.
- * Quand l'endpoint n'est pas (encore) monté, on sert l'historique local des
- * analyses de démonstration — cohérent avec le repli de la page d'analyse.
- */
+/** Historique paginé de l'utilisateur connecté. */
 export async function getHistory(params: HistoryParams = {}): Promise<AnalysisPage> {
   const page = params.page ?? 1;
   const pageSize = params.pageSize ?? 20;
@@ -217,51 +172,16 @@ export async function getHistory(params: HistoryParams = {}): Promise<AnalysisPa
   });
   if (params.verdict) query.set("verdict", params.verdict);
 
-  try {
-    return await apiClient.get<AnalysisPage>(`${BASE}?${query.toString()}`);
-  } catch (err) {
-    if (DEMO_FALLBACK && isEndpointUnavailable(err)) {
-      return readDemoHistory({ page, pageSize, sortBy, order, verdict: params.verdict });
-    }
-    throw err;
-  }
+  return await apiClient.get<AnalysisPage>(`${BASE}?${query.toString()}`);
 }
 
 /** Rapport détaillé d'une analyse. */
 export async function getAnalysis(id: string): Promise<Analysis> {
-  // Un rapport de démonstration ne vit que localement : inutile d'appeler l'API.
-  if (isDemoId(id)) {
-    const stored = readDemoAnalysis(id);
-    if (stored) return stored;
-    throw new ApiError(404, "Analyse introuvable.");
-  }
-
-  try {
-    const raw = await apiClient.get<Record<string, unknown>>(`${BASE}/${id}`);
-    return parseAnalysis(raw);
-  } catch (err) {
-    if (DEMO_FALLBACK && isEndpointUnavailable(err)) {
-      const stored = readDemoAnalysis(id);
-      if (stored) return stored;
-    }
-    throw err;
-  }
+  const raw = await apiClient.get<Record<string, unknown>>(`${BASE}/${id}`);
+  return parseAnalysis(raw);
 }
 
 /** Retire une analyse de l'historique personnel. */
 export async function deleteAnalysis(id: string): Promise<void> {
-  if (isDemoId(id)) {
-    deleteDemoAnalysis(id);
-    return;
-  }
-
-  try {
-    await apiClient.delete<void>(`${BASE}/${id}`);
-  } catch (err) {
-    if (DEMO_FALLBACK && isEndpointUnavailable(err)) {
-      deleteDemoAnalysis(id);
-      return;
-    }
-    throw err;
-  }
+  await apiClient.delete<void>(`${BASE}/${id}`);
 }

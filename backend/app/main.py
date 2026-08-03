@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
@@ -5,6 +7,15 @@ from starlette.middleware.sessions import SessionMiddleware
 from app.core.config import settings
 from app.core.exceptions import RisklyException, riskly_exception_handler
 from app.api.v1.router import router as api_router
+
+# Sans configuration explicite, les logger.info() des collectors/services
+# (résultats des API externes, décisions du modèle) restent invisibles
+# (root logger par défaut au niveau WARNING). Ce basicConfig les fait
+# apparaître dans la console où tourne uvicorn.
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+)
 
 # Enregistre le modèle User (auth). Les autres modèles (analysis, domain…)
 # sont du WIP qui ne s'importe pas encore ; on les ajoutera ici une

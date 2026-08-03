@@ -90,8 +90,10 @@ export function ReportCard({
 
           {!hasScore && (
             <p className="mt-2 max-w-md text-sm leading-relaxed text-text-muted">
-              Aucun score n'a pu être produit pour ce domaine. Sans historique
-              exploitable, il n'y a pas de risque de réputation à évaluer.
+              Le domaine ne répond pas en DNS : ni classement, ni backlinks, ni
+              pays d'hébergement n'ont pu être mesurés. C'est courant pour un
+              domaine expiré ou en vente, mais aucun verdict ne peut être fondé
+              là-dessus — vérifiez son historique manuellement.
             </p>
           )}
 
@@ -127,9 +129,18 @@ export function ReportCard({
           )}
         </div>
 
-        <div className="flex shrink-0 items-start gap-6 sm:gap-8">
+        {/* Ordre de lecture = ordre du calcul : les composantes (risque,
+            autorité, warm-up) puis la rentabilité, qui les agrège toutes.
+            La jauge warm-up n'apparaît que si un CSV a été fourni : sans lui,
+            le modèle n'a pas tourné (email_health_score est null) et afficher
+            une jauge vide laisserait croire à un score de zéro. */}
+        <div className="flex shrink-0 flex-wrap items-start justify-end gap-6 sm:gap-8">
           <ScoreGauge score={analysis.risk_score} kind="risk" size={96} />
           <ScoreGauge score={analysis.authority_score} kind="authority" size={96} />
+          {analysis.email_health_score !== null && (
+            <ScoreGauge score={analysis.email_health_score} kind="email_health" size={96} />
+          )}
+          <ScoreGauge score={analysis.profitability_score} kind="profitability" size={96} />
         </div>
       </div>
 

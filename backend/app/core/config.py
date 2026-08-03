@@ -15,6 +15,12 @@ class Settings(BaseSettings):
     MODEL_PATH: str = "app/ml/artifacts/model_v1.pkl"
     MODEL_VERSION: str = "v1"
 
+    RISK_MODEL_PATH: str = "app/ml/artifacts/model_risk.joblib"
+    RISK_MODEL_THRESHOLD: float = 0.5
+    PROFITABILITY_MODEL_PATH: str = "app/ml/artifacts/xgboost_wormup_model_f_v.pkl"
+
+    EXTERNAL_API_TIMEOUT_SECONDS: float = 10.0
+
     TELEGRAM_BOT_TOKEN: str = ""
     TELEGRAM_AUTH_MAX_AGE: int = 86_400
 

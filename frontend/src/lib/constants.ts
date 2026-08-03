@@ -24,12 +24,3 @@ export const SOURCES = [
   "Bases de menaces",
   "ip-api",
 ] as const;
-
-/**
- * Jeu de démonstration : quand l'API d'analyse ne répond pas encore (les
- * routes `/analyses` ne sont pas montées côté backend), la page affiche des
- * rapports d'exemple, signalés par un bandeau explicite.
- * Passer à `false` — ou définir VITE_DEMO_FALLBACK=false — dès que le backend
- * expose l'endpoint.
- */
-export const DEMO_FALLBACK = import.meta.env.VITE_DEMO_FALLBACK !== "false";

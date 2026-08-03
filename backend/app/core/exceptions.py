@@ -61,6 +61,16 @@ class AnalysisNotFoundError(RisklyException):
         super().__init__(f"L'analyse '{analysis_id}' est introuvable.")
 
 
+class InvalidAnalysisReferenceError(RisklyException):
+    status_code = 422
+    def __init__(self, domain_id: str, user_id: str):
+        self.domain_id = domain_id
+        self.user_id = user_id
+        super().__init__(
+            f"Référence invalide pour créer l'analyse (domaine '{domain_id}', utilisateur '{user_id}')."
+        )
+
+
 class AnalysisAlreadyInProgressError(RisklyException):
     status_code = 409
     def __init__(self, domain: str):
@@ -199,11 +209,11 @@ class WarmupFileNotFoundError(RisklyException):
         super().__init__(message)
 
 
-class LimiteConcurrenceAtteinte(Exception):
-    def __init__(self, max_concurrent : int):
+class LimiteConcurrenceAtteinteError(RisklyException):
+    status_code = 429
+    def __init__(self, max_concurrent: int):
         self.max_concurrent = max_concurrent
         super().__init__(
             f"Limite de {max_concurrent} analyses simultanées atteinte. "
             "Attendez qu'une analyse se termine avant d'en lancer une nouvelle."
         )
-                

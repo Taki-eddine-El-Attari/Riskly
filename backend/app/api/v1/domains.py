@@ -1,6 +1,6 @@
 from uuid import UUID
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -9,44 +9,59 @@ from app.core.exceptions import LimiteConcurrenceAtteinteError
 from app.models.user import User
 from app.repositories.analysis_repo import AnalysisRepository
 from app.repositories.domain_repo import DomainRepository
-from app.schemas.analysis import AnalysisCreate, AnalysisOut
+from app.schemas.analysis import AnalysisOut
 from app.schemas.domain import DomainOut, DomainList, DomainWithLatestMetric, DomainMetricOut
 from app.services import analysis_service
 
 analyses_router = APIRouter(prefix="/analyses", tags=["analyses"])
 domains_router = APIRouter(prefix="/domains", tags=["domains"])
 
-@analyses_router.post("/analyses", response_model=AnalysisOut, status_code=status.HTTP_201_CREATED)
+@analyses_router.post("", response_model=AnalysisOut, status_code=status.HTTP_201_CREATED)
 async def create_analysis(
-    payload: AnalysisCreate,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> AnalysisOut:
-    try :
+    # Le front envoie du JSON quand aucun CSV de warm-up n'est joint, et du
+    # multipart/form-data uniquement quand un fichier est present (cf.
+    # analyses.api.ts::createAnalysis). Un seul endpoint doit donc accepter
+    # les deux formats plutot que de forcer Form(...)/File(...).
+    content_type = request.headers.get("content-type", "")
+    warmup_csv: Optional[UploadFile] = None
+
+    if content_type.startswith("multipart/form-data"):
+        form = await request.form()
+        domain_name = form.get("domain_name")
+        candidate = form.get("warmup_csv")
+        # `request.form()` renvoie un `starlette.datastructures.UploadFile`,
+        # pas un `fastapi.UploadFile` (qui en est une sous-classe) : un
+        # `isinstance(candidate, UploadFile)` avec le UploadFile de fastapi
+        # est TOUJOURS faux ici, meme quand un vrai fichier est joint — d'ou
+        # le duck-typing sur `.filename` plutot qu'un isinstance.
+        if hasattr(candidate, "filename") and candidate.filename:
+            warmup_csv = candidate
+    else:
+        try:
+            body = await request.json()
+        except Exception:
+            body = {}
+        domain_name = (body or {}).get("domain_name")
+
+    if not domain_name:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "domain_name est requis")
+
+    try:
         analysis = await analysis_service.analyze_domain(
-            db, domain_name= payload.domain_name , user_id=current_user.id
+            db,
+            domain_name=domain_name,
+            user_id=current_user.id,
+            warmup_file=warmup_csv,
         )
     except LimiteConcurrenceAtteinteError as e:
         raise HTTPException(
-            status.HTTP_429_TOO_MANY_REQUEST,
-            f"Limite de {e.limite} analyses simultanees atteinte",
-        )   
-    return AnalysisOut.model_validate(analysis) 
-
-@analyses_router.get("/{analysis_id}", response_model=AnalysisOut)
-async def get_analysis(
-    analysis_id: UUID,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-) -> AnalysisOut:
-    repo = AnalysisRepository(db)
-    analysis = repo.get_by_id(analysis_id)
-
-    if analysis is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Analyse introuvable")
-    if current_user.role == "user" and str(analysis.user_id) != str(current_user.id):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Acces refuse")
-
+            status.HTTP_429_TOO_MANY_REQUESTS,
+            f"Limite de {e.max_concurrent} analyses simultanees atteinte",
+        )
     return AnalysisOut.model_validate(analysis)
 
 @analyses_router.get("/{analysis_id}/status")

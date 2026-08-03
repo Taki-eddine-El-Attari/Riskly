@@ -1,8 +1,15 @@
+import logging
 import httpx
 from dataclasses import dataclass
 from typing import Optional
 from app.core.config import settings
-from app.core.exceptions import CollectorError, CollectorTimeout, CollectorRateLimit
+from app.core.exceptions import (
+    ExternalAPIError,
+    ExternalAPIRateLimitError,
+    ExternalAPITimeoutError,
+)
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -17,7 +24,9 @@ class BacklinkProfile:
 
 
 class BacklinksCollector:
-    OPENPAGERANK_URL = "https://openpagerank.com/api/v1.0/getPageRank"
+    # Meme service que RankCollector (cf. son commentaire) : API "OpenPageRank"
+    # de Keywords Everywhere, Bearer token + POST JSON.
+    OPENPAGERANK_URL = "https://openpagerank.keywordseverywhere.com/v1/domains/bulk"
     TIMEOUT_SECONDS = 10.0
 
     def __init__(self):
@@ -25,29 +34,33 @@ class BacklinksCollector:
 
     async def collect(self, domain: str) -> BacklinkProfile:
         try:
-            return await self._fetch_openpagerank(domain)
-        except (CollectorTimeout, CollectorRateLimit, CollectorError) as e:
-            print(f"[BacklinksCollector] echec pour {domain}: {e}")
+            result = await self._fetch_openpagerank(domain)
+            logger.info(
+                "[BacklinksCollector] %s -> backlink_count=%s quality=%s",
+                domain, result.backlink_count, result.quality_estimate,
+            )
+            return result
+        except ExternalAPIError as e:
+            logger.warning("[BacklinksCollector] echec pour %s: %s", domain, e)
 
         return BacklinkProfile(raw_response={"error": "Collecte backlinks echouee"})
 
     async def _fetch_openpagerank(self, domain: str) -> BacklinkProfile:
         if not self.api_key:
-            raise CollectorError("OpenPageRank", "Cle API non configuree")
+            raise ExternalAPIError("OpenPageRank", "Cle API non configuree")
 
-        headers = {"API-OPR": self.api_key}
-        params = {"domains[]": domain}
+        headers = {"Authorization": f"Bearer {self.api_key}"}
 
         try:
             async with httpx.AsyncClient(timeout=self.TIMEOUT_SECONDS) as client:
-                response = await client.get(
-                    self.OPENPAGERANK_URL, headers=headers, params=params
+                response = await client.post(
+                    self.OPENPAGERANK_URL, headers=headers, json={"domains": [domain]}
                 )
 
                 if response.status_code == 429:
-                    raise CollectorRateLimit("OpenPageRank", "Quota depasse")
+                    raise ExternalAPIRateLimitError("OpenPageRank")
                 if response.status_code >= 500:
-                    raise CollectorError(
+                    raise ExternalAPIError(
                         "OpenPageRank", f"Erreur serveur {response.status_code}"
                     )
 
@@ -56,31 +69,36 @@ class BacklinksCollector:
                 return self._parse_response(data)
 
         except httpx.TimeoutException:
-            raise CollectorTimeout("OpenPageRank", f"Timeout apres {self.TIMEOUT_SECONDS}s")
+            raise ExternalAPITimeoutError("OpenPageRank")
         except httpx.HTTPStatusError as e:
-            raise CollectorError("OpenPageRank", f"HTTP {e.response.status_code}")
+            raise ExternalAPIError("OpenPageRank", f"HTTP {e.response.status_code}")
         except httpx.RequestError as e:
-            raise CollectorError("OpenPageRank", f"Erreur reseau: {e}")
+            raise ExternalAPIError("OpenPageRank", f"Erreur reseau: {e}")
 
     def _parse_response(self, data: dict) -> BacklinkProfile:
         try:
-            results = data.get("response", [])
-            if not results:
+            results = data.get("results", [])
+            if not results or not results[0].get("found"):
                 return BacklinkProfile(source="OpenPageRank", raw_response=data)
 
             result = results[0]
-            page_rank = float(result.get("page_rank_decimal", 0))
+            page_rank = float(result.get("open_page_rank", 0))
+            # `backlink_count` porte le nombre de domaines referents : c'est la
+            # semantique de la colonne "backlist" du dataset d'entrainement
+            # (cf. collect_fe_4.py : `pagerank_info.get("referring_domains")`),
+            # que `feature_builder.py` lit ensuite via la cle "backlink".
+            referring_domains = result.get("referring_domains")
 
             return BacklinkProfile(
-                referring_domains_count=None,
+                referring_domains_count=referring_domains,
                 toxic_backlink_ratio=None,
-                backlink_count=None,
+                backlink_count=referring_domains,
                 quality_estimate=self._estimate_quality(page_rank),
                 source="OpenPageRank",
                 raw_response=data,
             )
-        except (KeyError, ValueError, TypeError) as e:
-            raise CollectorError("OpenPageRank", f"Format inattendu: {e}")
+        except (KeyError, ValueError, TypeError, IndexError) as e:
+            raise ExternalAPIError("OpenPageRank", f"Format inattendu: {e}")
 
     def _estimate_quality(self, page_rank: float) -> float:
     

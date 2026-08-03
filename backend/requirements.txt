@@ -13,3 +13,16 @@ psycopg[binary]>=3.2
 bcrypt>=4.1          # hachage des mots de passe (auth locale)
 itsdangerous>=2.2    # signature du cookie de session (SessionMiddleware)
 python-dotenv>=1.0
+
+# --- Collecte de signaux domaine ---
+httpx>=0.28           # appels HTTP async (RDAP, OpenPageRank, ip-api)
+dnspython>=2.8        # requêtes DNS (blacklists DNSBL, comptage NS)
+tenacity>=9.1         # retry avec backoff (collectors/base.py)
+
+# --- Scoring ML ---
+pandas>=2.2
+numpy>=2.0
+scikit-learn>=1.9
+xgboost>=3.0
+shap>=0.52
+joblib>=1.5
