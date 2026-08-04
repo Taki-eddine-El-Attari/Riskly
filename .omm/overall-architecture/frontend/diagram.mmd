@@ -1,0 +1,15 @@
+graph LR
+    pages["Pages\nfrontend/src/pages/"]
+    hooks["Hooks (TanStack Query)\nfrontend/src/hooks/"]
+    api-layer["API Access Layer\nfrontend/src/api/"]
+    auth-context["Auth Context + Guard\nfrontend/src/context/ + routes/"]
+    components["Components\nfrontend/src/components/"]
+    lib["Shared Lib\nfrontend/src/lib/"]
+
+    pages -->|"render + bind data"| components
+    pages -->|"call queries/mutations"| hooks
+    pages -->|"gate protected routes"| auth-context
+    hooks -->|"invoke HTTP functions"| api-layer
+    auth-context -->|"login / me / logout"| api-layer
+    api-layer -->|"fetch (credentials: include)"| lib
+    components -->|"cn(), formatting, export"| lib

@@ -1,0 +1,1 @@
+`RiskPredictor.predict`: casts features to the booster's dtypes and returns `malicious_prob` (P(malicious)). This probability is the security veto: ≥ 0.50 forces a DANGEROUS verdict regardless of SEO/email quality; below it, it discounts the final score by `(1 - malicious_prob)`.

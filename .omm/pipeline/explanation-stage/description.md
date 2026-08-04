@@ -1,0 +1,1 @@
+`explainer.py`: SHAP values over the risk features, turned into per-feature contributions that `analysis_service` stores as `shap_values` and the frontend renders as plain-language factors. Purely explanatory — never changes the verdict, and failures degrade gracefully to no explanation.

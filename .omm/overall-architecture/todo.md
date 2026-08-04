@@ -1,0 +1,2 @@
+- Finish or remove the Celery worker path to move long analyses off the request thread.
+- Reconcile the two scoring entry points (`services/scoring_service.py` used in production vs `ml/pipeline.py` `DomainPipeline`, which is a parallel, unused implementation).

@@ -1,0 +1,1 @@
+Session state and route protection: `context/AuthContext.tsx` holds the current user (incl. role) and exposes login/logout/refreshUser without ever storing a token; `routes/ProtectedRoute.tsx` requires an authenticated user (and optionally a role) before rendering the protected outlet.

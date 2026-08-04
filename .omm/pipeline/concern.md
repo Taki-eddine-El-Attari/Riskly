@@ -1,0 +1,1 @@
+Two parallel scoring implementations exist: the production path (`services/scoring_service.py` → `ScoringResponse`) and `ml/pipeline.py::DomainPipeline` (returns a dict). Only the former is wired into `analysis_service`; the latter is unused and can drift silently from the real logic.

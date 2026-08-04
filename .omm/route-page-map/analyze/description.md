@@ -1,0 +1,1 @@
+`Analyze.tsx` (`/app`): the core product screen. Users enter 1–5 domains (with optional warm-up CSV / bulk CSV import), the `useAnalyses` mutation drives the long synchronous request behind `AnalysisLoader`, and results render grouped by verdict via `ReportList`.

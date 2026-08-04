@@ -1,0 +1,1 @@
+`BacklinksCollector` (`backlinks.py`): async call to an internal backlinks API returning backlink count, referring domains, and toxic ratio. Own TTL LRU cache. Contributes to both the risk features and the authority sub-score.

@@ -1,0 +1,1 @@
+`RiskPredictor` (`predictor.py`): loads `model_risk.joblib` (XGBoost), casts features to the model's declared dtypes, and returns `malicious_prob` + a thresholded label. Cached as a singleton via `get_risk_predictor()`. Its probability is the security veto input to the decision matrix.

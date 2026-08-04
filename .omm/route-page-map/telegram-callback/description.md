@@ -1,0 +1,1 @@
+`TelegramCallback.tsx`: receives the signed data from the Telegram widget and forwards it to `/api/v1/auth/telegram`, which validates the HMAC, creates/binds the user, sets the HttpOnly cookie, and returns the user.

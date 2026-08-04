@@ -1,0 +1,1 @@
+`RankCollector` → OpenPageRank API (key: `OPEN_PAGERANK_API_KEY`). Returns a 0–10 authority score (higher = better) that is the highest-weighted term (0.5) in the decision matrix's authority sub-score. Cached in-process (TTL LRU) to limit repeat calls.

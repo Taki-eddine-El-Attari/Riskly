@@ -1,0 +1,1 @@
+`AnalysisRepository.complete` writes the scores, verdict, and SHAP values onto the Analysis row and links the DomainMetric; then per-source `ApiLog` rows record each collector's success/failure and payload. All committed by `get_db` on a clean return.

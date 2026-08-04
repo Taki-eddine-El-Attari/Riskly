@@ -1,0 +1,1 @@
+Thresholds and weights are hard-coded constructor defaults (malicious 0.50, worth-buying 0.60, risky 0.30; authority weights 0.5/0.3/0.2). Rank normalization assumes the OpenPageRank 0–10 scale (higher=better), NOT a positional rank — a log/inverse normalization would flip the signal.

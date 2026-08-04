@@ -1,0 +1,14 @@
+created: 2026-08-04T14:31:55.753Z
+updated: 2026-08-04T14:31:55.955Z
+update_count: 2
+last_field: diagram
+kind: nested-class
+title: ml-scoring
+children:
+  - decision-matrix
+  - explainer
+  - feature-builder
+  - profitability-predictor
+  - risk-predictor
+  - scoring-service
+parentPath: []

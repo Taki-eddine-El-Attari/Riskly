@@ -1,0 +1,1 @@
+`backend/app/workers/` (Celery) is incomplete: `celery_app.py` is empty and `tasks.py` references undefined symbols (`celery_app`, `verdict`). Analysis therefore runs synchronously inside the request, blocking a worker for up to ~90s per domain — the main scalability bottleneck.

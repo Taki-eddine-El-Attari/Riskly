@@ -1,0 +1,3 @@
+Riskly is a decision-support SaaS for buyers of expired/second-hand domains used for cold-email outreach. A user submits 1–5 domain names (optionally with a warm-up traffic CSV); the system gathers external reputation signals, runs two ML models, and returns a verdict — "Bon achat" (worth buying), "Risqué" (risky), or "À éviter" (avoid) — with an explanation.
+
+This perspective is the whole system at a glance. The React SPA (`frontend/`) talks to a FastAPI backend (`backend/app/`) over HTTP with an HttpOnly session cookie. The `analysis_service` orchestrator is the heart of the backend: it fans out to signal collectors, feeds the results through ML scoring, and persists everything to PostgreSQL. Uploaded warm-up CSVs are stored on a private file volume.

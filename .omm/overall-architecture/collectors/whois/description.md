@@ -1,0 +1,1 @@
+`WhoisCollector` (`whois_rdap.py`): queries rdap.org (following the 302 to the registry RDAP server) and extracts creation/expiration dates, country, and registrar from the RDAP JSON. Creation date drives `domain_age`, the single most important feature of the risk model.

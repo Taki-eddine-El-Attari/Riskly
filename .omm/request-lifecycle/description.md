@@ -1,0 +1,1 @@
+End-to-end path of the product's core action: analyzing one domain via `POST /api/v1/analyses`. It traces a single request from the HTTP edge, through auth and the orchestrator, out to the collectors and ML models, and back as a serialized `AnalysisOut`. The whole path runs synchronously inside the request (no queue), which is why the frontend budgets up to 90s.

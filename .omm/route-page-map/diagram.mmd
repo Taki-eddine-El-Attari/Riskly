@@ -1,0 +1,26 @@
+graph TD
+    router["Router\nfrontend/src/App.tsx"]
+    landing["Landing (/)\nfrontend/src/pages/Landing.tsx"]
+    login["Login (/login)\nfrontend/src/pages/Login.tsx"]
+    register["Register (/register)\nfrontend/src/pages/Register.tsx"]
+    telegram-callback["Telegram Callback (/telegram/callback)\nfrontend/src/pages/TelegramCallback.tsx"]
+    protected-route["Protected Route Guard\nfrontend/src/routes/ProtectedRoute.tsx"]
+    analyze["Analyze (/app)\nfrontend/src/pages/Analyze.tsx"]
+    history["History (/history)\nfrontend/src/pages/History.tsx"]
+    report-page["Report (/history/:id)\nfrontend/src/pages/ReportPage.tsx"]
+
+    router -->|"public"| landing
+    router -->|"public"| login
+    router -->|"public"| register
+    router -->|"public"| telegram-callback
+    router -->|"guarded outlet"| protected-route
+    protected-route -->|"authed"| analyze
+    protected-route -->|"authed"| history
+    protected-route -->|"authed"| report-page
+    landing -->|"CTA / navbar"| login
+    login -->|"Telegram widget"| telegram-callback
+    login -->|"success → app"| analyze
+    history -->|"open a past report"| report-page
+
+    classDef entry fill:#89b4fa,stroke:#89b4fa,color:#1e1e2e
+    class router entry

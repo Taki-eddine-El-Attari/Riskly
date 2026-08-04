@@ -1,0 +1,1 @@
+`_collect_all` runs WHOIS, blacklist, rank, backlinks, geo, and nameserver collectors concurrently via `asyncio.gather(return_exceptions=True)`; blocking collectors run in a thread executor. Exceptions become `None` per source so partial failures still yield a usable signal set.

@@ -1,0 +1,22 @@
+graph LR
+    analysis-service["Analysis Orchestrator\nbackend/app/services/analysis_service.py"]
+    auth-service["Auth Service\nbackend/app/services/telegram_auth_service.py"]
+
+    whois-rdap["WHOIS via RDAP\nrdap.org → registry"]
+    dnsbl-blacklist["DNSBL Blacklist\nSpamhaus / SURBL"]
+    openpagerank["OpenPageRank\nauthority rank 0-10"]
+    backlinks-api["Backlinks API\ninternal tool"]
+    ip-api-geo["ip-api.com\nhosting country"]
+    dns["DNS Resolver\nnameservers / A record"]
+    telegram["Telegram Login\nHMAC-verified"]
+
+    analysis-service -->|"creation date, registrar"| whois-rdap
+    analysis-service -->|"is_blacklisted"| dnsbl-blacklist
+    analysis-service -->|"rank score"| openpagerank
+    analysis-service -->|"backlink profile"| backlinks-api
+    analysis-service -->|"IP → country"| ip-api-geo
+    analysis-service -->|"NS count, IP resolve"| dns
+    auth-service -->|"verify auth_date + hash"| telegram
+
+    classDef external fill:#585b70,stroke:#585b70,color:#cdd6f4
+    class whois-rdap,dnsbl-blacklist,openpagerank,backlinks-api,ip-api-geo,dns,telegram external

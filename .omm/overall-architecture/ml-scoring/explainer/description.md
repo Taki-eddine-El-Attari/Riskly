@@ -1,0 +1,1 @@
+`explainer.py`: SHAP-based explanation of the risk model, producing per-feature contributions surfaced to the user as plain-language factors. Failures are caught and downgraded to "no explanation" so they never block a verdict.

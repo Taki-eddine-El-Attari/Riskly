@@ -1,0 +1,1 @@
+Telegram Login: the frontend `TelegramLogin` widget returns signed auth data; `telegram_auth_service` / `core/security.verify_telegram_auth` recompute the HMAC-SHA256 with the bot token and reject stale (`TELEGRAM_AUTH_MAX_AGE`) or tampered payloads before creating/binding the user and setting the session cookie. Setup is documented in `TELEGRAM_LOGIN.md`.

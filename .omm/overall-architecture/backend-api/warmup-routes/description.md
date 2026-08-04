@@ -1,0 +1,1 @@
+`/api/v1/analyses/{id}/warmup` (`warmup.py`): upload (owner-only, 409 if one already exists), get metadata, download (streamed with sha256 verification, owner/admin), and delete. Files go through `warmup_storage_service`; DB row and disk object are kept consistent (rollback deletes the orphan file).

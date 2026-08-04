@@ -1,0 +1,1 @@
+The frontend's page structure and navigation. Routing is declared entirely in `App.tsx` (zero logic there): four public routes and three routes behind a `ProtectedRoute` guard. `main.tsx` wraps everything in Router + QueryClient + AuthProvider. Navigation follows the product funnel: Landing → auth → Analyze, with History → Report for revisiting past runs.

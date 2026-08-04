@@ -1,0 +1,1 @@
+`/api/v1/domains` (in `domains.py`, `domains_router`): list, search, per-id detail, with-metric, metrics history, plus admin-only TLD/recent stats and cache clear/stats. Backed by an in-process TTL LRU (`_EndpointLruCache`, 60s) to cut repeat DB reads; admin routes gated by `require_admin`.

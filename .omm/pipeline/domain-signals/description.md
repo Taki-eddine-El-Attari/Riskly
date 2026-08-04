@@ -1,0 +1,1 @@
+The `domain_info` dict assembled in `analysis_service`: tld, country, domain length/hyphens, domain_age (from WHOIS), rank, backlink count, blacklist flag, and NS server count. Feeds both the risk model (via features) and the decision matrix's authority sub-score directly.

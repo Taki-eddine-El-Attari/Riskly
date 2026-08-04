@@ -1,0 +1,1 @@
+`ProfitabilityPredictor` (`profitability_predictor.py`): loads the warm-up XGBoost bundle (`xgboost_wormup_model_f_v.pkl`) and predicts `success_proba` (email deliverability health) from a warm-up traffic history. Only runs when a warm-up CSV was supplied; otherwise email-health is treated as absent, not zero.

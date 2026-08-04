@@ -1,0 +1,1 @@
+Third-party data sources the collectors depend on: RDAP (rdap.org → registry servers) for WHOIS, Spamhaus/SURBL DNSBL zones for blacklist checks, OpenPageRank for authority rank, an internal backlinks API, and ip-api.com for geolocation. Detailed in the `external-integrations` perspective.

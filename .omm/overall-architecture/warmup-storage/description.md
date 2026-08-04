@@ -1,0 +1,1 @@
+Private file volume for uploaded warm-up CSVs, wrapped by `backend/app/services/warmup_storage_service.py` (validates size/extension, computes sha256, writes under `WARMUP_STORAGE_DIR`, default `/var/lib/riskly/warmup`). Only metadata (object_key, sha256, size, rows) is stored in the `warmup_file` table; file bytes never touch the DB. Deletes are ordered DB-first, then disk.

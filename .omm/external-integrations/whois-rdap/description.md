@@ -1,0 +1,1 @@
+`WhoisCollector` → rdap.org, following the 302 redirect to the registry's RDAP server. Extracts registration/expiration dates, country, and registrar. Registration date yields `domain_age`, the dominant risk-model feature; `follow_redirects=True` is essential or the body is empty and age silently defaults to 0.

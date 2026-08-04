@@ -1,0 +1,1 @@
+`BlacklistCollector` → DNSBL zones dbl.spamhaus.org and multi.surbl.org via dnspython. A listing in any zone sets `is_blacklisted`, a strong negative input to the risk model. No API key — plain DNS queries.

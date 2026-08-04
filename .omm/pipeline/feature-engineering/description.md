@@ -1,0 +1,1 @@
+`feature_builder.py` produces model-ready rows for both stages and keeps training/inference aligned: fixed known-TLD/known-country one-hot columns + missing-flags for the risk model, and last-day extraction with pinned weekday/month categories for the warm-up model. Missing columns default to 0 via the predictor's dtype cast.

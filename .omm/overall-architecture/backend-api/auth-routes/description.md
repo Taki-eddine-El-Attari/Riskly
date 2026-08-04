@@ -1,0 +1,1 @@
+`/api/v1/auth` (`auth.py`): register, login (local password), telegram (verified Telegram login), me, logout. Delegates to `AuthService`; on success sets the user id in the signed session cookie. Passwords are bcrypt-hashed (`core/security.py`).

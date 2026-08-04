@@ -1,0 +1,20 @@
+graph LR
+    domain-signals["Domain Signals\ndomain_info dict"]
+    warmup-traffic["Warm-up Traffic\ntraffic_rows (optional)"]
+    feature-engineering["Feature Engineering\nbackend/app/ml/feature_builder.py"]
+    risk-stage["Risk Stage (XGBoost)\nbackend/app/ml/predictor.py"]
+    warmup-stage["Warm-up Stage (XGBoost)\nbackend/app/ml/profitability_predictor.py"]
+    decision-stage["Decision Matrix\nbackend/app/services/decision_matrix.py"]
+    explanation-stage["Explanation (SHAP)\nbackend/app/ml/explainer.py"]
+
+    domain-signals -->|"build_risk_features"| feature-engineering
+    warmup-traffic -->|"build_profitability_features"| feature-engineering
+    feature-engineering -->|"risk feature row"| risk-stage
+    feature-engineering -->|"warm-up feature row"| warmup-stage
+    risk-stage -->|"malicious_prob"| decision-stage
+    warmup-stage -->|"email_health_prob"| decision-stage
+    domain-signals -->|"rank / backlinks / age"| decision-stage
+    decision-stage -->|"feature contributions"| explanation-stage
+
+    classDef concern fill:#f38ba8,stroke:#f38ba8,color:#1e1e2e
+    class decision-stage concern

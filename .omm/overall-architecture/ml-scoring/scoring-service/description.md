@@ -1,0 +1,1 @@
+`ScoringService` (`scoring_service.py`): the production scoring path. `quick_score()` (a module-level helper over a cached singleton) runs the risk predictor, derives email-health from traffic rows when present, calls the decision matrix, and returns a `ScoringResponse` (decision + SHAP explanation + raw predictions). This is what `analysis_service` actually calls.

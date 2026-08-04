@@ -1,0 +1,1 @@
+Optional per-day warm-up traffic rows parsed from the uploaded CSV (volumes, bounces, spam complaints, open/reply rates, date). Only the last valid day is used at inference. When absent, the warm-up stage is skipped and email-health is marked missing.

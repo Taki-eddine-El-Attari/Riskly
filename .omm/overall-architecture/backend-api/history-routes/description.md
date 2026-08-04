@@ -1,0 +1,1 @@
+`/api/v1/analyses` GET family (`history.py`): paginated/sorted/verdict-filtered user history, `GET /{id}` detail, `DELETE /{id}` (owner-only, also cleans the warm-up file from disk), personal stats overview, and an admin `GET /admin/all`. Ownership enforced by comparing `analysis.user_id` to the current user.

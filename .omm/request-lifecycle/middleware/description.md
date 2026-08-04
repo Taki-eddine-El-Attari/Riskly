@@ -1,0 +1,1 @@
+`main.py` middleware stack: `SessionMiddleware` reads/writes the signed HttpOnly cookie carrying `user_id`; `CORSMiddleware` allows the configured origins with credentials. The `RisklyException` handler translates domain errors into structured HTTP responses.
