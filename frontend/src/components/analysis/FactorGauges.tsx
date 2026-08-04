@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { factorDirection, factorGauge, factorLabel, factorValue, sortFactors } from "@/lib/factors";
 import type { Factor } from "@/types/analysis";
@@ -11,7 +12,15 @@ function valueSize(value: string): string {
   return "text-base";
 }
 
-export function FactorGauges({ factors, className }: { factors: Factor[]; className?: string }) {
+export function FactorGauges({
+  factors,
+  className,
+  headerActions,
+}: {
+  factors: Factor[];
+  className?: string;
+  headerActions?: ReactNode;
+}) {
   const sorted = sortFactors(factors);
   if (sorted.length === 0) return null;
 
@@ -24,9 +33,12 @@ export function FactorGauges({ factors, className }: { factors: Factor[]; classN
 
   return (
     <section className={className}>
-      <h4 className="font-mono text-[11px] uppercase tracking-widest text-text-faint">
-        Ce qui a pesé dans le score
-      </h4>
+      <div className="flex items-center justify-between gap-3">
+        <h4 className="font-mono text-[11px] uppercase tracking-widest text-text-faint">
+          Ce qui a pesé dans le score
+        </h4>
+        {headerActions}
+      </div>
 
       {gauges.length > 0 && (
         <ul className="mt-4 flex flex-wrap justify-center gap-x-3 gap-y-5 xl:justify-center">

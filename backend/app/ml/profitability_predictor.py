@@ -193,12 +193,6 @@ class ProfitabilityPredictor:
         logger.info("Modèle profitabilité sauvegardé dans %s", path)
 
     def load_bundle(self, pkl_path: str | Path) -> "ProfitabilityPredictor":
-        """Charge un artefact `{model, threshold, feature_names}` (un seul fichier).
-
-        Format produit par l'entraînement du modèle de warm-up — distinct de
-        `save()`/`load()` (dossier `model.joblib` + `metadata.json`) utilisé
-        pour un futur ré-entraînement piloté par ce module.
-        """
         bundle = joblib.load(pkl_path)
         self.model = bundle["model"]
         self.feature_names = list(bundle.get("feature_names", self.feature_names))

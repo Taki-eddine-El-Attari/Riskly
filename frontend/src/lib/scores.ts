@@ -1,13 +1,3 @@
-// Bandes de scores, verdicts et libellés d'alertes — la sémantique visuelle du
-// produit, centralisée (design.md §12.2 → §12.4).
-//
-// Règle de couleur : le RISQUE porte l'alarme et se colore par sa bande
-// (good / risky / avoid). L'AUTORITÉ reste en cyan, seule l'intensité traduit
-// la force — on ne teinte jamais une autorité faible en ambre ou en rouge.
-//
-// Les classes Tailwind sont écrites en toutes lettres (jamais interpolées) :
-// le scanner de Tailwind ne voit pas les chaînes construites à l'exécution.
-
 import type { AlertCode, Verdict } from "@/types/analysis";
 
 export type Tone = "good" | "risky" | "avoid" | "accent" | "faint";
@@ -15,15 +5,14 @@ export type Tone = "good" | "risky" | "avoid" | "accent" | "faint";
 export interface Band {
   label: string;
   tone: Tone;
-  /** Bornes inclusives, pour l'affichage « 0–25 ». */
   min: number;
   max: number;
 }
 
 export const RISK_BANDS: Band[] = [
-  { label: "Risque faible", tone: "good", min: 0, max: 25 },
-  { label: "Risque modéré", tone: "risky", min: 26, max: 60 },
-  { label: "Risque élevé", tone: "avoid", min: 61, max: 100 },
+  { label: "Risque faible", tone: "good", min: 0, max: 24 },
+  { label: "Risque modéré", tone: "risky", min: 25, max: 49 },
+  { label: "Risque élevé", tone: "avoid", min: 50, max: 100 },
 ];
 
 export const AUTHORITY_BANDS: Band[] = [
@@ -32,13 +21,10 @@ export const AUTHORITY_BANDS: Band[] = [
   { label: "Autorité forte", tone: "accent", min: 66, max: 100 },
 ];
 
-// Contrairement au risque, une rentabilité élevée est une bonne nouvelle :
-// mêmes tons (good/risky/avoid) que le risque, mais appliqués dans l'autre
-// sens (score haut → good, score bas → avoid).
 export const PROFITABILITY_BANDS: Band[] = [
-  { label: "Rentabilité faible", tone: "avoid", min: 0, max: 33 },
-  { label: "Rentabilité moyenne", tone: "risky", min: 34, max: 66 },
-  { label: "Rentabilité forte", tone: "good", min: 67, max: 100 },
+  { label: "Rentabilité faible", tone: "avoid", min: 0, max: 29 },
+  { label: "Rentabilité moyenne", tone: "risky", min: 30, max: 59 },
+  { label: "Rentabilité forte", tone: "good", min: 60, max: 100 },
 ];
 
 export function riskBand(score: number): Band {
@@ -59,9 +45,6 @@ export function profitabilityBand(score: number): Band {
   );
 }
 
-// Sortie du modèle de warm-up : probabilité de réussite d'une campagne email.
-// Même sens de lecture que la rentabilité (haut = bon), seuil aligné sur celui
-// du modèle lui-même (0.4, cf. le bundle .pkl).
 export const EMAIL_HEALTH_BANDS: Band[] = [
   { label: "Réputation fragile", tone: "avoid", min: 0, max: 39 },
   { label: "Réputation correcte", tone: "risky", min: 40, max: 69 },
@@ -75,14 +58,11 @@ export function emailHealthBand(score: number): Band {
   );
 }
 
-/** Opacité du tracé de la jauge d'autorité : l'intensité seule dit la force. */
 export function authorityIntensity(score: number): number {
   if (score >= 66) return 1;
   if (score >= 31) return 0.7;
   return 0.4;
 }
-
-// ── Classes par ton ────────────────────────────────────────────────────────
 
 export const toneText: Record<Tone, string> = {
   good: "text-good",
@@ -116,12 +96,9 @@ export const toneFill: Record<Tone, string> = {
   faint: "bg-text-faint",
 };
 
-// ── Verdicts ───────────────────────────────────────────────────────────────
-
 export interface VerdictMeta {
   label: string;
   tone: Tone;
-  /** Une phrase, en français courant, sur ce que le verdict signifie. */
   hint: string;
 }
 
@@ -143,27 +120,30 @@ export const VERDICTS: Record<Verdict, VerdictMeta> = {
   },
 };
 
-/** Ordre d'affichage de la liste comparative : le meilleur en premier. */
 export const VERDICT_ORDER: Verdict[] = ["bon_achat", "risque", "a_eviter"];
 
-/**
- * Matrice de décision du PRD (§2.4.3) : risque × autorité → verdict.
- * Le risque prime — un risque élevé finit sur « À éviter » quelle que soit
- * l'autorité. Déterministe : on l'applique côté front uniquement quand le
- * backend n'a pas renvoyé de verdict, jamais pour contredire le sien.
- */
-export function computeVerdict(risk: number, authority: number): Verdict {
-  if (risk > 60) return "a_eviter";
-  const weakAuthority = authority <= 30;
-  if (risk > 25) return weakAuthority ? "a_eviter" : "risque";
-  return weakAuthority ? "risque" : "bon_achat";
-}
+export function computeVerdict(
+  risk: number,
+  authority: number,
+  emailHealth?: number | null,
+): Verdict {
+  const maliciousProb = risk / 100;
+  if (maliciousProb >= 0.5) return "a_eviter";
 
-// ── Alertes de transparence ────────────────────────────────────────────────
+  const authorityNorm = authority / 100;
+  const baseScore =
+    emailHealth === null || emailHealth === undefined
+      ? authorityNorm
+      : 0.5 * authorityNorm + 0.5 * (emailHealth / 100);
+
+  const finalScore = baseScore * (1 - maliciousProb);
+  if (finalScore >= 0.6) return "bon_achat";
+  if (finalScore >= 0.3) return "risque";
+  return "a_eviter";
+}
 
 export interface AlertMeta {
   label: string;
-  /** Ce que l'alerte veut dire, sans jargon. */
   hint: string;
   tone: Tone;
 }

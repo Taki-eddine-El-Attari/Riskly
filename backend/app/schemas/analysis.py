@@ -5,6 +5,7 @@ from enum import Enum
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 from app.schemas.domain import DomainOut, DomainMetricOut
+from app.schemas.warmup import WarmupSummary
 
 MAX_DOMAINS_PER_BATCH = 5
 
@@ -17,14 +18,12 @@ class AnalysisStatus(str, Enum):
 
 
 class Verdict(str, Enum):
-    """Format exact stocké en base (contrainte CHECK `analysis_verdict_check`)."""
     BON_ACHAT = "Bon achat"
     RISQUE = "Risque"
     A_EVITER = "A eviter"
 
 
 class VerdictFilter(str, Enum):
-    """Format envoyé par le frontend (snake_case) pour filtrer l'historique."""
     BON_ACHAT = "bon_achat"
     RISQUE = "risque"
     A_EVITER = "a_eviter"
@@ -72,7 +71,6 @@ class AnalysisOut(BaseModel):
     risk_score: Optional[float] = Field(None, ge=0, le=100)
     authority_score: Optional[float] = Field(None, ge=0, le=100)
     profitability_score: Optional[float] = Field(None, ge=0, le=100)
-    # None = aucun CSV de warm-up fourni (modèle non exécuté).
     email_health_score: Optional[float] = Field(None, ge=0, le=100)
 
     verdict: Optional[Verdict] = None
@@ -81,10 +79,13 @@ class AnalysisOut(BaseModel):
     requested_at: Optional[datetime] = None
     completed_at: Optional[datetime] = None
 
+    is_cached: bool = False
+    cache_age_minutes: Optional[int] = None
+
     domain: Optional[DomainOut] = None
-    # L'attribut ORM s'appelle `domain_metric` (cf. models/analysis.py), mais
-    # le frontend attend `metric` (types/analysis.ts) — d'où l'alias.
     metric: Optional[DomainMetricOut] = Field(None, validation_alias="domain_metric")
+    # Idem pour `warmup_file` → `warmup` (types/analysis.ts::Analysis.warmup).
+    warmup: Optional[WarmupSummary] = Field(None, validation_alias="warmup_file")
 
 
 class AnalysisBatchResponse(BaseModel):
@@ -104,6 +105,7 @@ class AnalysisSummary(BaseModel):
     verdict: Optional[Verdict] = None
     requested_at: Optional[datetime] = None
     status: Optional[AnalysisStatus] = None
+    warmup: Optional[WarmupSummary] = None
 
 
 class AnalysisList(BaseModel):

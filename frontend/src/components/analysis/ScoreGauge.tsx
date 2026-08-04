@@ -31,16 +31,7 @@ const KIND_BAND: Record<Kind, (score: number) => Band> = {
   email_health: emailHealthBand,
 };
 
-/**
- * Score 0–100 en jauge circulaire, avec sa bande d'interprétation.
- *
- * Couleur : le RISQUE se teinte par sa bande (vert / ambre / rouge) — c'est lui
- * qui porte l'alarme. L'AUTORITÉ reste en cyan, seule l'intensité du tracé
- * traduit la force (design.md §12.2).
- *
- * Le chiffre monte de 0 au score en ~1,2 s ; il s'affiche directement si
- * l'utilisateur a demandé moins d'animations.
- */
+
 export function ScoreGauge({
   score,
   kind,

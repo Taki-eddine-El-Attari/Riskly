@@ -8,11 +8,6 @@ const sizes = {
   lg: "px-4 py-2 text-sm",
 } as const;
 
-/**
- * Bon achat / Risqué / À éviter.
- * La couleur ne porte jamais seule le sens : le libellé est toujours écrit
- * (design.md §14).
- */
 export function VerdictBadge({
   verdict,
   size = "md",
@@ -22,7 +17,9 @@ export function VerdictBadge({
   size?: keyof typeof sizes;
   className?: string;
 }) {
-  if (!verdict) {
+  const meta = verdict ? VERDICTS[verdict] : undefined;
+
+  if (!meta) {
     return (
       <span
         className={cn(
@@ -35,8 +32,6 @@ export function VerdictBadge({
       </span>
     );
   }
-
-  const meta = VERDICTS[verdict];
 
   return (
     <span

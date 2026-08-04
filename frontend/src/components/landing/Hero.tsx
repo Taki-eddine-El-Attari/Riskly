@@ -54,14 +54,6 @@ export default function Hero() {
           </h1>
         </BlurFade>
 
-        {/* <BlurFade delay={0.2} duration={0.6}>
-          <p className="mt-6 max-w-xl text-lg text-text-muted">
-            Score de risque, score d'autorité et verdict clair, croisés depuis
-            RDAP, Tranco, Open PageRank et les bases de menaces PhishTank,
-            URLhaus et OpenPhish.
-          </p>
-        </BlurFade> */}
-
         <BlurFade delay={0.35} duration={0.6} blur="10px" yOffset={12} className="w-full max-w-xl">
           <form
             onSubmit={submit}

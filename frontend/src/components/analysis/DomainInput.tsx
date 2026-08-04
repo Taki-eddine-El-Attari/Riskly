@@ -1,9 +1,22 @@
 import { useCallback, useMemo, useRef, useState } from "react";
-import { ArrowRight, FileSpreadsheet, Globe, Loader2, Paperclip, Plus, X } from "lucide-react";
+import {
+  ArrowRight,
+  FileSpreadsheet,
+  Globe,
+  Loader2,
+  Paperclip,
+  Plus,
+  Upload,
+  X,
+} from "lucide-react";
 import { BorderBeam } from "@/components/landing/effects/BorderBeam";
+import { CsvBulkImportDialog } from "@/components/analysis/CsvBulkImportDialog";
+import { CsvPreviewDialog } from "@/components/analysis/CsvPreviewDialog";
 import { useTypingPlaceholder } from "@/hooks/useTypingPlaceholder";
+import type { BulkDomainJob } from "@/hooks/useBulkAnalyses";
 import { MAX_DOMAINS } from "@/lib/constants";
 import { isValidDomain, normalizeDomain, splitDomains } from "@/lib/domains";
+import { buildDomainCsvFile, groupByDomain, parseCsvTable, type GroupedCsv } from "@/lib/csvDomains";
 import { formatBytes, readWarmupFile, WARMUP_ACCEPT, WarmupError } from "@/lib/warmup";
 import type { WarmupFile } from "@/lib/warmup";
 import { cn } from "@/lib/utils";
@@ -15,7 +28,6 @@ const EXAMPLES = [
   "agence-web.ma",
 ];
 
-/** Un domaine soumis, avec son CSV de warm-up optionnel (fichier + comptage). */
 export interface DomainEntry {
   domain: string;
   warmup?: WarmupFile;
@@ -29,31 +41,45 @@ interface Row {
 
 type RowIssue = "format" | "duplicate" | null;
 
+interface EffectiveWarmup {
+  file: File;
+  otherDomains: string[];
+  matchedRows: number;
+}
+
+function effectiveWarmupFor(
+  rowId: number,
+  domain: string,
+  warmup: WarmupFile | undefined,
+  csvTables: Map<number, GroupedCsv>,
+): EffectiveWarmup | undefined {
+  if (!warmup) return undefined;
+  const grouped = csvTables.get(rowId);
+  if (!grouped || !grouped.hasDomainColumn) {
+    return { file: warmup.file, otherDomains: [], matchedRows: warmup.rows ?? 0 };
+  }
+
+  const target = normalizeDomain(domain);
+  const matched = grouped.groups.find((g) => g.domain === target);
+  const otherDomains = grouped.groups.filter((g) => g.domain !== target).map((g) => g.domain);
+
+  return {
+    file: buildDomainCsvFile(grouped.header, matched?.rows ?? [], warmup.file.name),
+    otherDomains,
+    matchedRows: matched?.rows.length ?? 0,
+  };
+}
+
 let nextId = 1;
 const newRow = (value = ""): Row => ({ id: nextId++, value });
-
-/**
- * Saisie de 1 à 5 domaines, chacun avec un CSV de warm-up optionnel.
- *
- * Le premier champ reprend exactement le champ du hero de la landing (coque
- * arrondie, lueur de bordure, placeholder qui se tape) : l'utilisateur qui
- * arrive de la vitrine retrouve le même geste après connexion. Les domaines
- * suivants s'ajoutent en lignes compactes en dessous.
- *
- * Le format est validé au fil de l'eau et les doublons sont signalés — un
- * domaine invalide est écarté sans bloquer les autres (PRD, UC-03 A2/A3).
- *
- * Warm-up : pendant un glisser, chaque champ devient sa propre zone de dépôt
- * en pointillés. Le CSV va au domaine sur lequel on le lâche — c'est le geste
- * qui désigne, rien n'est deviné. Le trombone ouvre le sélecteur pour ceux qui
- * préfèrent cliquer.
- */
 export function DomainInput({
   onSubmit,
+  onBulkImport,
   pending = false,
   className,
 }: {
   onSubmit: (entries: DomainEntry[]) => void;
+  onBulkImport?: (jobs: BulkDomainJob[]) => void;
   pending?: boolean;
   className?: string;
 }) {
@@ -61,8 +87,12 @@ export function DomainInput({
   const [focused, setFocused] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [fileError, setFileError] = useState<string | null>(null);
+  const [csvTables, setCsvTables] = useState<Map<number, GroupedCsv>>(new Map());
+  const [bulkFile, setBulkFile] = useState<File | null>(null);
+  const [previewFile, setPreviewFile] = useState<File | null>(null);
   const inputRefs = useRef(new Map<number, HTMLInputElement>());
   const fileRefs = useRef(new Map<number, HTMLInputElement>());
+  const bulkFileInputRef = useRef<HTMLInputElement | null>(null);
   const dragDepth = useRef(0);
 
   const typed = useTypingPlaceholder(EXAMPLES, focused || rows[0].value.length > 0);
@@ -77,7 +107,6 @@ export function DomainInput({
     else fileRefs.current.delete(id);
   }, []);
 
-  /** Domaines normalisés, dans l'ordre de saisie — sert au diagnostic des lignes. */
   const normalized = useMemo(() => rows.map((r) => normalizeDomain(r.value)), [rows]);
 
   const issues = useMemo<RowIssue[]>(
@@ -94,10 +123,36 @@ export function DomainInput({
   const entries = useMemo<DomainEntry[]>(
     () =>
       rows
-        .map((row, i) => ({ domain: normalized[i], warmup: row.warmup, issue: issues[i] }))
+        .map((row, i) => {
+          const domain = normalized[i];
+          const effective = effectiveWarmupFor(row.id, domain, row.warmup, csvTables);
+          const warmup: WarmupFile | undefined = effective
+            ? { file: effective.file, rows: row.warmup?.rows ?? null }
+            : undefined;
+          return { domain, warmup, issue: issues[i] };
+        })
         .filter((e) => e.domain.length > 0 && e.issue === null)
         .map(({ domain, warmup }) => ({ domain, warmup })),
-    [rows, normalized, issues],
+    [rows, normalized, issues, csvTables],
+  );
+
+  const csvHints = useMemo<(string | null)[]>(
+    () =>
+      rows.map((row, i) => {
+        const domain = normalized[i];
+        if (!row.warmup || domain.length === 0) return null;
+        const effective = effectiveWarmupFor(row.id, domain, row.warmup, csvTables);
+        if (!effective || effective.otherDomains.length === 0) return null;
+
+        const n = effective.otherDomains.length;
+        const shown = effective.otherDomains.slice(0, 3).join(", ") + (n > 3 ? "…" : "");
+
+        if (effective.matchedRows === 0) {
+          return `Aucune ligne pour ${domain} dans ce CSV — le warm-up ne sera pas utilisé (fichier : ${shown}).`;
+        }
+        return `${effective.matchedRows} ligne${effective.matchedRows > 1 ? "s" : ""} retenue${effective.matchedRows > 1 ? "s" : ""} pour ce domaine · ${n} autre${n > 1 ? "s" : ""} domaine${n > 1 ? "s" : ""} ignoré${n > 1 ? "s" : ""} dans le fichier (${shown}).`;
+      }),
+    [rows, normalized, csvTables],
   );
 
   const canAddRow = rows.length < MAX_DOMAINS;
@@ -114,14 +169,9 @@ export function DomainInput({
     if (!canAddRow) return;
     const row = newRow();
     setRows((current) => [...current, row]);
-    // Le champ n'existe qu'au rendu suivant.
     requestAnimationFrame(() => inputRefs.current.get(row.id)?.focus());
   }
 
-  /**
-   * Coller une liste (« a.com, b.fr b.io ») remplit les lignes suivantes
-   * plutôt que de tout entasser dans un seul champ.
-   */
   function handlePaste(id: number, event: React.ClipboardEvent<HTMLInputElement>) {
     const pasted = splitDomains(event.clipboardData.getData("text"));
     if (pasted.length < 2) return;
@@ -136,13 +186,24 @@ export function DomainInput({
     });
   }
 
-  // ── Warm-up : rattachement des fichiers ──────────────────────────────────
 
   async function attachToRow(id: number, file: File) {
     setFileError(null);
     try {
       const warmup = await readWarmupFile(file);
       setRows((current) => current.map((r) => (r.id === id ? { ...r, warmup } : r)));
+
+      try {
+        const grouped = groupByDomain(await parseCsvTable(await file.text()));
+        setCsvTables((current) => new Map(current).set(id, grouped));
+      } catch {
+        setCsvTables((current) => {
+          if (!current.has(id)) return current;
+          const next = new Map(current);
+          next.delete(id);
+          return next;
+        });
+      }
     } catch (err) {
       setFileError(err instanceof WarmupError ? err.message : "Fichier illisible.");
     }
@@ -150,17 +211,25 @@ export function DomainInput({
 
   function detachFromRow(id: number) {
     setRows((current) => current.map((r) => (r.id === id ? { ...r, warmup: undefined } : r)));
+    setCsvTables((current) => {
+      if (!current.has(id)) return current;
+      const next = new Map(current);
+      next.delete(id);
+      return next;
+    });
     const input = fileRefs.current.get(id);
-    if (input) input.value = ""; // permet de re-choisir le même fichier
+    if (input) input.value = "";
+  }
+
+  function previewRow(id: number) {
+    const row = rows.find((r) => r.id === id);
+    if (row?.warmup) setPreviewFile(row.warmup.file);
   }
 
   function csvFilesFrom(event: React.DragEvent): File[] {
     return [...event.dataTransfer.files];
   }
 
-  // Le glisser est suivi au niveau du formulaire, mais seul le dépôt SUR une
-  // ligne rattache : chaque champ devient sa propre zone en pointillés, et
-  // c'est vous qui désignez le domaine. Rien n'est deviné.
   function onFormDragEnter(event: React.DragEvent) {
     if (pending || !event.dataTransfer.types.includes("Files")) return;
     dragDepth.current += 1;
@@ -172,7 +241,6 @@ export function DomainInput({
     if (dragDepth.current === 0) setDragging(false);
   }
 
-  /** Dépôt à côté des champs : on le dit plutôt que de choisir à sa place. */
   function onFormDrop(event: React.DragEvent) {
     event.preventDefault();
     dragDepth.current = 0;
@@ -217,7 +285,6 @@ export function DomainInput({
       onDragLeave={onFormDragLeave}
       onDrop={onFormDrop}
     >
-      {/* Champ principal — identique au hero de la landing. */}
       <div
         onDrop={(e) => onRowDrop(rows[0].id, e)}
         className={cn(
@@ -228,8 +295,6 @@ export function DomainInput({
         )}
       >
         <BorderBeam size={120} duration={7} />
-        {/* `flex-wrap` : à l'étroit (mobile), la pastille du CSV passe à la
-            ligne au lieu d'écraser le champ. */}
         <div className="flex flex-wrap items-center gap-3 px-3">
           <Globe className="size-5 shrink-0 text-text-faint" aria-hidden />
           <div className="relative min-w-[7rem] flex-1 overflow-hidden">
@@ -262,6 +327,7 @@ export function DomainInput({
             registerFileRef={registerFileRef}
             onPick={attachToRow}
             onRemove={() => detachFromRow(rows[0].id)}
+            onPreview={() => previewRow(rows[0].id)}
           />
 
           <button
@@ -286,9 +352,8 @@ export function DomainInput({
         </div>
       </div>
 
-      <RowFeedback issue={issues[0]} className="px-3" />
+      <RowFeedback issue={issues[0]} csvHint={csvHints[0]} className="px-3" />
 
-      {/* Domaines 2 à 5. */}
       {rows.length > 1 && (
         <ul className="mt-3 space-y-2">
           {rows.slice(1).map((row) => {
@@ -325,6 +390,7 @@ export function DomainInput({
                     registerFileRef={registerFileRef}
                     onPick={attachToRow}
                     onRemove={() => detachFromRow(row.id)}
+                    onPreview={() => previewRow(row.id)}
                   />
                   <button
                     type="button"
@@ -336,7 +402,7 @@ export function DomainInput({
                     <X className="size-4" aria-hidden />
                   </button>
                 </div>
-                <RowFeedback issue={issues[index]} className="px-4" />
+                <RowFeedback issue={issues[index]} csvHint={csvHints[index]} className="px-4" />
               </li>
             );
           })}
@@ -344,15 +410,43 @@ export function DomainInput({
       )}
 
       <div className="mt-3 flex flex-wrap items-center justify-between gap-3 px-1">
-        <button
-          type="button"
-          onClick={addRow}
-          disabled={!canAddRow || pending}
-          className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-sm text-text-muted outline-none transition-colors duration-150 hover:text-text focus-visible:ring-[3px] focus-visible:ring-accent/30 disabled:pointer-events-none disabled:opacity-40"
-        >
-          <Plus className="size-4" aria-hidden />
-          Ajouter un domaine
-        </button>
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={addRow}
+            disabled={!canAddRow || pending}
+            className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-sm text-text-muted outline-none transition-colors duration-150 hover:text-text focus-visible:ring-[3px] focus-visible:ring-accent/30 disabled:pointer-events-none disabled:opacity-40"
+          >
+            <Plus className="size-4" aria-hidden />
+            Ajouter un domaine
+          </button>
+
+          {onBulkImport && (
+            <>
+              <input
+                ref={bulkFileInputRef}
+                type="file"
+                accept={WARMUP_ACCEPT}
+                className="sr-only"
+                disabled={pending}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) setBulkFile(file);
+                  e.target.value = "";
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => bulkFileInputRef.current?.click()}
+                disabled={pending}
+                className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-sm text-text-muted outline-none transition-colors duration-150 hover:text-text focus-visible:ring-[3px] focus-visible:ring-accent/30 disabled:pointer-events-none disabled:opacity-40"
+              >
+                <Upload className="size-4" aria-hidden />
+                Importer un CSV multi-domaines
+              </button>
+            </>
+          )}
+        </div>
 
         <p className="font-mono text-xs text-text-faint">
           {rows.length} / {MAX_DOMAINS}
@@ -378,17 +472,26 @@ export function DomainInput({
           {fileError}
         </p>
       )}
+
+      {onBulkImport && (
+        <CsvBulkImportDialog
+          file={bulkFile}
+          onOpenChange={(open) => !open && setBulkFile(null)}
+          onConfirm={(jobs) => {
+            setBulkFile(null);
+            onBulkImport(jobs);
+          }}
+        />
+      )}
+
+      <CsvPreviewDialog
+        file={previewFile}
+        onOpenChange={(open) => !open && setPreviewFile(null)}
+      />
     </form>
   );
 }
 
-/**
- * L'emplacement du CSV, à droite du nom de domaine, dans le champ lui-même.
- *
- * Vide, c'est un trombone discret. Rempli, il devient une pastille sur deux
- * lignes — le nom du fichier, puis ce qu'il contient — de sorte que le fichier
- * reste visuellement rattaché à SON domaine plutôt que posé sous le champ.
- */
 function WarmupSlot({
   rowId,
   warmup,
@@ -396,6 +499,7 @@ function WarmupSlot({
   registerFileRef,
   onPick,
   onRemove,
+  onPreview,
 }: {
   rowId: number;
   warmup?: WarmupFile;
@@ -403,6 +507,7 @@ function WarmupSlot({
   registerFileRef: (id: number, el: HTMLInputElement | null) => void;
   onPick: (id: number, file: File) => void;
   onRemove: () => void;
+  onPreview: () => void;
 }) {
   const inputId = `warmup-${rowId}`;
 
@@ -447,8 +552,12 @@ function WarmupSlot({
       <div className="flex min-w-0 shrink-0 items-center gap-2 rounded-lg border border-accent/30 bg-accent/10 py-1 pl-2 pr-1">
         <FileSpreadsheet className="size-3.5 shrink-0 text-accent" aria-hidden />
 
-        {/* Cliquer la pastille remplace le fichier ; la croix le retire. */}
-        <label htmlFor={inputId} className="min-w-0 cursor-pointer" title="Remplacer le fichier">
+        <button
+          type="button"
+          onClick={onPreview}
+          className="min-w-0 cursor-pointer text-left outline-none focus-visible:ring-[3px] focus-visible:ring-accent/30"
+          title="Aperçu du CSV"
+        >
           <span className="block max-w-[9rem] truncate font-mono text-[11px] leading-tight text-text sm:max-w-[13rem]">
             {warmup.file.name}
           </span>
@@ -456,7 +565,7 @@ function WarmupSlot({
             {warmup.rows !== null && `${warmup.rows.toLocaleString("fr-FR")} lignes · `}
             {formatBytes(warmup.file.size)}
           </span>
-        </label>
+        </button>
 
         <button
           type="button"
@@ -472,13 +581,30 @@ function WarmupSlot({
   );
 }
 
-function RowFeedback({ issue, className }: { issue: RowIssue; className?: string }) {
-  if (!issue) return null;
-  return (
-    <p className={cn("mt-1.5 text-xs text-avoid", className)} role="alert">
-      {issue === "format"
-        ? "Ce nom de domaine n'a pas un format valide — il sera écarté."
-        : "Ce domaine est déjà dans la liste : il ne sera analysé qu'une fois."}
-    </p>
-  );
+function RowFeedback({
+  issue,
+  csvHint,
+  className,
+}: {
+  issue: RowIssue;
+  csvHint?: string | null;
+  className?: string;
+}) {
+  if (issue) {
+    return (
+      <p className={cn("mt-1.5 text-xs text-avoid", className)} role="alert">
+        {issue === "format"
+          ? "Ce nom de domaine n'a pas un format valide — il sera écarté."
+          : "Ce domaine est déjà dans la liste : il ne sera analysé qu'une fois."}
+      </p>
+    );
+  }
+  if (csvHint) {
+    return (
+      <p className={cn("mt-1.5 text-xs text-risky", className)}>
+        {csvHint}
+      </p>
+    );
+  }
+  return null;
 }

@@ -56,7 +56,6 @@ class TelegramAuthService:
             photos = data["result"].get("photos", [])
             if not photos:
                 return None
-            # choose the largest size available
             file_id = photos[0][-1]["file_id"]
             with urllib.request.urlopen(f"{base}/getFile?file_id={file_id}", timeout=10) as resp:
                 file_data = json.load(resp)
@@ -84,7 +83,6 @@ class TelegramAuthService:
         existing = self.db.query(User).filter(User.telegram_id == telegram_id).first()
 
         if existing:
-            # update photo_url if we received a newer one or can fetch one
             if not existing.photo_url and not photo_url:
                 fetched = self._fetch_telegram_profile_photo(telegram_id)
                 if fetched:
@@ -101,7 +99,6 @@ class TelegramAuthService:
 
         name = username or f"tg_user_{telegram_id}"
 
-        # if widget didn't provide photo_url, try fetching via Bot API
         if not photo_url:
             photo_url = self._fetch_telegram_profile_photo(telegram_id)
 

@@ -5,17 +5,17 @@ const steps = [
   {
     n: "01",
     title: "Saisissez vos domaines",
-    text: "Entrez 1 à 5 noms de domaine que vous envisagez d'acheter. Un seul champ, aucune configuration.",
+    text: "Entrez 1 à 5 noms de domaine que vous envisagez d'acheter, avec en option un CSV de warm-up (historique d'envoi) pour chacun. Un seul champ, aucune configuration.",
   },
   {
     n: "02",
     title: "Collecte multi-sources",
-    text: "Riskly interroge en parallèle RDAP, la résolution DNS, Tranco, Open PageRank et les bases de menaces PhishTank, URLhaus et OpenPhish.",
+    text: "Riskly interroge en parallèle RDAP, la résolution DNS, Tranco, Open PageRank et les bases de menaces PhishTank, URLhaus et OpenPhish, puis passe le CSV de warm-up au modèle de réputation email si vous en avez fourni un.",
   },
   {
     n: "03",
     title: "Verdict expliqué",
-    text: "Score de risque, score d'autorité et un verdict clair (Bon achat, Risqué ou À éviter), avec les raisons détaillées.",
+    text: "Score de risque, score d'autorité, réputation email si un warm-up a été fourni, et un verdict clair (Bon achat, Risqué ou À éviter), avec les raisons détaillées.",
   },
 ];
 

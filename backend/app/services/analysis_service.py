@@ -28,6 +28,7 @@ from app.collectors.network import GeoCollector, NameserverCollector
 from app.services import warmup_storage_service as storage
 from app.services.scoring_service import quick_score
 from app.services.decision_matrix import Verdict as ScoringVerdict
+from app.core import cache
 
 logger = logging.getLogger(__name__)
 
@@ -47,17 +48,30 @@ async def analyze_domain(
     domain_name: str,
     user_id: Optional[UUID] = None,
     warmup_file: Optional[UploadFile] = None,
+    force_refresh: bool = False,
 ) -> Analysis:
     analysis_repo = AnalysisRepository(db)
+
+    domain_name = domain_name.lower().strip()
+    domain_repo = DomainRepository(db)
+    domain = domain_repo.get_or_create(domain_name)
+
+    cached = cache.get_cached_analysis(
+        db, domain_id=domain.id, user_id=user_id,
+        has_warmup=warmup_file is not None,
+        force_refresh=force_refresh,
+        domain_name=domain_name,
+    )
+    if cached is not None:
+        hit_age = cache.age(cached)
+        cached.is_cached = True
+        cached.cache_age_minutes = int(hit_age.total_seconds() // 60) if hit_age else None
+        return cached
 
     if user_id is not None:
         active_count = analysis_repo.count_active_by_user(user_id)
         if active_count >= settings.MAX_CONCURRENT_ANALYSES:
             raise LimiteConcurrenceAtteinteError(settings.MAX_CONCURRENT_ANALYSES)
-
-    domain_name = domain_name.lower().strip()
-    domain_repo = DomainRepository(db)
-    domain = domain_repo.get_or_create(domain_name)
 
     analysis = analysis_repo.create(domain_id=domain.id, user_id=user_id)
 

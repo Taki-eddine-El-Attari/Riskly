@@ -40,13 +40,9 @@ export interface Domain {
   first_analysis: string | null;
 }
 
-/** Métadonnées du CSV de warm-up fourni à l'analyse (jamais son contenu). */
 export interface WarmupInfo {
-  /** Nom du fichier tel que fourni par l'utilisateur. */
   name: string;
-  /** Taille en octets. */
   size: number;
-  /** Lignes de données (en-tête exclu). `null` si le comptage a échoué. */
   rows: number | null;
 }
 
@@ -65,12 +61,7 @@ export interface Analysis {
 
   risk_score: number | null;
   authority_score: number | null;
-  /** Score global de rentabilite/reussite d'un warm-up (0-100). */
   profitability_score: number | null;
-  /**
-   * Sortie brute du modele de warm-up (0-100). `null` quand aucun CSV n'a ete
-   * fourni : le modele n'a pas tourne du tout — a ne pas confondre avec 0.
-   */
   email_health_score: number | null;
 
   verdict: Verdict | null;
@@ -81,12 +72,10 @@ export interface Analysis {
 
   domain: Domain | null;
 
-  // ── backend soon ────────────────────────────────────────
   alerts?: Alert[];
   missing_sources?: string[];
   cached_at?: string | null;
   metric?: DomainMetric | null;
-  /** CSV de warm-up joint à la demande, s'il y en a un. */
   warmup?: WarmupInfo | null;
 }
 
@@ -105,7 +94,6 @@ export interface AnalysisSummary {
   verdict: Verdict | null;
   requested_at: string | null;
   status: AnalysisStatus | null;
-  /** CSV de warm-up joint à la demande, s'il y en a un. */
   warmup?: WarmupInfo | null;
 }
 

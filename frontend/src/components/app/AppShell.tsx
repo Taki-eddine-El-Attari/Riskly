@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { Link, NavLink } from "react-router-dom";
-import { LogOut, User as UserIcon } from "lucide-react";
+import { History as HistoryIcon, LogOut } from "lucide-react";
 import { RisklyLogo } from "@/components/landing/RisklyLogo";
 import { ThemeToggle } from "@/components/landing/ThemeToggle";
 import {
@@ -69,7 +69,7 @@ function UserMenu() {
 
         <DropdownMenuItem asChild>
           <Link to="/history">
-            <UserIcon aria-hidden />
+            <HistoryIcon aria-hidden />
             Mes analyses
           </Link>
         </DropdownMenuItem>

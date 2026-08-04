@@ -86,16 +86,6 @@ def _country_column(country) -> str:
 
 
 def build_risk_features(domain: dict, metric: dict | None = None) -> pd.DataFrame:
-    """Construit le vecteur de features attendu par le modèle de risque.
-
-    Clés lues sur `domain` (complétées par `metric` si fourni — en pratique
-    `scoring_service.py` n'en fournit pas, tout transite par `domain_info`) :
-    `domain_name`, `tld`, `country`, `domain_length`, `hyphen_count`,
-    `domain_age` (jours), `rank`, `backlink`, `is_blacklisted`,
-    `ns_server_count`. Ce sont les mêmes noms que `decision_matrix.py`
-    attend déjà (`rank`, `backlink`, `domain_age`) — un seul dict sert les
-    deux consommateurs.
-    """
     metric = metric or {}
 
     def pick(key):

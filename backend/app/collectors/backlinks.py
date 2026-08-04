@@ -1,7 +1,11 @@
+import asyncio
 import logging
-import httpx
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
 from typing import Optional
+
+import httpx
+
 from app.core.config import settings
 from app.core.exceptions import (
     ExternalAPIError,
@@ -21,7 +25,66 @@ class BacklinkProfile:
     quality_estimate: Optional[float] = None
     source: Optional[str] = None
     raw_response: Optional[dict] = None
+    cached : bool = False
 
+class _BacklinkLruCache:
+    def __init__(self, maxsize: int = 256, ttl_seconds: int = 3600):
+        self._cache: dict[str, tuple[BacklinkProfile, datetime]] = {}
+        self._maxsize = maxsize
+        self._ttl = timedelta(seconds=ttl_seconds)
+    def _now(self) -> datetime:
+        return datetime.utcnow()
+
+    def _is_expired(self, timestamp: datetime) -> bool:
+        return (self._now() - timestamp) > self._ttl
+
+    def _evict_if_needed(self) -> None:
+        expired = [k for k, (_, ts) in self._cache.items() if self._is_expired(ts)]
+        for k in expired:
+            del self._cache[k]
+        if len(self._cache) >= self._maxsize:
+            oldest = next(iter(self._cache))
+            del self._cache[oldest]
+
+    def get(self, domain: str) -> Optional[BacklinkProfile]:
+        self._evict_if_needed()
+        entry = self._cache.get(domain)
+        if entry is None:
+            return None
+        value, timestamp = entry
+        if self._is_expired(timestamp):
+            del self._cache[domain]
+            return None
+        del self._cache[domain]
+        self._cache[domain] = (value, self._now())
+        return BacklinkProfile(
+            referring_domains_count=value.referring_domains_count,
+            toxic_backlink_ratio=value.toxic_backlink_ratio,
+            backlink_count=value.backlink_count,
+            quality_estimate=value.quality_estimate,
+            source=value.source,
+            raw_response=value.raw_response,
+            cached=True,
+        )
+    def set(self, domain: str, value: BacklinkProfile) -> None:
+        self._evict_if_needed()
+        self._cache[domain] = (value, self._now())
+
+    def invalidate(self, domain: str) -> None:
+        self._cache.pop(domain, None)
+
+    def clear(self) -> None:
+        self._cache.clear()
+
+    def stats(self) -> dict:
+        return {
+            "size": len(self._cache),
+            "maxsize": self._maxsize,
+            "ttl_seconds": self._ttl.total_seconds(),
+            "keys": list(self._cache.keys())[:10],
+        }   
+
+_backlinks_cache = _BacklinkLruCache(maxsize=256, ttl_seconds=3600)
 
 class BacklinksCollector:
     # Meme service que RankCollector (cf. son commentaire) : API "OpenPageRank"
@@ -29,16 +92,28 @@ class BacklinksCollector:
     OPENPAGERANK_URL = "https://openpagerank.keywordseverywhere.com/v1/domains/bulk"
     TIMEOUT_SECONDS = 10.0
 
-    def __init__(self):
+    def __init__(self,use_cache: bool = True):
         self.api_key = settings.OPEN_PAGERANK_API_KEY or ""
+        self.use_cache = use_cache
 
     async def collect(self, domain: str) -> BacklinkProfile:
+        if self.use_cache:
+            cached = _backlinks_cache.get(domain)
+            if cached is not None:
+                 logger.info(
+                    "[BacklinksCollector] %s -> CACHE HIT backlink_count=%s",
+                    domain, cached.backlink_count,
+                )
+                 return cached
+
         try:
             result = await self._fetch_openpagerank(domain)
             logger.info(
                 "[BacklinksCollector] %s -> backlink_count=%s quality=%s",
                 domain, result.backlink_count, result.quality_estimate,
             )
+            if self.use_cache:
+                _backlinks_cache.set(domain, result)
             return result
         except ExternalAPIError as e:
             logger.warning("[BacklinksCollector] echec pour %s: %s", domain, e)
@@ -103,3 +178,47 @@ class BacklinksCollector:
     def _estimate_quality(self, page_rank: float) -> float:
     
         return round(min(page_rank / 10.0, 1.0), 4)
+
+    async def collect_batch(self, domains: list[str]) -> dict[str, BacklinkProfile]:
+        unique_domains = list(set(domains))
+        cached_results = {}
+        domains_to_fetch = []
+
+        if self._use_cache:
+            for d in unique_domains:
+                cached = _backlinks_cache.get(d)
+                if cached is not None:
+                    cached_results[d] = cached
+                else:
+                    domains_to_fetch.append(d)
+        else:
+            domains_to_fetch = unique_domains
+
+        if domains_to_fetch:
+            tasks = [self.collect(d) for d in domains_to_fetch]
+            fetched_results = await asyncio.gather(*tasks, return_exceptions=True)
+
+            for domain, result in zip(domains_to_fetch, fetched_results):
+                if isinstance(result, Exception):
+                    cached_results[domain] = BacklinkProfile(
+                        raw_response={"error": str(result)}
+                    )
+                else:
+                    cached_results[domain] = result
+
+        return {d: cached_results[d] for d in domains}         
+
+    @staticmethod
+    def cache_stats() -> dict:
+        
+        return _backlinks_cache.stats()
+
+    @staticmethod
+    def cache_clear() -> None:
+       
+        _backlinks_cache.clear()
+
+    @staticmethod
+    def cache_invalidate(domain: str) -> None:
+        
+        _backlinks_cache.invalidate(domain)   

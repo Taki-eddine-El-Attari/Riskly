@@ -9,7 +9,6 @@ class UserRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    # --- Telegram ---------------------------------------------------------
     def get_by_telegram_id(self, telegram_id: int) -> Optional[User]:
         return self.db.query(User).filter(User.telegram_id == telegram_id).first()
 
@@ -20,8 +19,6 @@ class UserRepository:
         first_name: Optional[str] = None,
         photo_url: Optional[str] = None,
     ) -> User:
-        """Crée le compte au 1er login Telegram (auth_method='telegram'),
-        sinon rafraîchit le telegram_username et la photo_url. La clé est telegram_id."""
         user = self.get_by_telegram_id(telegram_id)
         if user is not None:
             user.telegram_username = telegram_username

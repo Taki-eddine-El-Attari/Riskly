@@ -1,10 +1,3 @@
-"""Endpoints du CSV de warm-up attaché à une analyse.
-
-Accès : le propriétaire de l'analyse pour tout ; un admin peut aussi lire,
-télécharger et supprimer. Le contenu du fichier n'est servi QUE par l'endpoint
-de téléchargement authentifié — jamais en statique.
-"""
-
 import uuid
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
@@ -38,7 +31,6 @@ def _get_owned_analysis(
 
 
 def _sanitize_filename(name: str) -> str:
-    """Neutralise CR/LF/guillemets pour l'en-tête Content-Disposition."""
     cleaned = "".join(c for c in name if c not in '\r\n"\\').strip()
     return cleaned or "warmup.csv"
 

@@ -26,14 +26,14 @@ const features: Feature[] = [
     text: "Domaine très récent, aucune autorité, historique discontinu, présence dans une base de menaces : chaque signal s'affiche à part, sans fausser le score ni le verdict.",
   },
   {
-    spec: "cache 24 h",
-    title: "Résultats en moins de 15 s",
-    text: "Collecte parallèle et cache de 24 h : une nouvelle analyse tient sous les 15 secondes, et un domaine déjà vu répond aussitôt.",
+    spec: "CSV optionnel",
+    title: "Réputation email par warm-up",
+    text: "Fournissez l'historique d'envoi du domaine et un second modèle évalue sa réputation d'envoi. Elle compte pour la moitié du score de valeur, à parts égales avec l'autorité — sans elle, le score repose sur l'autorité seule.",
   },
   {
-    spec: "horodaté",
-    title: "Historique personnel",
-    text: "Retrouvez vos analyses passées, horodatées, et rouvrez chaque rapport tel qu'il a été produit ce jour-là.",
+    spec: "0,5 · 0,5",
+    title: "Score de valeur transparent",
+    text: "Autorité et réputation email combinées à parts égales, puis réduites par le score de risque : ≥ 60 % Bon achat, ≥ 30 % Risqué, en dessous À éviter. Au-delà de 50 % de risque, veto immédiat quel que soit le reste.",
   },
 ];
 

@@ -33,8 +33,6 @@ class UserLogin(BaseModel):
 
 # --- Auth Telegram (Login Widget) --------------------------------------------
 class TelegramAuthData(BaseModel):
-    """Données brutes renvoyées par le Login Widget Telegram (à vérifier côté serveur)."""
-
     id: int
     first_name: str
     last_name: str | None = None

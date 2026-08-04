@@ -30,7 +30,6 @@ export function AuthDivider({ label }: { label: string }) {
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
     <main className="grid min-h-screen lg:grid-cols-2">
-      {/* Panneau globe, desktop uniquement */}
       <section className="relative hidden overflow-hidden border-r border-border bg-bg-elevated/30 lg:block">
         <div className="hero-grid pointer-events-none absolute inset-0" aria-hidden />
         <div className="hero-glow pointer-events-none absolute inset-0" aria-hidden />
@@ -56,7 +55,6 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
         </div>
       </section>
 
-      {/* Panneau formulaire */}
       <section className="flex flex-col px-6 py-8 sm:px-10">
         <header className="flex items-center justify-between">
           <div className="lg:invisible">

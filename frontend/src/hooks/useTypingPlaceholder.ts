@@ -1,14 +1,6 @@
 import { useEffect, useState } from "react";
 import { useReducedMotion } from "motion/react";
 
-/**
- * Placeholder qui se tape puis s'efface, en boucle.
- * Partagé par le champ du hero (landing) et le champ d'analyse (app) pour que
- * les deux se comportent exactement pareil.
- *
- * `paused` gèle l'animation (champ focalisé ou déjà rempli). Sous
- * `prefers-reduced-motion`, le premier exemple s'affiche en entier, sans boucle.
- */
 export function useTypingPlaceholder(examples: string[], paused: boolean): string {
   const reduced = useReducedMotion();
   const [phase, setPhase] = useState({ i: 0, len: 0, deleting: false });

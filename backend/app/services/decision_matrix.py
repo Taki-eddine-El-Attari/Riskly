@@ -115,14 +115,6 @@ class DecisionMatrix:
 
     @staticmethod
     def _signals_are_insufficient(data: DecisionMatrixInput) -> bool:
-        """Vrai quand AUCUN signal externe n'a pu etre collecte.
-
-        Typiquement un domaine enregistre mais inactif (expire, parke, en
-        vente) : le DNS ne resout pas, donc ni rank, ni backlinks, ni pays.
-        C'est le cas NOMINAL pour un domaine qu'on envisage de racheter, mais
-        le modele de risque n'a ete entraine que sur des domaines actifs : il
-        y voit systematiquement une menace. On refuse donc de trancher.
-        """
         return (
             data.rank is None
             and data.backlinks_total is None

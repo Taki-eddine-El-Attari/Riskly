@@ -6,17 +6,15 @@ import {
   useReducedMotion,
   wrap,
 } from "motion/react";
-import { Bug, Fish, Gauge, Globe, MapPin, Network, ShieldAlert, TrendingUp } from "lucide-react";
+import { HeartPulse, Mail, MailCheck, Search, ShieldAlert, TrendingUp } from "lucide-react";
 
 const sources = [
-  { name: "RDAP", icon: Globe },
-  { name: "Tranco", icon: TrendingUp },
-  { name: "Open PageRank", icon: Gauge },
-  { name: "PhishTank", icon: Fish },
-  { name: "URLhaus", icon: Bug },
-  { name: "OpenPhish", icon: ShieldAlert },
-  { name: "Résolution DNS", icon: Network },
-  { name: "ip-api", icon: MapPin },
+  { name: "Deliverability Audit", icon: MailCheck },
+  { name: "Search Optimization", icon: Search },
+  { name: "Warm-up Scoring", icon: TrendingUp },
+  { name: "Cold Emailing", icon: Mail },
+  { name: "Domain Health", icon: HeartPulse },
+  { name: "Spam Prevention", icon: ShieldAlert },
 ];
 
 const SPEED = 40;
@@ -75,7 +73,7 @@ export default function Sources() {
   return (
     <section id="sources" className="border-y border-border py-10">
       <p className="mb-8 text-center font-mono text-xs uppercase tracking-widest text-text-faint">
-        Verdicts croisés depuis des sources publiques reconnues
+        Diagnostic Risque & Santé Domaine
       </p>
       <div
         ref={containerRef}

@@ -5,11 +5,6 @@ import { ReportCard } from "@/components/analysis/ReportCard";
 import { Button } from "@/components/ui/button";
 import { useAnalysis } from "@/hooks/useAnalysis";
 
-/**
- * Rapport d'une analyse, ouvert en pleine page depuis l'historique.
- * Réutilise la carte de rapport de la page d'analyse (scores, signaux, détail
- * et téléchargement) — même lecture, adresse partageable.
- */
 export default function ReportPage() {
   const { id = "" } = useParams();
   const report = useAnalysis(id);

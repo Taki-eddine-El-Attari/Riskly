@@ -31,14 +31,13 @@ class Settings(BaseSettings):
 
     MAX_CONCURRENT_ANALYSES: int = 5
 
+    ANALYSIS_CACHE_TTL_HOURS: int = 24
+    ANALYSIS_CACHE_SCOPE: str = "user"
+
     # --- Stockage des CSV de warm-up (volume privé, hors dépôt) --------------
-    # Répertoire dédié, en dehors de l'arborescence servie par le serveur web.
-    # DOIT résider sur un volume chiffré au repos (chiffrement disque/LUKS ou
-    # SSE côté objet) — le service n'ajoute pas de chiffrement applicatif.
     WARMUP_STORAGE_DIR: str = "/var/lib/riskly/warmup"
     # Plafond de taille par fichier (5 Mio, aligné sur la validation front).
     WARMUP_MAX_SIZE_BYTES: int = 5 * 1024 * 1024
-    # Extensions autorisées (minuscules, sans le point), séparées par virgule.
     WARMUP_ALLOWED_EXTENSIONS: str = "csv"
 
     @property

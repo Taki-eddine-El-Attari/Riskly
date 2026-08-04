@@ -14,7 +14,6 @@ def get_auth_service(db: Session = Depends(get_db)) -> AuthService:
     return AuthService(db)
 
 
-# --- Auth locale (username / mot de passe) -----------------------------------
 @router.post("/register", response_model=UserRead, status_code=status.HTTP_201_CREATED)
 def register(
     payload: UserRegister,
@@ -33,7 +32,6 @@ def login(
     return svc.login(request, payload.name, payload.password)
 
 
-# --- Auth Telegram (Login Widget) --------------------------------------------
 @router.post("/telegram", response_model=UserRead)
 def login_telegram(
     data: TelegramAuthData,
@@ -43,7 +41,6 @@ def login_telegram(
     return svc.authenticate_telegram(request, data)
 
 
-# --- Commun ------------------------------------------------------------------
 @router.get("/me", response_model=UserRead)
 def me(current_user: User = Depends(get_current_user)) -> User:
     return current_user

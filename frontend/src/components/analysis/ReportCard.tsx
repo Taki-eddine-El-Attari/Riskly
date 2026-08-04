@@ -2,13 +2,12 @@ import { useId, useState } from "react";
 import { ChevronDown, Clock } from "lucide-react";
 import { ScoreGauge } from "./ScoreGauge";
 import { VerdictBadge } from "./VerdictBadge";
-import { ReportDetail } from "./ReportDetail";
+import { NO_SCORE_MESSAGE, ReportDetail } from "./ReportDetail";
 import { DownloadMenu } from "./DownloadMenu";
 import { cn } from "@/lib/utils";
 import { ALERTS, toneBadge, VERDICTS } from "@/lib/scores";
 import type { Analysis } from "@/types/analysis";
 
-/** Âge lisible depuis la date d'enregistrement RDAP. */
 function ageLabel(creationDate: string | null | undefined): string | null {
   if (!creationDate) return null;
   const created = new Date(creationDate);
@@ -22,7 +21,6 @@ function ageLabel(creationDate: string | null | undefined): string | null {
   return `${days} jour${days > 1 ? "s" : ""}`;
 }
 
-/** La ligne de repères qu'un acheteur lit en premier, avant d'ouvrir le détail. */
 function keyFacts(analysis: Analysis): string[] {
   const facts: string[] = [];
   const { domain, metric } = analysis;
@@ -45,10 +43,6 @@ function cacheLabel(cachedAt: string): string | null {
   return `donnée d'il y a ${hours} h`;
 }
 
-/**
- * Le rapport d'un domaine : verdict, les deux scores, les signaux, et le
- * détail complet dépliable.
- */
 export function ReportCard({
   analysis,
   defaultOpen = false,
@@ -64,7 +58,8 @@ export function ReportCard({
   const domainName = analysis.domain?.domain_name ?? "Domaine inconnu";
   const alerts = analysis.alerts ?? [];
   const hasScore = analysis.risk_score !== null;
-  const verdictTone = analysis.verdict ? VERDICTS[analysis.verdict].tone : null;
+  const verdictMeta = analysis.verdict ? VERDICTS[analysis.verdict] : undefined;
+  const verdictTone = verdictMeta?.tone ?? null;
   const cached = analysis.cached_at ? cacheLabel(analysis.cached_at) : null;
   const facts = keyFacts(analysis);
 
@@ -82,18 +77,15 @@ export function ReportCard({
             <VerdictBadge verdict={analysis.verdict} />
           </div>
 
-          {hasScore && analysis.verdict && (
+          {hasScore && verdictMeta && (
             <p className="mt-2 max-w-md text-sm leading-relaxed text-text-muted">
-              {VERDICTS[analysis.verdict].hint}
+              {verdictMeta.hint}
             </p>
           )}
 
           {!hasScore && (
             <p className="mt-2 max-w-md text-sm leading-relaxed text-text-muted">
-              Le domaine ne répond pas en DNS : ni classement, ni backlinks, ni
-              pays d'hébergement n'ont pu être mesurés. C'est courant pour un
-              domaine expiré ou en vente, mais aucun verdict ne peut être fondé
-              là-dessus — vérifiez son historique manuellement.
+              {NO_SCORE_MESSAGE}
             </p>
           )}
 
@@ -128,12 +120,6 @@ export function ReportCard({
             </p>
           )}
         </div>
-
-        {/* Ordre de lecture = ordre du calcul : les composantes (risque,
-            autorité, warm-up) puis la rentabilité, qui les agrège toutes.
-            La jauge warm-up n'apparaît que si un CSV a été fourni : sans lui,
-            le modèle n'a pas tourné (email_health_score est null) et afficher
-            une jauge vide laisserait croire à un score de zéro. */}
         <div className="flex shrink-0 flex-wrap items-start justify-end gap-6 sm:gap-8">
           <ScoreGauge score={analysis.risk_score} kind="risk" size={96} />
           <ScoreGauge score={analysis.authority_score} kind="authority" size={96} />

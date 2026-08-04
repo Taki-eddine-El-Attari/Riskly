@@ -1,12 +1,11 @@
-// COUCHE 1 — ACCÈS. Aucune logique de présentation ici : on parle HTTP et on
-// renvoie des objets conformes à `types/analysis.ts`.
-
 import { apiClient } from "@/lib/api-client";
+import { API_BASE_URL } from "@/lib/constants";
 import { computeVerdict } from "@/lib/scores";
 import type {
   Analysis,
   AnalysisBatchResult,
   AnalysisPage,
+  AnalysisSummary,
   Factor,
   Verdict,
   WarmupInfo,
@@ -16,14 +15,12 @@ import type { WarmupFile } from "@/lib/warmup";
 
 const BASE = "/api/v1/analyses";
 
-/** SQLAlchemy sérialise `Numeric` en chaîne : on ramène tout en nombre. */
 function num(value: unknown): number | null {
   if (value === null || value === undefined || value === "") return null;
   const n = typeof value === "number" ? value : Number(value);
   return Number.isFinite(n) ? n : null;
 }
 
-/** Normalise les métadonnées de warm-up renvoyées par le backend (à venir). */
 function parseWarmup(raw: unknown): WarmupInfo | null {
   if (typeof raw !== "object" || raw === null) return null;
   const w = raw as Record<string, unknown>;
@@ -47,16 +44,10 @@ function parseFactors(raw: unknown): Factor[] | null {
     }))
     .filter((f) => f.feature.length > 0);
 }
-
-/**
- * Normalise une réponse brute du backend.
- * Le verdict du serveur fait autorité ; s'il est absent alors que les deux
- * scores sont présents, on applique la matrice du PRD — déterministe, donc
- * aucune donnée inventée.
- */
 export function parseAnalysis(raw: Record<string, unknown>): Analysis {
   const risk = num(raw.risk_score);
   const authority = num(raw.authority_score);
+  const emailHealth = num(raw.email_health_score);
   const verdict = normalizeVerdict(raw.verdict);
 
   return {
@@ -65,10 +56,12 @@ export function parseAnalysis(raw: Record<string, unknown>): Analysis {
     risk_score: risk,
     authority_score: authority,
     profitability_score: num(raw.profitability_score),
-    email_health_score: num(raw.email_health_score),
+    email_health_score: emailHealth,
     verdict:
       verdict ??
-      (risk !== null && authority !== null ? computeVerdict(risk, authority) : null),
+      (risk !== null && authority !== null
+        ? computeVerdict(risk, authority, emailHealth)
+        : null),
     shap_values: parseFactors(raw.shap_values),
     requested_at: (raw.requested_at as string) ?? null,
     completed_at: (raw.completed_at as string) ?? null,
@@ -81,29 +74,44 @@ export function parseAnalysis(raw: Record<string, unknown>): Analysis {
   };
 }
 
-/** Un domaine à analyser, avec son CSV de warm-up optionnel (fichier + comptage). */
+function parseAnalysisSummary(raw: Record<string, unknown>): AnalysisSummary {
+  const risk = num(raw.risk_score);
+  const authority = num(raw.authority_score);
+  const emailHealth = num(raw.email_health_score);
+  const verdict = normalizeVerdict(raw.verdict);
+
+  return {
+    id: String(raw.id ?? ""),
+    domain_name: String(raw.domain_name ?? ""),
+    risk_score: risk,
+    authority_score: authority,
+    profitability_score: num(raw.profitability_score),
+    email_health_score: emailHealth,
+    verdict:
+      verdict ??
+      (risk !== null && authority !== null
+        ? computeVerdict(risk, authority, emailHealth)
+        : null),
+    requested_at: (raw.requested_at as string) ?? null,
+    status: (raw.status as AnalysisSummary["status"]) ?? null,
+    warmup: parseWarmup(raw.warmup),
+  };
+}
+
+export function warmupDownloadUrl(analysisId: string): string {
+  return `${API_BASE_URL}${BASE}/${analysisId}/warmup/download`;
+}
+
 export interface DomainEntry {
   domain: string;
   warmup?: WarmupFile;
 }
 
-/** Métadonnées affichables d'un warm-up — jamais son contenu. */
 function warmupInfoOf(warmup: WarmupFile): WarmupInfo {
   return { name: warmup.file.name, size: warmup.file.size, rows: warmup.rows };
 }
 
-/**
- * Lance l'analyse d'UN domaine.
- *
- * Contrat attendu côté backend :
- * - sans warm-up → `application/json` : `{ "domain_name": "..." }` ;
- * - avec warm-up → `multipart/form-data` : champ `domain_name` + fichier
- *   `warmup_csv`. Le CSV est facultatif : l'analyse aboutit sans lui.
- */
 export async function createAnalysis(entry: DomainEntry): Promise<Analysis> {
-  // Le backend ne renvoie pas (encore) les métadonnées du fichier : on les
-  // porte depuis la saisie pour qu'elles apparaissent dans le rapport, les
-  // exports et l'historique. Le contenu du CSV, lui, ne quitte pas la requête.
   const info = entry.warmup ? warmupInfoOf(entry.warmup) : null;
 
   if (entry.warmup) {
@@ -119,15 +127,10 @@ export async function createAnalysis(entry: DomainEntry): Promise<Analysis> {
   });
   return parseAnalysis(raw);
 }
-
-/**
- * Lance l'analyse d'un lot de 1 à 5 domaines.
- * Le backend n'expose qu'un endpoint mono-domaine : on parallélise et on isole
- * les échecs — un domaine qui tombe n'empêche pas les autres (PRD, UC-03 A7).
- */
-export async function createAnalyses(entries: DomainEntry[]): Promise<AnalysisBatchResult> {
-  const settled = await Promise.allSettled(entries.map(createAnalysis));
-
+export function foldResults(
+  domains: string[],
+  settled: PromiseSettledResult<Analysis>[],
+): AnalysisBatchResult {
   const results: Analysis[] = [];
   const failed: AnalysisBatchResult["failed"] = [];
 
@@ -137,7 +140,7 @@ export async function createAnalyses(entries: DomainEntry[]): Promise<AnalysisBa
       return;
     }
     failed.push({
-      domain: entries[i].domain,
+      domain: domains[i],
       reason:
         outcome.reason instanceof Error
           ? outcome.reason.message
@@ -148,16 +151,19 @@ export async function createAnalyses(entries: DomainEntry[]): Promise<AnalysisBa
   return { results, failed };
 }
 
-/** Paramètres de consultation de l'historique — miroir des query params backend. */
+export async function createAnalyses(entries: DomainEntry[]): Promise<AnalysisBatchResult> {
+  const settled = await Promise.allSettled(entries.map(createAnalysis));
+  return foldResults(entries.map((e) => e.domain), settled);
+}
+
 export interface HistoryParams {
   page?: number;
   pageSize?: number;
-  sortBy?: "requested_at" | "risk_score" | "authority_score";
+  sortBy?: "requested_at" | "risk_score" | "authority_score" | "profitability_score";
   order?: "asc" | "desc";
   verdict?: Verdict | null;
 }
 
-/** Historique paginé de l'utilisateur connecté. */
 export async function getHistory(params: HistoryParams = {}): Promise<AnalysisPage> {
   const page = params.page ?? 1;
   const pageSize = params.pageSize ?? 20;
@@ -172,16 +178,26 @@ export async function getHistory(params: HistoryParams = {}): Promise<AnalysisPa
   });
   if (params.verdict) query.set("verdict", params.verdict);
 
-  return await apiClient.get<AnalysisPage>(`${BASE}?${query.toString()}`);
+  const raw = await apiClient.get<{
+    items: Record<string, unknown>[];
+    total: number;
+    page: number;
+    page_size: number;
+  }>(`${BASE}?${query.toString()}`);
+
+  return {
+    items: raw.items.map(parseAnalysisSummary),
+    total: raw.total,
+    page: raw.page,
+    page_size: raw.page_size,
+  };
 }
 
-/** Rapport détaillé d'une analyse. */
 export async function getAnalysis(id: string): Promise<Analysis> {
   const raw = await apiClient.get<Record<string, unknown>>(`${BASE}/${id}`);
   return parseAnalysis(raw);
 }
 
-/** Retire une analyse de l'historique personnel. */
 export async function deleteAnalysis(id: string): Promise<void> {
   await apiClient.delete<void>(`${BASE}/${id}`);
 }

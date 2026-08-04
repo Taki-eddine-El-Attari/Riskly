@@ -1,12 +1,6 @@
 import { Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-/**
- * Sources qui n'ont pas répondu.
- * Ton neutre et strictement factuel : une donnée manquante n'est pas une
- * erreur, et on ne la remplace jamais par une valeur par défaut (PRD §9.4.2,
- * design.md §12.8).
- */
 export function MissingDataNotice({
   sources,
   className,

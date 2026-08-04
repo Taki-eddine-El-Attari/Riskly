@@ -19,11 +19,6 @@ const BORDERS: Record<string, string> = {
   faint: "border-l-border-hover",
 };
 
-/**
- * Les alertes de transparence (PRD §2.4.4).
- * Elles ne modifient ni le score ni le verdict — la mention est explicite,
- * et le ton reste informatif sauf pour la présence en base de menaces.
- */
 export function AlertList({ alerts, className }: { alerts: Alert[]; className?: string }) {
   if (alerts.length === 0) return null;
 

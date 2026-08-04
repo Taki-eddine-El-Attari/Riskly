@@ -1,13 +1,3 @@
-// ◐ Composant en réserve : construit et fonctionnel, monté nulle part.
-//
-// La saisie fait aujourd'hui de chaque champ de domaine sa propre zone de
-// dépôt, ce qui lève l'ambiguïté à la source — cette boîte n'a donc plus lieu
-// de s'ouvrir. Elle reste disponible pour un écran où le fichier arrive sans
-// cible désignée (import en masse, dépôt depuis l'historique).
-//
-// Usage : lui passer les fichiers déjà lus et la liste des domaines candidats ;
-// elle suggère, l'utilisateur tranche, `onConfirm` rend les couples retenus.
-
 import { useEffect, useState } from "react";
 import { Check, FileSpreadsheet } from "lucide-react";
 import {
@@ -23,39 +13,25 @@ import { formatBytes, matchDomainByFileName } from "@/lib/warmup";
 import type { WarmupFile } from "@/lib/warmup";
 import { cn } from "@/lib/utils";
 
-/** Un domaine saisi, candidat à recevoir un fichier. */
 export interface WarmupTarget {
   rowId: number;
-  /** Le domaine saisi, ou une chaîne vide si la ligne est encore vide. */
   domain: string;
-  /** Position affichée (1 pour le champ principal). */
   position: number;
-  /** La ligne porte déjà un CSV : l'associer le remplacera. */
   hasWarmup: boolean;
 }
 
-/** `-1` = ne pas associer ce fichier. */
 const IGNORE = -1;
 
 function targetLabel(target: WarmupTarget): string {
   return target.domain || `Domaine ${target.position} (vide)`;
 }
 
-/**
- * Choix du domaine auquel rattacher un CSV déposé.
- *
- * Un fichier lâché sur le bloc — et non sur une ligne précise — ne dit pas à
- * quel domaine il appartient. Plutôt que de deviner, on demande. La suggestion
- * de départ reste intelligente (fichier nommé d'après un domaine, sinon
- * première ligne libre), mais elle se corrige en un clic.
- */
 export function WarmupAssignDialog({
   files,
   targets,
   onConfirm,
   onCancel,
 }: {
-  /** Fichiers déposés, déjà lus et validés. Vide = boîte fermée. */
   files: WarmupFile[];
   targets: WarmupTarget[];
   onConfirm: (assignment: { file: WarmupFile; rowId: number }[]) => void;
@@ -63,8 +39,6 @@ export function WarmupAssignDialog({
 }) {
   const [choices, setChoices] = useState<number[]>([]);
 
-  // Suggestions recalculées à chaque nouveau dépôt : le fichier nommé d'après
-  // un domaine y va, les autres comblent les emplacements encore libres.
   useEffect(() => {
     const domains = targets.map((t) => t.domain);
     const taken: number[] = [];
@@ -90,7 +64,6 @@ export function WarmupAssignDialog({
     setChoices((current) =>
       current.map((choice, i) => {
         if (i === fileIndex) return choice === rowId ? IGNORE : rowId;
-        // Un domaine ne reçoit qu'un fichier : l'autre sélection se libère.
         return choice === rowId && rowId !== IGNORE ? IGNORE : choice;
       }),
     );

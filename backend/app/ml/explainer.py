@@ -45,10 +45,6 @@ def _sigmoid(x: float) -> float:
     return 1.0 / (1.0 + np.exp(-x))
 
 
-# ---------------------------------------------------------------------------
-# Structures de sortie
-# ---------------------------------------------------------------------------
-
 @dataclass
 class FeatureContribution:
     feature: str
@@ -90,10 +86,6 @@ class Explanation:
             "summary_text": self.summary_text,
         }
 
-
-# ---------------------------------------------------------------------------
-# Explainer
-# ---------------------------------------------------------------------------
 
 class RiskExplainer:
 

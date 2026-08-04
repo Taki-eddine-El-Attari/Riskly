@@ -1,19 +1,3 @@
-"""Stockage privé des CSV de warm-up (option ①).
-
-Principes de sécurité appliqués ici :
-- Le fichier est écrit sous `settings.WARMUP_STORAGE_DIR`, un volume dédié
-  **hors du dépôt** et **jamais servi en statique**. Le volume doit être
-  chiffré au repos (chiffrement disque / SSE) — pas de chiffrement applicatif.
-- Le nom de stockage est un UUID aléatoire (`object_key`). Le nom fourni par
-  l'utilisateur n'entre jamais dans la construction d'un chemin → pas de path
-  traversal. Une garde `_resolve` revérifie que tout chemin reste sous la base.
-- Validation à l'ingestion : extension autorisée, plafond de taille (streaming,
-  jamais tout en mémoire d'un coup au-delà du plafond), contenu réellement
-  textuel + parsable en CSV, comptage des lignes, empreinte SHA-256.
-- Écriture atomique (fichier temporaire + `os.replace`) avec permissions 0600 ;
-  répertoires 0700. Le propriétaire (`user_id`) est vérifié en amont par l'API.
-"""
-
 from __future__ import annotations
 
 import csv
@@ -32,16 +16,12 @@ from app.core.exceptions import (
     WarmupFileTooLargeError,
 )
 
-# Taille des blocs de lecture (64 Kio).
 _CHUNK = 64 * 1024
-# Octets échantillonnés pour deviner si le contenu est binaire.
 _SNIFF_BYTES = 8192
 
 
 @dataclass(frozen=True)
 class StoredWarmup:
-    """Résultat d'un stockage réussi — à persister en base."""
-
     object_key: str
     size_bytes: int
     rows: int | None
@@ -53,7 +33,6 @@ def _base_dir() -> Path:
 
 
 def _resolve(object_key: str) -> Path:
-    """Résout `object_key` sous la base et interdit toute évasion de chemin."""
     base = _base_dir().resolve()
     # Un object_key est toujours relatif ; on rejette tout ce qui ressemble à
     # un chemin absolu ou à une remontée de répertoire.
@@ -66,7 +45,6 @@ def _resolve(object_key: str) -> Path:
 
 
 def _new_object_key(extension: str) -> str:
-    """Clé opaque, éclatée en 2 niveaux pour éviter les répertoires géants."""
     token = uuid.uuid4().hex
     return f"{token[:2]}/{token[2:4]}/{token}.{extension}"
 
@@ -88,7 +66,6 @@ def _looks_binary(sample: bytes) -> bool:
 
 
 def _count_csv_rows(data: bytes) -> int | None:
-    """Compte les lignes de données (en-tête exclu). None si non décodable."""
     try:
         text = data.decode("utf-8-sig")
     except UnicodeDecodeError:
@@ -102,12 +79,6 @@ def _count_csv_rows(data: bytes) -> int | None:
 
 
 def store_warmup(fileobj: BinaryIO, filename: str) -> StoredWarmup:
-    """Valide puis stocke le flux `fileobj`. Lève une RisklyException sinon.
-
-    Le flux est lu par blocs : dès que le plafond est dépassé, on s'arrête et on
-    n'écrit rien. Le fichier n'est déplacé à son emplacement final qu'une fois
-    entièrement validé (écriture atomique).
-    """
     extension = _check_extension(filename)
     max_size = settings.WARMUP_MAX_SIZE_BYTES
 
@@ -151,7 +122,6 @@ def store_warmup(fileobj: BinaryIO, filename: str) -> StoredWarmup:
         os.chmod(tmp_path, 0o600)
         os.replace(tmp_path, final_path)  # atomique sur le même volume
     except Exception:
-        # Nettoyage systématique du temporaire en cas d'échec.
         tmp_path.unlink(missing_ok=True)
         raise
 
@@ -164,11 +134,6 @@ def store_warmup(fileobj: BinaryIO, filename: str) -> StoredWarmup:
 
 
 def open_warmup(object_key: str, expected_sha256: str | None = None) -> Iterator[bytes]:
-    """Ouvre un fichier stocké et le renvoie par blocs (pour StreamingResponse).
-
-    Si `expected_sha256` est fourni, l'empreinte est recalculée à la volée et
-    une incohérence lève une erreur en fin de flux (intégrité).
-    """
     path = _resolve(object_key)
     if not path.is_file():
         raise WarmupFileNotFoundError()
@@ -190,7 +155,6 @@ def open_warmup(object_key: str, expected_sha256: str | None = None) -> Iterator
 
 
 def delete_warmup(object_key: str) -> None:
-    """Supprime le fichier du disque (idempotent)."""
     path = _resolve(object_key)
     path.unlink(missing_ok=True)
 

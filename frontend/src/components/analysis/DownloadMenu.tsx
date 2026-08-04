@@ -12,12 +12,6 @@ import { exportCsv, exportPdf } from "@/lib/report-export";
 import { cn } from "@/lib/utils";
 import type { Analysis } from "@/types/analysis";
 
-/**
- * Téléchargement d'un rapport ou d'un lot.
- *
- * Deux formats, deux usages : le PDF s'archive et se transmet, le CSV se
- * rouvre dans un tableur pour comparer. jsPDF n'est chargé qu'au clic.
- */
 export function DownloadMenu({
   analyses,
   label,
@@ -25,7 +19,6 @@ export function DownloadMenu({
   className,
 }: {
   analyses: Analysis[];
-  /** Texte du bouton. Absent → bouton icône seule. */
   label?: string;
   variant?: "ghost" | "outline";
   className?: string;

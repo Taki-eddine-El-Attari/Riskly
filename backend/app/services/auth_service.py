@@ -59,8 +59,6 @@ class AuthService:
         request.session.clear()
 
     def authenticate_telegram(self, request: Request, data: TelegramAuthData) -> User:
-        """Login/register via le Login Widget Telegram : vérifie la signature,
-        crée/retrouve le compte (clé = telegram_id), ouvre la session."""
         if not settings.TELEGRAM_BOT_TOKEN:
             raise TelegramAuthError("Connexion Telegram non configurée côté serveur.")
 

@@ -5,15 +5,6 @@ import { LOADER_SEQUENCE_MS, SOURCES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 const STEP_MS = LOADER_SEQUENCE_MS / SOURCES.length;
-
-/**
- * L'attente d'une analyse (jusqu'à 15 s par domaine), habillée en terminal —
- * l'esthétique de la landing, réemployée là où l'utilisateur patiente.
- *
- * Les sources se cochent une à une sur 5 secondes, puis la ligne « calcul du
- * score » prend le relais et tourne jusqu'à l'arrivée de la réponse réelle :
- * l'écran ne prétend jamais que l'analyse est finie avant qu'elle le soit.
- */
 export function AnalysisLoader({
   domains,
   className,
@@ -41,7 +32,6 @@ export function AnalysisLoader({
       role="status"
       aria-live="polite"
     >
-      {/* Barre de fenêtre */}
       <div className="flex items-center gap-3 border-b border-border px-4 py-3">
         <div className="flex gap-1.5" aria-hidden>
           <span className="size-2.5 rounded-full bg-avoid/60" />
@@ -90,7 +80,6 @@ export function AnalysisLoader({
             );
           })}
 
-          {/* Le calcul reste en cours tant que la réponse n'est pas là. */}
           <li
             className={cn(
               "flex items-center gap-3 border-t border-border pt-2.5 font-mono text-xs",

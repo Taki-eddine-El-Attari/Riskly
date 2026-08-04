@@ -6,15 +6,23 @@ import { BlurFade } from "./effects/BlurFade";
 const faqs = [
   {
     q: "D'où viennent les données ?",
-    a: "Exclusivement de sources publiques : RDAP, Tranco, Open PageRank, la résolution DNS et les bases de menaces PhishTank, URLhaus et OpenPhish. Aucune donnée inventée : si une source ne répond pas, le rapport le signale.",
+    a: "De sources publiques : RDAP, Tranco, Open PageRank, la résolution DNS et les bases de menaces PhishTank, URLhaus et OpenPhish. La seule donnée que vous fournissez vous-même est le CSV de warm-up, optionnel, pour évaluer la réputation d'envoi. Aucune donnée inventée : si une source ne répond pas, le rapport le signale.",
   },
   {
     q: "Comment le score de risque est-il calculé ?",
-    a: "Un modèle XGBoost combine les signaux collectés : présence dans une base de menaces, ancienneté RDAP, configuration DNS, blacklists. Chaque facteur qui pèse sur le score est détaillé dans le rapport, via SHAP, donc le verdict reste toujours explicable.",
+    a: "Un modèle XGBoost combine les signaux collectés : présence dans une base de menaces, ancienneté RDAP, configuration DNS, blacklists. Chaque facteur qui pèse sur le score est détaillé dans le rapport, via SHAP, donc le verdict reste toujours explicable. À partir de 50 %, le domaine est classé DANGEREUX et le verdict s'arrête là.",
   },
   {
     q: "Et le score d'autorité ?",
     a: "Une formule transparente : 0,5 × rang Open PageRank + 0,3 × backlinks + 0,2 × âge du domaine. Ce n'est pas une estimation de prix de revente, mais un indicateur d'autorité comparable d'un domaine à l'autre.",
+  },
+  {
+    q: "À quoi sert le CSV de warm-up ?",
+    a: "À faire évaluer la réputation d'envoi du domaine par un second modèle, entraîné spécifiquement sur des historiques de campagnes email. Cette réputation compte pour la moitié du score de valeur, à parts égales avec l'autorité. Sans warm-up fourni, le score de valeur repose sur l'autorité seule — l'absence de donnée n'est jamais comptée comme une mauvaise réputation.",
+  },
+  {
+    q: "Comment le verdict final est-il obtenu ?",
+    a: "Le score de valeur (0,5 × autorité + 0,5 × réputation email) est réduit par le score de risque, puis comparé à deux seuils : 60 % pour « Bon achat », 30 % pour « Risqué », en dessous c'est « À éviter ». Un domaine dont le DNS ne répond pas du tout (rien à mesurer) reçoit « Données insuffisantes » plutôt qu'un verdict forcé.",
   },
   {
     q: "Puis-je analyser plusieurs domaines à la fois ?",

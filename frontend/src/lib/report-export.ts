@@ -1,16 +1,9 @@
-// Export des rapports : PDF (document à archiver ou transmettre) et CSV
-// (tableau comparatif réexploitable dans un tableur).
-//
-// jsPDF est chargé en import dynamique : il ne pèse sur le bundle que le jour
-// où l'utilisateur clique réellement sur « Télécharger ».
-
-import { authorityBand, riskBand, VERDICTS } from "./scores";
+import { authorityBand, emailHealthBand, profitabilityBand, riskBand, VERDICTS } from "./scores";
 import { ALERTS } from "./scores";
 import { factorLabel, factorValue, sortFactors } from "./factors";
 import { formatBytes } from "./warmup";
+import { NO_SCORE_MESSAGE } from "@/components/analysis/ReportDetail";
 import type { Analysis } from "@/types/analysis";
-
-// ── Utilitaires ────────────────────────────────────────────────────────────
 
 function downloadBlob(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
@@ -20,7 +13,6 @@ function downloadBlob(blob: Blob, filename: string) {
   document.body.appendChild(link);
   link.click();
   link.remove();
-  // Laisser au navigateur le temps de démarrer le téléchargement.
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
@@ -37,7 +29,6 @@ function today(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-/** Nom de fichier d'un export, sans extension. */
 export function exportBaseName(analyses: Analysis[]): string {
   if (analyses.length === 1) {
     return `riskly-${slug(analyses[0].domain?.domain_name ?? "rapport")}-${today()}`;
@@ -53,10 +44,30 @@ function score(value: number | null): string {
   return value === null ? "" : String(Math.round(value));
 }
 
-function bandLabel(analysis: Analysis, kind: "risk" | "authority"): string {
-  const value = kind === "risk" ? analysis.risk_score : analysis.authority_score;
-  if (value === null) return "";
-  return kind === "risk" ? riskBand(value).label : authorityBand(value).label;
+type ScoreKind = "risk" | "authority" | "profitability" | "email_health";
+
+const SCORE_VALUE: Record<ScoreKind, (a: Analysis) => number | null> = {
+  risk: (a) => a.risk_score,
+  authority: (a) => a.authority_score,
+  profitability: (a) => a.profitability_score,
+  email_health: (a) => a.email_health_score,
+};
+
+const SCORE_BAND = {
+  risk: riskBand,
+  authority: authorityBand,
+  profitability: profitabilityBand,
+  email_health: emailHealthBand,
+};
+
+function bandLabel(analysis: Analysis, kind: ScoreKind): string {
+  const value = SCORE_VALUE[kind](analysis);
+  return value === null ? "" : SCORE_BAND[kind](value).label;
+}
+
+function bandColor(analysis: Analysis, kind: ScoreKind, fallback: string): string {
+  const value = SCORE_VALUE[kind](analysis);
+  return value === null ? INK.faint : TONE_INK[SCORE_BAND[kind](value).tone] ?? fallback;
 }
 
 function verdictLabel(analysis: Analysis): string {
@@ -67,7 +78,6 @@ function alertLabels(analysis: Analysis): string[] {
   return (analysis.alerts ?? []).map((a) => ALERTS[a.code]?.label ?? a.code);
 }
 
-/** « warmup.csv (12 Ko, 148 lignes) » — vide si aucun fichier joint. */
 function warmupText(analysis: Analysis): string {
   const w = analysis.warmup;
   if (!w) return "";
@@ -82,8 +92,6 @@ function formatDate(value: string | null | undefined): string {
   if (Number.isNaN(date.getTime())) return "";
   return date.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric" });
 }
-
-// ── CSV ────────────────────────────────────────────────────────────────────
 
 const CSV_COLUMNS = [
   "Domaine",
@@ -149,7 +157,6 @@ function csvRow(analysis: Analysis): string[] {
   ];
 }
 
-/** Tableau comparatif, séparateur `;` (Excel francophone) et BOM UTF-8. */
 export function analysesToCsv(analyses: Analysis[]): string {
   const lines = [
     CSV_COLUMNS.join(";"),
@@ -163,9 +170,6 @@ export function exportCsv(analyses: Analysis[]) {
   downloadBlob(blob, `${exportBaseName(analyses)}.csv`);
 }
 
-// ── PDF ────────────────────────────────────────────────────────────────────
-
-// Palette du thème clair : c'est celle qui tient le contraste sur papier.
 const INK = {
   text: "#0D1220",
   muted: "#565D73",
@@ -190,15 +194,14 @@ const CONTENT_WIDTH = PAGE.width - PAGE.margin * 2;
 
 type Doc = import("jspdf").jsPDF;
 
-/**
- * Écrit du texte dans le document.
- *
- * Les polices standard de jsPDF n'encodent que du Latin-1 : les espaces fines
- * insécables produites par `toLocaleString("fr-FR")` (« 2 656 ») et les
- * apostrophes typographiques y sortent en caractères parasites. On les ramène
- * donc à leurs équivalents ASCII au moment de l'écriture — un seul endroit à
- * tenir plutôt qu'un formatage spécial à chaque appel.
- */
+function toLatin1(text: string): string {
+  return text
+    .replace(/[\u00a0\u2007\u2009\u202f]/g, " ")
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/[\u201c\u201d]/g, '"')
+    .replace(/[\u2013\u2014]/g, "-");
+}
+
 function write(
   doc: Doc,
   text: string,
@@ -206,12 +209,20 @@ function write(
   y: number,
   options?: Parameters<Doc["text"]>[3],
 ) {
-  const latin1 = text
-    .replace(/[\u00a0\u2007\u2009\u202f]/g, " ")
-    .replace(/[\u2018\u2019]/g, "'")
-    .replace(/[\u201c\u201d]/g, '"')
-    .replace(/[\u2013\u2014]/g, "-");
-  doc.text(latin1, x, y, options);
+  doc.text(toLatin1(text), x, y, options);
+}
+
+function writeWrapped(
+  doc: Doc,
+  text: string,
+  x: number,
+  y: number,
+  maxWidth: number,
+  lineHeight = 4.2,
+): number {
+  const lines: string[] = doc.splitTextToSize(toLatin1(text), maxWidth);
+  lines.forEach((line, i) => doc.text(line, x, y + i * lineHeight));
+  return y + lines.length * lineHeight;
 }
 
 function pageFooter(doc: Doc, page: number, total: number) {
@@ -236,7 +247,6 @@ function pageHeader(doc: Doc, subtitle: string) {
   doc.line(PAGE.margin, PAGE.margin + 3, PAGE.width - PAGE.margin, PAGE.margin + 3);
 }
 
-/** Pavé de verdict : rectangle teinté + libellé, comme le badge de l'interface. */
 function verdictChip(doc: Doc, analysis: Analysis, x: number, y: number) {
   const label = verdictLabel(analysis).toUpperCase();
   const tone = analysis.verdict ? VERDICTS[analysis.verdict].tone : "faint";
@@ -270,7 +280,6 @@ function scoreBlock(
   write(doc, band || "Non calcule", x, y + 15);
 }
 
-/** Écrit une section « libellé : valeur » sur deux colonnes alignées. */
 function dataTable(doc: Doc, x: number, y: number, width: number, rows: [string, string][]): number {
   let cursor = y;
   for (const [label, value] of rows) {
@@ -300,37 +309,40 @@ function renderReportPage(doc: Doc, analysis: Analysis) {
   verdictChip(doc, analysis, PAGE.margin + doc.getTextWidth(domainName(analysis)) + 6, y);
 
   y += 8;
+  doc.setFont("helvetica", "normal").setFontSize(9).setTextColor(INK.muted);
   if (analysis.verdict) {
-    doc.setFont("helvetica", "normal").setFontSize(9).setTextColor(INK.muted);
     write(doc, VERDICTS[analysis.verdict].hint, PAGE.margin, y);
+    y += 10;
   } else {
-    doc.setFont("helvetica", "normal").setFontSize(9).setTextColor(INK.muted);
-    write(
-    doc,
-      "Aucun score n'a pu etre produit pour ce domaine.",
-      PAGE.margin,
-      y,
-    );
+    const reason =
+      analysis.risk_score === null
+        ? NO_SCORE_MESSAGE
+        : "Aucun score n'a pu etre produit pour ce domaine.";
+    y = writeWrapped(doc, reason, PAGE.margin, y, CONTENT_WIDTH) + 6;
   }
 
-  // Scores
-  y += 10;
-  const riskColor =
-    analysis.risk_score === null ? INK.faint : TONE_INK[riskBand(analysis.risk_score).tone];
-  scoreBlock(doc, PAGE.margin, y, "Score de risque", analysis.risk_score, bandLabel(analysis, "risk"), riskColor);
+  const scoreCols = [PAGE.margin, PAGE.margin + 44, PAGE.margin + 88, PAGE.margin + 132];
   scoreBlock(
-    doc,
-    PAGE.margin + 60,
-    y,
-    "Score d'autorite",
-    analysis.authority_score,
-    bandLabel(analysis, "authority"),
-    INK.accent,
+    doc, scoreCols[0], y, "Risque",
+    analysis.risk_score, bandLabel(analysis, "risk"), bandColor(analysis, "risk", INK.faint),
+  );
+  scoreBlock(
+    doc, scoreCols[1], y, "Autorite",
+    analysis.authority_score, bandLabel(analysis, "authority"), INK.accent,
+  );
+  scoreBlock(
+    doc, scoreCols[2], y, "Warm-up",
+    analysis.email_health_score, bandLabel(analysis, "email_health"),
+    bandColor(analysis, "email_health", INK.faint),
+  );
+  scoreBlock(
+    doc, scoreCols[3], y, "Rentabilite",
+    analysis.profitability_score, bandLabel(analysis, "profitability"),
+    bandColor(analysis, "profitability", INK.faint),
   );
 
   y += 26;
 
-  // Facteurs explicatifs
   const factors = sortFactors(analysis.shap_values ?? []).slice(0, 8);
   if (factors.length > 0) {
     sectionTitle(doc, PAGE.margin, y, "Ce qui a pese dans le score");
@@ -357,7 +369,6 @@ function renderReportPage(doc: Doc, analysis: Analysis) {
     y += 4;
   }
 
-  // Alertes
   const alerts = analysis.alerts ?? [];
   if (alerts.length > 0) {
     sectionTitle(doc, PAGE.margin, y, "Signaux a connaitre");
@@ -381,7 +392,6 @@ function renderReportPage(doc: Doc, analysis: Analysis) {
     y += 8;
   }
 
-  // Données collectées
   const { domain, metric } = analysis;
   sectionTitle(doc, PAGE.margin, y, "Donnees collectees");
   y += 5;
@@ -441,7 +451,6 @@ function renderReportPage(doc: Doc, analysis: Analysis) {
   }
 }
 
-/** Page de synthèse d'un lot : le tableau comparatif, trié par risque croissant. */
 function renderSummaryPage(doc: Doc, analyses: Analysis[]) {
   pageHeader(doc, `Analyse de ${analyses.length} domaines - ${today()}`);
 
@@ -503,7 +512,6 @@ function renderSummaryPage(doc: Doc, analyses: Analysis[]) {
   );
 }
 
-/** Génère le PDF : synthèse comparative si lot, puis une page par domaine. */
 export async function exportPdf(analyses: Analysis[]) {
   if (analyses.length === 0) return;
 

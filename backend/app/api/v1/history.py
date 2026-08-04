@@ -16,6 +16,7 @@ from app.schemas.analysis import (
     VerdictFilter,
     VERDICT_FILTER_TO_STORED,
 )
+from app.schemas.warmup import WarmupSummary
 
 router = APIRouter(prefix="/analyses", tags=["analyses"])
 
@@ -23,7 +24,9 @@ router = APIRouter(prefix="/analyses", tags=["analyses"])
 async def get_history(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-    sort_by: Literal["requested_at", "risk_score", "authority_score"] = Query("requested_at"),
+    sort_by: Literal[
+        "requested_at", "risk_score", "authority_score", "profitability_score"
+    ] = Query("requested_at"),
     order: Literal["asc", "desc"] = Query("desc"),
     verdict: Optional[VerdictFilter] = Query(None),
     db: Session = Depends(get_db),
@@ -44,6 +47,7 @@ async def get_history(
                 profitability_score=a.profitability_score,
                 email_health_score=a.email_health_score,
                 verdict=a.verdict, requested_at=a.requested_at, status=a.status,
+                warmup=WarmupSummary.model_validate(a.warmup_file) if a.warmup_file else None,
             )
             for a in analyses
         ]
@@ -80,6 +84,7 @@ async def get_all_history(
             id=a.id, domain_name=a.domain.domain_name if a.domain else "",
             risk_score=a.risk_score, authority_score=a.authority_score,
             verdict=a.verdict, requested_at=a.requested_at, status=a.status,
+            warmup=WarmupSummary.model_validate(a.warmup_file) if a.warmup_file else None,
         )
         for a in analyses
     ]

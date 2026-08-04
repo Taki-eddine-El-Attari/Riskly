@@ -3,7 +3,6 @@ import { cn } from "@/lib/utils";
 import { toneText, VERDICT_ORDER, VERDICTS } from "@/lib/scores";
 import type { Analysis, Verdict } from "@/types/analysis";
 
-/** Risque croissant : le candidat le plus sûr en tête (PRD, UC-03 étape 7). */
 function byRiskAscending(a: Analysis, b: Analysis): number {
   const left = a.risk_score ?? Number.POSITIVE_INFINITY;
   const right = b.risk_score ?? Number.POSITIVE_INFINITY;
@@ -26,11 +25,6 @@ function groupByVerdict(analyses: Analysis[]): [Verdict | "sans_verdict", Analys
     .map((key) => [key, groups.get(key)!.sort(byRiskAscending)]);
 }
 
-/**
- * Les rapports d'un lot, groupés par verdict et triés par risque croissant —
- * la lecture attendue quand on compare plusieurs candidats.
- * Un seul domaine : la carte s'affiche seule, dépliée, sans en-tête de groupe.
- */
 export function ReportList({
   analyses,
   className,

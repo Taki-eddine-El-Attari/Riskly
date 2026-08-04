@@ -2,13 +2,6 @@ import { cn } from "@/lib/utils";
 import { factorDirection, factorLabel, factorValue, sortFactors } from "@/lib/factors";
 import type { Factor } from "@/types/analysis";
 
-/**
- * Ce qui a pesé dans le score, en français courant.
- *
- * Chaque signal se lit sur un axe central : à droite il pousse le risque vers
- * le haut, à gauche il le tire vers le bas. La longueur de la barre dit le
- * poids relatif — jamais une valeur brute de modèle (PRD, UC-04).
- */
 export function FactorList({
   factors,
   limit = 6,
@@ -45,7 +38,6 @@ export function FactorList({
               </div>
 
               <div className="mt-1.5 flex items-center gap-3">
-                {/* Axe central : gauche = allège le risque, droite = l'alourdit. */}
                 <div className="relative h-1.5 flex-1 rounded-full bg-bg">
                   <span
                     className="absolute inset-y-[-3px] left-1/2 w-px bg-border-hover"

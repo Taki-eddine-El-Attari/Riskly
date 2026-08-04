@@ -5,8 +5,6 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class WarmupInfo(BaseModel):
-    """Métadonnées d'un CSV de warm-up (jamais son contenu)."""
-
     model_config = ConfigDict(from_attributes=True)
 
     id: uuid.UUID
@@ -16,3 +14,11 @@ class WarmupInfo(BaseModel):
     content_type: Optional[str] = None
     sha256: str = Field(..., description="Empreinte SHA-256 du contenu.")
     created_at: Optional[datetime] = None
+
+
+class WarmupSummary(BaseModel):
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    name: str = Field(..., validation_alias="original_name")
+    size: int = Field(..., ge=0, validation_alias="size_bytes")
+    rows: Optional[int] = Field(None, ge=0)

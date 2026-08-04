@@ -7,15 +7,6 @@ from app.models.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 
 class WarmupFile(UUIDPrimaryKeyMixin, TimestampMixin, Base):
-    """Métadonnées d'un CSV de warm-up joint à une analyse.
-
-    Le contenu du fichier n'est JAMAIS stocké en base : seul l'`object_key`
-    (chemin relatif opaque, à base d'UUID) pointe vers le fichier posé sur le
-    volume privé chiffré. `original_name` n'est qu'une métadonnée d'affichage,
-    jamais utilisée pour construire un chemin (protection contre le path
-    traversal). `sha256` permet de vérifier l'intégrité au téléchargement.
-    """
-
     __tablename__ = "warmup_file"
 
     # Un fichier de warm-up au plus par analyse (relation 1-1).
@@ -42,7 +33,6 @@ class WarmupFile(UUIDPrimaryKeyMixin, TimestampMixin, Base):
 
     # Clé de stockage opaque (chemin relatif, jamais exposé au client).
     object_key: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
-    # Empreinte du contenu, pour vérification d'intégrité.
     sha256: Mapped[str] = mapped_column(String(64), nullable=False)
 
     analysis: Mapped["Analysis"] = relationship(back_populates="warmup_file")

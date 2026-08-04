@@ -1,44 +1,25 @@
 import { useCallback, useEffect, useState } from "react";
 
-/**
- * Gestion du thème clair / sombre.
- *
- * Le SOMBRE est le défaut (dark-first). Le CLAIR s'active en posant la classe
- * `.light` sur <html> ; les tokens CSS correspondants vivent dans index.css.
- * La classe initiale est posée par un script anti-FOUC dans index.html AVANT
- * le rendu React, pour éviter tout flash au chargement — ce hook se contente
- * ensuite de lire, basculer et persister le choix.
- */
-
 export type Theme = "dark" | "light";
 
 export const THEME_STORAGE_KEY = "riskly-theme";
 
-/** Lit le thème réellement appliqué au document (source de vérité = le DOM). */
 function readTheme(): Theme {
   if (typeof document === "undefined") return "dark";
   return document.documentElement.classList.contains("light") ? "light" : "dark";
 }
 
-/** Applique un thème : classe sur <html>, persistance, sans toucher au state. */
 function applyTheme(theme: Theme) {
   document.documentElement.classList.toggle("light", theme === "light");
   try {
     localStorage.setItem(THEME_STORAGE_KEY, theme);
-  } catch {
-    // stockage indisponible (mode privé, quota) : le thème reste valable pour la session.
-  }
+  } catch {}
 }
 
 type ViewTransitionDocument = Document & {
   startViewTransition?: (callback: () => void) => unknown;
 };
 
-/**
- * Applique la mutation dans un fondu plein écran (View Transition API :
- * fondu croisé « fade in / out » de toute la page). Repli immédiat si l'API
- * n'existe pas ou si l'utilisateur réduit les animations.
- */
 function startThemeTransition(mutate: () => void) {
   const doc = document as ViewTransitionDocument;
   const prefersReduced =
@@ -64,7 +45,6 @@ export function useTheme() {
     setTheme(readTheme() === "light" ? "dark" : "light");
   }, [setTheme]);
 
-  // Synchronise les onglets ouverts et les changements de classe DOM.
   useEffect(() => {
     function updateFromDOM() {
       setThemeState(readTheme());

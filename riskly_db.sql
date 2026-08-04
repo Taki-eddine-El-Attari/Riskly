@@ -1,4 +1,4 @@
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     username VARCHAR(100) UNIQUE NOT NULL,
     telegram_id BIGINT UNIQUE,
@@ -11,14 +11,14 @@ CREATE TABLE users (
     created_at TIMESTAMP DEFAULT NOW()
 );
 
-CREATE UNIQUE INDEX idx_unique_superadmin
+CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_superadmin
     ON users ((role))
     WHERE role = 'superadmin';
 
-CREATE INDEX idx_users_telegram_id ON users(telegram_id);
+CREATE INDEX IF NOT EXISTS idx_users_telegram_id ON users(telegram_id);
 
 
-CREATE TABLE domain (
+CREATE TABLE IF NOT EXISTS domain (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     domain_name VARCHAR(255) UNIQUE NOT NULL,
     tld VARCHAR(20),
@@ -30,7 +30,7 @@ CREATE TABLE domain (
     first_analysis TIMESTAMP
 );
 
-CREATE TABLE domain_metric (
+CREATE TABLE IF NOT EXISTS domain_metric (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     domain_id UUID NOT NULL REFERENCES domain(id) ON DELETE CASCADE,
     is_blacklisted BOOLEAN DEFAULT FALSE,
@@ -44,7 +44,7 @@ CREATE TABLE domain_metric (
     calculated_at TIMESTAMP DEFAULT NOW()
 );
 
-CREATE TABLE model (
+CREATE TABLE IF NOT EXISTS model (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     version VARCHAR(50),
     algorithm VARCHAR(100),
@@ -54,7 +54,7 @@ CREATE TABLE model (
     training_date TIMESTAMP
 );
 
-CREATE TABLE analysis (
+CREATE TABLE IF NOT EXISTS analysis (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES users(id) ON DELETE SET NULL,
     domain_id UUID NOT NULL REFERENCES domain(id) ON DELETE CASCADE,
@@ -64,13 +64,16 @@ CREATE TABLE analysis (
     profitability_score DECIMAL(5,2),
     risk_score DECIMAL(5,2),
     authority_score DECIMAL(5,2),
+    -- Sortie brute du modele de warm-up (0-100). NULL quand aucun CSV de
+    -- warm-up n'a ete fourni : le modele n'est alors pas execute du tout.
+    email_health_score DECIMAL(5,2),
     verdict VARCHAR(20) CHECK (verdict IN ('Bon achat', 'Risque', 'A eviter')),
     shap_values JSONB,
     requested_at TIMESTAMP DEFAULT NOW(),
     completed_at TIMESTAMP
 );
 
-CREATE TABLE api_log (
+CREATE TABLE IF NOT EXISTS api_log (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     analysis_id UUID REFERENCES analysis(id) ON DELETE CASCADE,
     api_source VARCHAR(50),
@@ -80,7 +83,7 @@ CREATE TABLE api_log (
     call_date TIMESTAMP DEFAULT NOW()
 );
 
-CREATE TABLE traffic_history (
+CREATE TABLE IF NOT EXISTS traffic_history (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     domain_id UUID NOT NULL REFERENCES domain(id) ON DELETE CASCADE,
     day_date DATE,
@@ -92,7 +95,7 @@ CREATE TABLE traffic_history (
     reply_rate DECIMAL(5,2)
 );
 
-CREATE TABLE reputation_event (
+CREATE TABLE IF NOT EXISTS reputation_event (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     domain_id UUID NOT NULL REFERENCES domain(id) ON DELETE CASCADE,
     source VARCHAR(50),
@@ -102,7 +105,7 @@ CREATE TABLE reputation_event (
     exit_date DATE
 );
 
-CREATE TABLE acquisition_result (
+CREATE TABLE IF NOT EXISTS acquisition_result (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     domain_id UUID UNIQUE NOT NULL REFERENCES domain(id) ON DELETE CASCADE,
     acquisition_date DATE,
@@ -115,10 +118,24 @@ CREATE TABLE acquisition_result (
     observed_roi DECIMAL(6,2)
 );
 
-CREATE INDEX idx_analysis_user_id ON analysis(user_id);
-CREATE INDEX idx_analysis_domain_id ON analysis(domain_id);
-CREATE INDEX idx_domain_metric_domain_id ON domain_metric(domain_id);
-CREATE INDEX idx_api_log_analysis_id ON api_log(analysis_id);
-CREATE INDEX idx_traffic_history_domain_id ON traffic_history(domain_id);
-CREATE INDEX idx_reputation_event_domain_id ON reputation_event(domain_id);
-CREATE INDEX idx_domain_domain_name ON domain(domain_name);
+CREATE TABLE IF NOT EXISTS warmup_file (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    analysis_id UUID UNIQUE NOT NULL REFERENCES analysis(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    original_name VARCHAR(255) NOT NULL,
+    content_type VARCHAR(120),
+    size_bytes INT NOT NULL,
+    rows INT,
+    object_key VARCHAR(255) UNIQUE NOT NULL,
+    sha256 VARCHAR(64) NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_analysis_user_id ON analysis(user_id);
+CREATE INDEX IF NOT EXISTS idx_analysis_domain_id ON analysis(domain_id);
+CREATE INDEX IF NOT EXISTS idx_domain_metric_domain_id ON domain_metric(domain_id);
+CREATE INDEX IF NOT EXISTS idx_api_log_analysis_id ON api_log(analysis_id);
+CREATE INDEX IF NOT EXISTS idx_traffic_history_domain_id ON traffic_history(domain_id);
+CREATE INDEX IF NOT EXISTS idx_reputation_event_domain_id ON reputation_event(domain_id);
+CREATE INDEX IF NOT EXISTS idx_domain_domain_name ON domain(domain_name);
+CREATE INDEX IF NOT EXISTS idx_warmup_file_user_id ON warmup_file(user_id);

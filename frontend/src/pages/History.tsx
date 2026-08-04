@@ -40,20 +40,20 @@ import type { AnalysisSummary, Verdict } from "@/types/analysis";
 const PAGE_SIZE = 10;
 
 type VerdictFilter = Verdict | "all";
-type Sort = "recent" | "risk_asc" | "risk_desc";
+type Sort = "recent" | "profitability_asc" | "profitability_desc";
 
 const SORTS: { value: Sort; label: string }[] = [
   { value: "recent", label: "Plus récentes" },
-  { value: "risk_asc", label: "Risque croissant" },
-  { value: "risk_desc", label: "Risque décroissant" },
+  { value: "profitability_asc", label: "Rentabilité croissante" },
+  { value: "profitability_desc", label: "Rentabilité décroissante" },
 ];
 
 function sortParams(sort: Sort): {
-  sortBy: "requested_at" | "risk_score";
+  sortBy: "requested_at" | "profitability_score";
   order: "asc" | "desc";
 } {
-  if (sort === "risk_asc") return { sortBy: "risk_score", order: "asc" };
-  if (sort === "risk_desc") return { sortBy: "risk_score", order: "desc" };
+  if (sort === "profitability_asc") return { sortBy: "profitability_score", order: "asc" };
+  if (sort === "profitability_desc") return { sortBy: "profitability_score", order: "desc" };
   return { sortBy: "requested_at", order: "desc" };
 }
 
@@ -105,7 +105,6 @@ export default function History() {
       </section>
 
       <section className="mx-auto max-w-6xl px-6 py-10">
-        {/* Barre de filtres */}
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-1.5">
             <FilterChip active={verdict === "all"} onClick={() => changeFilter("all")}>
@@ -168,8 +167,6 @@ export default function History() {
     </AppShell>
   );
 }
-
-// ── Ligne d'historique ───────────────────────────────────────────────────────
 
 type ScoreKind = "risk" | "authority" | "profitability" | "email_health";
 
@@ -357,24 +354,18 @@ function HistoryRow({ item }: { item: AnalysisSummary }) {
           )}
 
           {detail.data && (
-            <>
-              <div className="mb-6 flex items-center justify-end gap-2">
-                <DownloadMenu
-                  analyses={[detail.data]}
-                  variant="outline"
-                  label="Télécharger"
-                />
-              </div>
-              <ReportDetail analysis={detail.data} />
-            </>
+            <ReportDetail
+              analysis={detail.data}
+              headerActions={
+                <DownloadMenu analyses={[detail.data]} variant="outline" label="Télécharger" />
+              }
+            />
           )}
         </div>
       )}
     </li>
   );
 }
-
-// ── Sous-composants d'état ───────────────────────────────────────────────────
 
 function FilterChip({
   active,
@@ -402,11 +393,6 @@ function FilterChip({
   );
 }
 
-/**
- * Menu de tri façon select moderne, bâti sur le `dropdown-menu` maison (Radix) —
- * même grammaire que le reste de l'app, surface elevated, focus cyan, coche sur
- * l'option active. Aucune dépendance supplémentaire.
- */
 function SortSelect({
   value,
   onChange,

@@ -1,139 +1,109 @@
-import { Fragment, useState } from "react";
+import { ArrowDown, Scale, ShieldAlert } from "lucide-react";
 import { BlurFade } from "./effects/BlurFade";
 
-type Verdict = "good" | "risky" | "avoid";
+type Tone = "avoid" | "accent" | "good" | "risky";
 
-const verdictStyle: Record<Verdict, string> = {
-  good: "border-good/30 bg-good/10 text-good",
-  risky: "border-risky/30 bg-risky/10 text-risky",
-  avoid: "border-avoid/30 bg-avoid/10 text-avoid",
+const toneText: Record<Tone, string> = {
+  avoid: "text-avoid",
+  accent: "text-accent",
+  good: "text-good",
+  risky: "text-risky",
 };
 
-const verdictHoverStyle: Record<Verdict, string> = {
-  good: "border-good bg-good/25 shadow-[0_0_20px_rgba(34,197,94,0.3)]",
-  risky: "border-risky bg-risky/25 shadow-[0_0_20px_rgba(245,158,11,0.3)]",
-  avoid: "border-avoid bg-avoid/25 shadow-[0_0_20px_rgba(239,68,68,0.3)]",
+const toneBorder: Record<Tone, string> = {
+  avoid: "border-avoid/30",
+  accent: "border-accent/30",
+  good: "border-good/30",
+  risky: "border-risky/30",
 };
 
-const verdictLabel: Record<Verdict, string> = {
-  good: "Bon achat",
-  risky: "Risqué",
-  avoid: "À éviter",
-};
-
-const matrix: Verdict[][] = [
-  ["good", "good", "risky"],
-  ["risky", "risky", "avoid"],
-  ["avoid", "avoid", "avoid"],
-];
-
-const riskLabels = [
-  { name: "Risque faible", band: "0–25" },
-  { name: "Risque modéré", band: "26–60" },
-  { name: "Risque élevé", band: "61–100" },
-];
-
-const authorityLabels = [
-  { name: "Autorité forte", band: "66–100" },
-  { name: "Autorité correcte", band: "31–65" },
-  { name: "Autorité faible", band: "0–30" },
+const verdicts: { label: string; rule: string; tone: Tone }[] = [
+  { label: "Bon achat", rule: "score de valeur ≥ 60 %", tone: "good" },
+  { label: "Risqué", rule: "score de valeur ≥ 30 %", tone: "risky" },
+  { label: "À éviter", rule: "score de valeur < 30 %", tone: "avoid" },
 ];
 
 export default function DecisionMatrix() {
-  const [hovered, setHovered] = useState<{ row: number; col: number } | null>(null);
-
   return (
     <section className="mx-auto max-w-6xl px-6 py-24">
       <BlurFade inView>
         <h2 className="text-center font-display text-3xl font-bold md:text-4xl">
-          La matrice de décision
+          Comment le verdict est calculé
         </h2>
         <p className="mx-auto mt-4 max-w-xl text-center text-text-muted">
-          Chaque domaine se lit sur deux axes, le risque et l'autorité. Le
-          risque prime : un domaine à risque élevé finit sur « À éviter », même
-          quand son autorité est forte.
+          Trois étapes, dans cet ordre : la sécurité prime toujours sur la
+          valeur, jamais l'inverse.
         </p>
       </BlurFade>
 
-      <BlurFade inView delay={0.15}>
-        <div className="mx-auto mt-14 max-w-2xl">
-          <div className="grid grid-cols-[auto_1fr_1fr_1fr] gap-2">
-            <span />
-            {authorityLabels.map((a, ci) => {
-              const isColActive = hovered?.col === ci;
-              return (
-                <span
-                  key={a.name}
-                  className={`flex flex-col items-center pb-2 text-center font-mono text-xs transition-all duration-200 ${
-                    isColActive
-                      ? "scale-105 font-bold text-accent drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]"
-                      : hovered
-                      ? "text-text-faint/50"
-                      : "text-text-faint"
-                  }`}
-                >
-                  {a.name}
-                  <span
-                    className={`text-[10px] transition-colors ${
-                      isColActive ? "text-accent/90 font-semibold" : "text-text-faint/70"
-                    }`}
-                  >
-                    {a.band}
-                  </span>
-                </span>
-              );
-            })}
-
-            {matrix.map((row, ri) => {
-              const isRowActive = hovered?.row === ri;
-              return (
-                <Fragment key={riskLabels[ri].name}>
-                  <span
-                    className={`flex flex-col justify-center pr-3 font-mono text-xs transition-all duration-200 ${
-                      isRowActive
-                        ? "scale-105 font-bold text-accent drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]"
-                        : hovered
-                        ? "text-text-faint/50"
-                        : "text-text-faint"
-                    }`}
-                  >
-                    {riskLabels[ri].name}
-                    <span
-                      className={`text-[10px] transition-colors ${
-                        isRowActive ? "text-accent/90 font-semibold" : "text-text-faint/70"
-                      }`}
-                    >
-                      {riskLabels[ri].band}
-                    </span>
-                  </span>
-                  {row.map((v, ci) => {
-                    const isHovered = hovered?.row === ri && hovered?.col === ci;
-
-                    return (
-                      <div
-                        key={`${ri}-${ci}`}
-                        onMouseEnter={() => setHovered({ row: ri, col: ci })}
-                        onMouseLeave={() => setHovered(null)}
-                        className={`relative flex h-20 cursor-pointer items-center justify-center rounded-lg border font-mono text-xs font-medium uppercase tracking-wider transition-all duration-200 md:h-24 ${
-                          isHovered
-                            ? `z-10 scale-[1.04] ${verdictHoverStyle[v]}`
-                            : verdictStyle[v]
-                        }`}
-                      >
-                        {verdictLabel[v]}
-                      </div>
-                    );
-                  })}
-                </Fragment>
-              );
-            })}
+      <div className="mx-auto mt-14 flex max-w-2xl flex-col items-center gap-3">
+        <div className={`w-full rounded-xl border ${toneBorder.avoid} bg-bg-elevated p-6`}>
+          <div className="flex items-center gap-3">
+            <ShieldAlert className={`size-5 shrink-0 ${toneText.avoid}`} aria-hidden />
+            <span className="font-mono text-xs uppercase tracking-widest text-text-faint">
+              Étape 1 · Verrou sécurité
+            </span>
           </div>
-          <p className="mt-4 text-center font-mono text-xs text-text-faint">
-            Les alertes (domaine très récent, base de menaces, historique
-            discontinu) éclairent la lecture sans jamais changer le verdict.
+          <p className="mt-3 font-mono text-sm text-text">
+            Score de risque ≥ 50 % <span className="text-text-faint">→</span>{" "}
+            <span className={toneText.avoid}>DANGEREUX</span>
+          </p>
+          <p className="mt-2 text-sm leading-relaxed text-text-muted">
+            Veto immédiat, quels que soient l'autorité ou le warm-up : un
+            domaine suspect n'est jamais « rattrapé » par un bon score
+            ailleurs.
           </p>
         </div>
-      </BlurFade>
+
+        <ArrowDown className="size-4 shrink-0 text-text-faint" aria-hidden />
+
+        <div className={`w-full rounded-xl border ${toneBorder.accent} bg-bg-elevated p-6`}>
+          <div className="flex items-center gap-3">
+            <Scale className={`size-5 shrink-0 ${toneText.accent}`} aria-hidden />
+            <span className="font-mono text-xs uppercase tracking-widest text-text-faint">
+              Étape 2 · Score de valeur
+            </span>
+          </div>
+          <p className="mt-3 font-mono text-sm text-text">
+            0,5 × autorité + 0,5 × réputation email
+          </p>
+          <p className="mt-2 text-sm leading-relaxed text-text-muted">
+            Sans CSV de warm-up, le score repose sur l'autorité seule — la
+            réputation email absente n'est jamais comptée comme mauvaise.
+            Le résultat est ensuite réduit par le score de risque, même
+            sous le seuil de veto.
+          </p>
+        </div>
+
+        <ArrowDown className="size-4 shrink-0 text-text-faint" aria-hidden />
+
+        <div className="w-full rounded-xl border border-border bg-bg-elevated p-6">
+          <div className="flex items-center gap-3">
+            <span className="font-mono text-xs uppercase tracking-widest text-text-faint">
+              Étape 3 · Verdict
+            </span>
+          </div>
+          <ul className="mt-4 space-y-2">
+            {verdicts.map((v) => (
+              <li
+                key={v.label}
+                className={`flex items-center justify-between gap-4 rounded-lg border ${toneBorder[v.tone]} bg-bg/40 px-4 py-2.5`}
+              >
+                <span className={`font-mono text-xs font-medium uppercase tracking-wider ${toneText[v.tone]}`}>
+                  {v.label}
+                </span>
+                <span className="font-mono text-xs text-text-faint">{v.rule}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+
+      <p className="mx-auto mt-6 max-w-xl text-center font-mono text-xs text-text-faint">
+        Domaine muet en DNS (aucun rang, aucun backlink) : Riskly renvoie
+        « Données insuffisantes » plutôt qu'un verdict forcé sur un modèle
+        entraîné uniquement sur des domaines actifs.
+      </p>
     </section>
   );
 }

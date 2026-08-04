@@ -61,7 +61,7 @@ export function TelegramLogin({ className }: { className?: string }) {
       { bot_id: TELEGRAM_BOT_ID, request_access: "write" },
       (user) => {
         if (!user) {
-          setPending(false); // popup fermée / refusée
+          setPending(false);
           return;
         }
         authApi
@@ -72,7 +72,6 @@ export function TelegramLogin({ className }: { className?: string }) {
             return refreshUser();
           })
           .then(() => {
-            // Laisse le message de confirmation visible un instant.
             setTimeout(() => navigate("/app", { replace: true }), 1400);
           })
           .catch(() => {
