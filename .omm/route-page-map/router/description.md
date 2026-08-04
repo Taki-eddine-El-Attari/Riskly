@@ -1,0 +1,1 @@
+`App.tsx`: declares all routes via react-router `Routes`/`Route`. Public routes render directly; protected routes are nested under a single `<Route element={<ProtectedRoute />}>`. Holds no logic beyond route-to-component mapping.

@@ -1,0 +1,15 @@
+created: 2026-08-04T14:29:44.471Z
+updated: 2026-08-04T14:30:02.580Z
+update_count: 5
+last_field: todo
+git_commit: 9266a4d
+git_branch: claude/tool-execution-project-1w69yr
+children:
+  - analysis-service
+  - backend-api
+  - collectors
+  - external-apis
+  - frontend
+  - ml-scoring
+  - postgres
+  - warmup-storage

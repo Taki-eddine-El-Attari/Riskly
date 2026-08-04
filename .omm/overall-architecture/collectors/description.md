@@ -1,0 +1,1 @@
+Signal collectors (`backend/app/collectors/`) — each wraps one external source and returns a typed result. `analysis_service._collect_all` runs them concurrently via `asyncio.gather(..., return_exceptions=True)`, so one failing source never sinks the whole analysis. Rank and backlinks collectors keep their own in-process TTL LRU caches.

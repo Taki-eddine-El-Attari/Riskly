@@ -1,0 +1,1 @@
+Cross-cutting utilities (`frontend/src/lib/`), no business logic: `api-client.ts` (fetch wrapper — baseURL, `credentials: include`, 90s timeout, JSON/multipart handling, ApiError), `constants.ts` (score bands, verdict colors, 5-domain limit), `utils.ts` (cn), plus report export, scores, factors, csvDomains, asyncPool helpers.

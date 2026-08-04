@@ -1,0 +1,1 @@
+The inbound request. The frontend (`analyses.api.ts`) sends JSON when no warm-up file is attached and multipart/form-data when one is, always with `credentials: include` so the session cookie travels. A 90s client-side timeout bounds the wait.

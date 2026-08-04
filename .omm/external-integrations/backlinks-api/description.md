@@ -1,0 +1,1 @@
+`BacklinksCollector` → an internal backlinks service (`INTERNAL_TOOL_API_URL` + `INTERNAL_TOOL_API_KEY`). Returns backlink count, referring domains, and toxic ratio, feeding both the risk features and the authority sub-score. Own TTL LRU cache.

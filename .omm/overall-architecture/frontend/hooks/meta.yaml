@@ -1,0 +1,9 @@
+created: 2026-08-04T14:30:46.367Z
+updated: 2026-08-04T14:30:46.368Z
+update_count: 1
+last_field: description
+kind: nested-class
+title: hooks
+children: []
+parentPath:
+  - frontend

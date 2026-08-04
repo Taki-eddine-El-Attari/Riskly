@@ -1,0 +1,1 @@
+`BaseCollector` (`base.py`): shared synchronous HTTP request helper with tenacity retry/backoff on timeouts and 5xx, `map_http_error` (429 → rate-limit, 502/503 → unavailable), and `follow_redirects=True` (critical for RDAP, which 302s to registry servers). Used by the WHOIS and blacklist collectors.

@@ -1,0 +1,1 @@
+Presentation layer (`frontend/src/components/`): `ui/` shadcn primitives, `auth/` login/register building blocks incl. TelegramLogin, `landing/` marketing sections + visual effects, and `analysis/` — the product core (DomainInput, AnalysisLoader, ReportList/Card/Detail, ScoreGauge, VerdictBadge, FactorGauges, AlertList, CSV import dialogs). Receives ready data and displays it.

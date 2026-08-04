@@ -1,0 +1,1 @@
+Plain DNS resolution used two ways: `NameserverCollector` counts NS records (liveness signal — no NS means a dead/expired domain, which triggers INSUFFICIENT_DATA), and `GeoCollector` resolves the A record before the geo lookup. Uses dnspython / socket, no external key.

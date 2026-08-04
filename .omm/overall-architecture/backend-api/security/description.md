@@ -1,0 +1,1 @@
+`core/security.py`: password hashing/verification (bcrypt), Telegram HMAC signature check, session cookie set/clear, `get_current_user` (reads user id from the session), and role dependencies (`require_authenticated`, `require_admin`, `require_superadmin`). These are the FastAPI dependencies every protected route depends on.

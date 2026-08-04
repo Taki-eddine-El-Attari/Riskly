@@ -1,0 +1,1 @@
+TanStack Query bridge between the api layer and the UI (`frontend/src/hooks/`): `useAnalyses` (long synchronous POST), `useHistory` (GET + cache), `useDeleteAnalysis` (DELETE + history-cache invalidation), `useBulkAnalyses`, `useAuth`. Encapsulates loading/error state and cache keys.

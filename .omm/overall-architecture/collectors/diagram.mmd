@@ -1,0 +1,10 @@
+graph LR
+    base["Base Collector\nbackend/app/collectors/base.py"]
+    whois["WHOIS/RDAP\nbackend/app/collectors/whois_rdap.py"]
+    blacklist["DNSBL Blacklist\nbackend/app/collectors/blacklist.py"]
+    rank["Rank\nbackend/app/collectors/rank.py"]
+    backlinks["Backlinks\nbackend/app/collectors/backlinks.py"]
+    network["Geo + Nameservers\nbackend/app/collectors/network.py"]
+
+    whois -->|"HTTP with retry/backoff"| base
+    blacklist -->|"HTTP with retry/backoff"| base

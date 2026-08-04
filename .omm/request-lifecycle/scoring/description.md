@@ -1,0 +1,1 @@
+`quick_score` runs the risk model, optionally the warm-up model, and the decision matrix, returning verdict + risk/authority/email-health/profitability scores + SHAP contributions. When signals are insufficient (dead domain) it returns INSUFFICIENT_DATA, and the service publishes null scores rather than a misleading zero.

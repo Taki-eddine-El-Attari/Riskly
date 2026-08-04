@@ -1,0 +1,1 @@
+`core/cache.py`: returns a recent COMPLETED analysis for the same domain (scoped per-user by default, TTL from `ANALYSIS_CACHE_TTL_HOURS`). Bypassed when caching is disabled, `force_refresh` is set, or a warm-up CSV is attached (result depends on the file). A hit is flagged `is_cached` with an age and returned immediately.

@@ -1,0 +1,1 @@
+Route-level screens (`frontend/src/pages/`) that assemble components and wire hooks. Public: Landing, Login, Register, TelegramCallback. Protected: Analyze (`/app`, the core product screen), History, ReportPage. Routing is declared in `App.tsx`; `main.tsx` mounts Router + QueryClient + AuthProvider.

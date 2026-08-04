@@ -1,0 +1,1 @@
+FastAPI application (`backend/app/main.py` + `backend/app/api/`). `main.py` builds the app, adds SessionMiddleware (signed HttpOnly cookie) and CORS, registers the RisklyException handler, and mounts the v1 router. `api/v1/router.py` aggregates auth, warmup, history, analyses, and domains routers under `/api/v1`. Auth/role gating lives in `core/security.py`.

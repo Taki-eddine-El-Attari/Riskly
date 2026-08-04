@@ -1,0 +1,1 @@
+Configuration lives in `core/config.py`: `OPEN_PAGERANK_API_KEY`, `INTERNAL_TOOL_API_URL`/`INTERNAL_TOOL_API_KEY` (backlinks), `TELEGRAM_BOT_TOKEN`, and a shared `EXTERNAL_API_TIMEOUT_SECONDS` (default 10s). Synchronous HTTP collectors (WHOIS, blacklist) go through `BaseCollector` with tenacity retry/backoff; rank and backlinks are async with their own TTL LRU caches.

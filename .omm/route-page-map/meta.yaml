@@ -1,0 +1,16 @@
+created: 2026-08-04T14:34:12.790Z
+updated: 2026-08-04T14:34:13.194Z
+update_count: 3
+last_field: context
+git_commit: 9266a4d
+git_branch: claude/tool-execution-project-1w69yr
+children:
+  - analyze
+  - history
+  - landing
+  - login
+  - protected-route
+  - register
+  - report-page
+  - router
+  - telegram-callback

@@ -1,0 +1,9 @@
+created: 2026-08-04T14:31:56.763Z
+updated: 2026-08-04T14:31:56.764Z
+update_count: 1
+last_field: description
+kind: nested-class
+title: profitability-predictor
+children: []
+parentPath:
+  - ml-scoring

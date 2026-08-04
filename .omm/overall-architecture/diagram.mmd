@@ -1,0 +1,25 @@
+graph LR
+    frontend["Frontend SPA\nfrontend/src/"]
+    backend-api["Backend API\nbackend/app/api/"]
+    analysis-service["Analysis Orchestrator\nbackend/app/services/analysis_service.py"]
+    collectors["Signal Collectors\nbackend/app/collectors/"]
+    ml-scoring["ML Scoring\nbackend/app/services/ + app/ml/"]
+    external-apis["External Data Sources\nWHOIS/DNSBL/Rank/Geo"]
+    postgres["PostgreSQL\nbackend/app/models/"]
+    warmup-storage["Warm-up File Store\nbackend/app/services/warmup_storage_service.py"]
+
+    frontend -->|"HTTP + HttpOnly session cookie"| backend-api
+    backend-api -->|"delegates domain analysis"| analysis-service
+    backend-api -->|"reads history / domains"| postgres
+    analysis-service -->|"async fan-out fetch"| collectors
+    collectors -->|"HTTP / DNS lookups"| external-apis
+    analysis-service -->|"risk + profitability + verdict"| ml-scoring
+    analysis-service -->|"persists analysis + metrics + logs"| postgres
+    analysis-service -->|"stores uploaded CSV"| warmup-storage
+
+    classDef external fill:#585b70,stroke:#585b70,color:#cdd6f4
+    classDef store fill:#a6e3a1,stroke:#a6e3a1,color:#1e1e2e
+    classDef entry fill:#89b4fa,stroke:#89b4fa,color:#1e1e2e
+    class external-apis external
+    class postgres,warmup-storage store
+    class frontend entry

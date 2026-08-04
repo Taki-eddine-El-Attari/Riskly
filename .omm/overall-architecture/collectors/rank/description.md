@@ -1,0 +1,1 @@
+`RankCollector` (`rank.py`): async OpenPageRank lookup returning a 0–10 authority score (higher = better). Wraps its own TTL LRU cache and maps rate-limit/timeout errors. Rank is the highest-weighted authority signal in the decision matrix.

@@ -1,0 +1,1 @@
+`ProtectedRoute` requires an authenticated user (from `AuthContext`, itself backed by the session cookie) and can optionally require a role. Unauthenticated access to `/app`, `/history`, or `/history/:id` redirects to login. A `/forgot-password` placeholder route is declared but not yet implemented.

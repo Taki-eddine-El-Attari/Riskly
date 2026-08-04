@@ -1,0 +1,1 @@
+`ProtectedRoute.tsx`: the auth gate. Reads `AuthContext`; if there is no authenticated user (or the required role is missing) it redirects to login, otherwise it renders the nested route via `<Outlet/>`. Wraps Analyze, History, and Report.

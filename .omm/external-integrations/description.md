@@ -1,0 +1,1 @@
+Every third-party dependency the system reaches out to, and why. Six feed the domain analysis (WHOIS, blacklist, rank, backlinks, geo, DNS) and one handles authentication (Telegram login). All analysis integrations are best-effort: `_collect_all` isolates failures per source so a single outage degrades the report instead of breaking it.

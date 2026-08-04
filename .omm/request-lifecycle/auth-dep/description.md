@@ -1,0 +1,1 @@
+`get_current_user` dependency: pulls `user_id` from the session and loads the User, raising 401 if absent/unknown. Establishes the identity used for cache scoping, the concurrency limit, and history ownership.

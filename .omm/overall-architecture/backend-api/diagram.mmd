@@ -1,0 +1,16 @@
+graph LR
+    auth-routes["Auth Routes\nbackend/app/api/v1/auth.py"]
+    analysis-routes["Analysis Routes\nbackend/app/api/v1/domains.py"]
+    domain-routes["Domain Routes\nbackend/app/api/v1/domains.py"]
+    history-routes["History Routes\nbackend/app/api/v1/history.py"]
+    warmup-routes["Warm-up File Routes\nbackend/app/api/v1/warmup.py"]
+    security["Security & Deps\nbackend/app/core/security.py"]
+
+    auth-routes -->|"session cookie via get_current_user"| security
+    analysis-routes -->|"requires authenticated user"| security
+    domain-routes -->|"role gating (user/admin)"| security
+    history-routes -->|"owner/admin checks"| security
+    warmup-routes -->|"owner/admin checks"| security
+
+    classDef entry fill:#89b4fa,stroke:#89b4fa,color:#1e1e2e
+    class auth-routes,analysis-routes,domain-routes,history-routes,warmup-routes entry

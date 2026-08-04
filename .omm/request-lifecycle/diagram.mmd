@@ -1,0 +1,26 @@
+graph LR
+    http-entry["HTTP Request\nPOST /api/v1/analyses"]
+    middleware["Session + CORS\nbackend/app/main.py"]
+    create-route["create_analysis\nbackend/app/api/v1/domains.py"]
+    auth-dep["get_current_user\nbackend/app/core/security.py"]
+    analyze-domain["analyze_domain\nbackend/app/services/analysis_service.py"]
+    cache-lookup["Freshness Cache\nbackend/app/core/cache.py"]
+    collect-all["_collect_all (fan-out)\nbackend/app/collectors/"]
+    scoring["quick_score\nbackend/app/services/scoring_service.py"]
+    persist["Persist + ApiLog\nbackend/app/repositories/analysis_repo.py"]
+    response["AnalysisOut\nbackend/app/schemas/analysis.py"]
+
+    http-entry -->|"signed cookie, CORS"| middleware
+    middleware -->|"route match (json or multipart)"| create-route
+    create-route -->|"resolve session user"| auth-dep
+    auth-dep -->|"user_id + warmup file"| analyze-domain
+    analyze-domain -->|"check fresh analysis first"| cache-lookup
+    cache-lookup -->|"miss → run"| collect-all
+    collect-all -->|"signals dict"| scoring
+    scoring -->|"verdict + scores + SHAP"| persist
+    persist -->|"serialize row"| response
+
+    classDef entry fill:#89b4fa,stroke:#89b4fa,color:#1e1e2e
+    classDef store fill:#a6e3a1,stroke:#a6e3a1,color:#1e1e2e
+    class http-entry entry
+    class persist store

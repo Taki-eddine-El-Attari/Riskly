@@ -1,0 +1,1 @@
+`ProfitabilityPredictor.predict_with_explanation`: returns `success_proba` (email-health) plus top features, from the warm-up XGBoost bundle. Runs only when traffic rows exist; exceptions are caught and downgrade email-health to None rather than failing the analysis.

@@ -1,0 +1,1 @@
+`BlacklistCollector` (`blacklist.py`): DNS queries against DNSBL zones (dbl.spamhaus.org, multi.surbl.org) via dnspython; a hit on any zone sets `is_blacklisted` and records detections. Feeds a hard input to the risk model.

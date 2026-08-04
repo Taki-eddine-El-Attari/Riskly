@@ -1,0 +1,1 @@
+Public marketing page (`Landing.tsx`) stacking the `landing/` sections (Hero, Features, HowItWorks, DecisionMatrix, Sources, FAQ, Footer). Kept separate from the app to keep the authenticated bundle lean. Entry point that funnels visitors to Login/Register.

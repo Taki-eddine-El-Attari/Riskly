@@ -1,0 +1,1 @@
+`network.py` holds two async collectors: `GeoCollector` (resolves the domain to an IP, then queries ip-api.com for the hosting country) and `NameserverCollector` (counts NS records via DNS). NS count doubles as the liveness signal that distinguishes an active domain from a dead/expired one (drives the INSUFFICIENT_DATA verdict).

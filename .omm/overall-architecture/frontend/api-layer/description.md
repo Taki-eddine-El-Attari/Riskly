@@ -1,0 +1,1 @@
+Thin HTTP access functions (`frontend/src/api/`): `auth.api.ts` (register/login/loginTelegram/getCurrentUser/logout) and `analyses.api.ts` (createAnalyses/getHistory/getAnalysis/deleteAnalysis). They call the shared `apiClient` and return typed results; no business logic.

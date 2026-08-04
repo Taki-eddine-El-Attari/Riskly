@@ -1,0 +1,14 @@
+graph LR
+    scoring-service["Scoring Coordinator\nbackend/app/services/scoring_service.py"]
+    feature-builder["Feature Builder\nbackend/app/ml/feature_builder.py"]
+    risk-predictor["Risk Predictor (XGBoost)\nbackend/app/ml/predictor.py"]
+    profitability-predictor["Profitability Predictor (XGBoost)\nbackend/app/ml/profitability_predictor.py"]
+    decision-matrix["Decision Matrix\nbackend/app/services/decision_matrix.py"]
+    explainer["SHAP Explainer\nbackend/app/ml/explainer.py"]
+
+    scoring-service -->|"malicious prob"| risk-predictor
+    scoring-service -->|"email health prob (if CSV)"| profitability-predictor
+    scoring-service -->|"combine → verdict"| decision-matrix
+    scoring-service -->|"feature contributions"| explainer
+    risk-predictor -->|"build risk row"| feature-builder
+    profitability-predictor -->|"build warm-up row"| feature-builder

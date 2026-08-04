@@ -1,0 +1,9 @@
+created: 2026-08-04T14:31:13.715Z
+updated: 2026-08-04T14:31:13.715Z
+update_count: 1
+last_field: description
+kind: nested-class
+title: warmup-routes
+children: []
+parentPath:
+  - backend-api
