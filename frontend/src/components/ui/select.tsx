@@ -4,9 +4,7 @@ import { Check, ChevronDown } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-// Hauteur fixe de chaque option, utilisée pour calculer la hauteur du menu
-// (voir SelectContent) : le menu doit toujours afficher exactement 4 options
-// et faire défiler le reste, quel que soit le nombre total d'options.
+
 const ITEM_HEIGHT_PX = 36;
 const VISIBLE_ITEMS = 4;
 const VIEWPORT_MAX_HEIGHT_PX = ITEM_HEIGHT_PX * VISIBLE_ITEMS;
@@ -61,8 +59,6 @@ function SelectContent({
         {...props}
       >
         <SelectPrimitive.Viewport
-          // Hauteur figée à exactement 4 options (4 × ITEM_HEIGHT_PX) : au-delà,
-          // Radix fait défiler le contenu tout seul, sans logique JS supplémentaire.
           style={{ maxHeight: VIEWPORT_MAX_HEIGHT_PX }}
           className="overflow-y-auto p-1"
         >
