@@ -8,9 +8,13 @@ import { PasswordStrength, scorePassword } from "@/components/auth/PasswordStren
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import * as authApi from "@/api/auth.api";
 import { useAuth } from "@/hooks/useAuth";
 import { ApiError } from "@/lib/api-client";
+
+// Ensemble fermé des entités disponibles (CMH1 à CMH16).
+const ENTITIES = Array.from({ length: 16 }, (_, i) => `CMH${i + 1}`);
 
 interface Errors {
   username?: string;
@@ -18,6 +22,36 @@ interface Errors {
   password?: string;
   confirm?: string;
   form?: string;
+}
+
+// Source unique de vérité pour chaque règle de validation : utilisées à la
+// fois par les onChange (validation en direct) et par submit(), pour éviter
+// que les deux se désynchronisent (c'était la cause des bugs précédents).
+function validateUsername(value: string): string | undefined {
+  return value.trim().length < 3
+    ? "Choisissez un nom d'utilisateur d'au moins 3 caractères."
+    : undefined;
+}
+
+function validateEntity(value: string): string | undefined {
+  return value.trim().length === 0 ? "Veuillez renseigner votre entité." : undefined;
+}
+
+// Miroir des règles de app/schemas/user.py::UserRegister.password_complexity
+// (au moins un chiffre + une majuscule), en plus du seuil de longueur et de
+// la force générale — sans ça, un mot de passe jugé "BON" côté frontend peut
+// quand même être rejeté par le backend avec un 422.
+function validatePassword(value: string): string | undefined {
+  if (value.length < 8) return "Le mot de passe doit contenir au moins 8 caractères.";
+  if (!/\d/.test(value)) return "Le mot de passe doit contenir au moins un chiffre.";
+  if (!/[A-Z]/.test(value)) return "Le mot de passe doit contenir au moins une majuscule.";
+  if (scorePassword(value) < 2)
+    return "Mot de passe trop faible : ajoutez majuscules, chiffres ou symboles.";
+  return undefined;
+}
+
+function validateConfirm(confirmValue: string, passwordValue: string): string | undefined {
+  return confirmValue !== passwordValue ? "Les deux mots de passe ne correspondent pas." : undefined;
 }
 
 export default function Register() {
@@ -32,18 +66,14 @@ export default function Register() {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    const errs: Errors = {};
-    if (username.trim().length < 3)
-      errs.username = "Choisissez un nom d'utilisateur d'au moins 3 caractères.";
-    if (entity.trim().length === 0) errs.entity = "Veuillez renseigner votre entité.";
-    if (password.length < 8)
-      errs.password = "Le mot de passe doit contenir au moins 8 caractères.";
-    else if (scorePassword(password) < 2)
-      errs.password = "Mot de passe trop faible : ajoutez majuscules, chiffres ou symboles.";
-    if (confirm !== password)
-      errs.confirm = "Les deux mots de passe ne correspondent pas.";
+    const errs: Errors = {
+      username: validateUsername(username),
+      entity: validateEntity(entity),
+      password: validatePassword(password),
+      confirm: validateConfirm(confirm, password),
+    };
     setErrors(errs);
-    if (Object.keys(errs).length > 0) return;
+    if (Object.values(errs).some((msg) => msg !== undefined)) return;
 
     setPending(true);
     try {
@@ -84,7 +114,11 @@ export default function Register() {
             placeholder="John"
             autoComplete="username"
             value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value;
+              setUsername(value);
+              setErrors((prev) => ({ ...prev, username: validateUsername(value) }));
+            }}
             aria-invalid={!!errors.username}
             aria-describedby={errors.username ? "username-error" : undefined}
           />
@@ -97,16 +131,28 @@ export default function Register() {
 
         <div className="space-y-2">
           <Label htmlFor="entity">Entité</Label>
-          <Input
-            id="entity"
-            type="text"
-            placeholder="CMH5"
-            autoComplete="organization"
+          <Select
             value={entity}
-            onChange={(e) => setEntity(e.target.value)}
-            aria-invalid={!!errors.entity}
-            aria-describedby={errors.entity ? "entity-error" : undefined}
-          />
+            onValueChange={(value) => {
+              setEntity(value);
+              setErrors((prev) => ({ ...prev, entity: validateEntity(value) }));
+            }}
+          >
+            <SelectTrigger
+              id="entity"
+              aria-invalid={!!errors.entity}
+              aria-describedby={errors.entity ? "entity-error" : undefined}
+            >
+              <SelectValue placeholder="Sélectionnez votre entité" />
+            </SelectTrigger>
+            <SelectContent>
+              {ENTITIES.map((e) => (
+                <SelectItem key={e} value={e}>
+                  {e}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           {errors.entity && (
             <p id="entity-error" className="text-xs text-avoid">
               {errors.entity}
@@ -121,7 +167,17 @@ export default function Register() {
             placeholder="8 caractères minimum"
             autoComplete="new-password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value;
+              setPassword(value);
+              setErrors((prev) => ({
+                ...prev,
+                password: validatePassword(value),
+                // Si "Confirmer" a déjà une valeur, la comparaison doit suivre
+                // les modifications du mot de passe, pas seulement celles de "Confirmer".
+                confirm: confirm.length > 0 ? validateConfirm(confirm, value) : prev.confirm,
+              }));
+            }}
             aria-invalid={!!errors.password}
             aria-describedby={errors.password ? "password-error" : undefined}
           />
@@ -140,7 +196,11 @@ export default function Register() {
             placeholder="Retapez votre mot de passe"
             autoComplete="new-password"
             value={confirm}
-            onChange={(e) => setConfirm(e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value;
+              setConfirm(value);
+              setErrors((prev) => ({ ...prev, confirm: validateConfirm(value, password) }));
+            }}
             aria-invalid={!!errors.confirm}
             aria-describedby={errors.confirm ? "confirm-error" : undefined}
           />

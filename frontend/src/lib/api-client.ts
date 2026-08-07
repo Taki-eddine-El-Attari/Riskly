@@ -12,6 +12,49 @@ export class ApiError extends Error {
   }
 }
 
+// Un item d'erreur de validation Pydantic/FastAPI, ex. celui renvoyé dans le
+// tableau `detail` d'une réponse 422 :
+// { "loc": ["body", "entite"], "msg": "Input should be 'CMH1', 'CMH2', ...", "type": "literal_error" }
+interface PydanticValidationError {
+  loc?: unknown[];
+  msg?: unknown;
+}
+
+function isPydanticValidationError(value: unknown): value is PydanticValidationError {
+  return typeof value === "object" && value !== null && "msg" in value;
+}
+
+// FastAPI renvoie `detail` comme une simple chaîne pour les erreurs métier
+// (ex. HTTPException(detail="...")), mais comme un tableau d'objets pour les
+// erreurs de validation Pydantic (422). Sans cette extraction, `new Error(detail)`
+// convertit silencieusement ce tableau en la chaîne "[object Object]".
+function extractErrorMessage(body: unknown, fallback: string): string {
+  if (body && typeof body === "object") {
+    const detail = (body as { detail?: unknown }).detail;
+
+    if (typeof detail === "string") return detail;
+
+    if (Array.isArray(detail) && detail.length > 0) {
+      const messages = detail
+        .filter(isPydanticValidationError)
+        .map((item) => {
+          const field = Array.isArray(item.loc)
+            ? item.loc.filter((part) => part !== "body").join(".")
+            : undefined;
+          const msg = typeof item.msg === "string" ? item.msg : undefined;
+          if (!msg) return undefined;
+          return field ? `${field} : ${msg}` : msg;
+        })
+        .filter((msg): msg is string => !!msg);
+      if (messages.length > 0) return messages.join(" ");
+    }
+
+    const message = (body as { message?: unknown }).message;
+    if (typeof message === "string") return message;
+  }
+  return fallback;
+}
+
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
@@ -32,7 +75,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
       let message = res.statusText;
       try {
         const body = await res.json();
-        message = body.detail ?? body.message ?? message;
+        message = extractErrorMessage(body, message);
       } catch {
       }
       throw new ApiError(res.status, message);

@@ -1,6 +1,7 @@
 import uuid
 from datetime import datetime
 from enum import Enum
+from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
@@ -10,11 +11,18 @@ class UserRole(str, Enum):
     user = "user"
 
 
+# Ensemble fermé des entités valides (CMH1 à CMH16), miroir du <select> frontend.
+Entite = Literal[
+    "CMH1", "CMH2", "CMH3", "CMH4", "CMH5", "CMH6", "CMH7", "CMH8",
+    "CMH9", "CMH10", "CMH11", "CMH12", "CMH13", "CMH14", "CMH15", "CMH16",
+]
+
+
 # --- Auth locale (username / mot de passe) -----------------------------------
 class UserRegister(BaseModel):
     name: str = Field(..., min_length=2, max_length=100)
     password: str = Field(..., min_length=8, max_length=128)
-    entite: str | None = Field(None, max_length=100)
+    entite: Entite | None = None
 
     @field_validator("password")
     @classmethod
@@ -33,6 +41,8 @@ class UserLogin(BaseModel):
 
 # --- Auth Telegram (Login Widget) --------------------------------------------
 class TelegramAuthData(BaseModel):
+    """Données brutes renvoyées par le Login Widget Telegram (à vérifier côté serveur)."""
+
     id: int
     first_name: str
     last_name: str | None = None
